@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Perpustakaan Digital - Vicky Server</title>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap"
+			rel="stylesheet" />
+		<link rel="stylesheet" href="style.css" type="text/css" media="all" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap"
+			rel="stylesheet" />
+	</head>
+	<body>
+		<header>
+			<div class="container">
+				<div class="header-content">
+					<div class="logo">
+						<i class="fas fa-book-quran"></i>
+						<h1>Perpustakaan <span>Digital</span></h1>
+					</div>
+					<div class="nav-controls">
+						<button class="nav-btn" id="backToShelf" style="display: none">
+							<i class="fas fa-arrow-left"></i> <span>Kembali ke Rak</span>
+						</button>
+						<button class="nav-btn" id="backToSurah" style="display: none">
+							<i class="fas fa-arrow-left"></i> <span>Daftar Surah</span>
+						</button>
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<div class="container">
+			<div class="bookshelf-container" id="mainShelf">
+				<h2 class="section-title">Rak Buku</h2>
+
+				<div class="shelf-header">
+					<i class="fas fa-mosque"></i>
+					<h3>Islam</h3>
+				</div>
+				<div class="bookshelf">
+					<div class="books-container">
+						<div class="books">
+							<div class="book" id="quranBook">
+								<div class="book-image">
+									<i class="fas fa-book-quran"></i>
+									<div class="surah-number-badge">Q</div>
+								</div>
+								<div class="book-title">
+									<h3>Al-Quran Al-Karim</h3>
+								</div>
+							</div>
+
+							<div class="book" id="hadithBook">
+								<div class="book-image">
+									<i class="fas fa-book"></i>
+									<div class="surah-number-badge">H</div>
+								</div>
+								<div class="book-title">
+									<h3>Sahih Al-Bukhari</h3>
+									<p>9 Volume Lengkap</p>
+								</div>
+							</div>
+
+							<div class="book">
+								<div class="book-image">
+									<i class="fas fa-book-open"></i>
+									<div class="surah-number-badge">D</div>
+								</div>
+								<div class="book-title">
+									<h3>Doa Harian</h3>
+									<p>10+ doa-doa</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="bookshelf-container" id="surahList" style="display: none">
+				<h2 class="section-title">Daftar Surah Al-Quran</h2>
+
+				<div class="search-container">
+					<input
+						type="text"
+						id="searchInput"
+						class="search-box"
+						placeholder="Cari surah berdasarkan nama atau nomor..." />
+					<div class="search-icon">
+						<i class="fas fa-search"></i>
+					</div>
+				</div>
+
+				<div class="shelf-header">
+					<i class="fas fa-book-quran"></i>
+					<h3>Pilih Surah</h3>
+				</div>
+				<div class="bookshelf">
+					<div class="books-container">
+						<div class="loading-container" id="surahLoading">
+							<div class="loading-spinner"></div>
+						</div>
+						<div class="books" id="surahBooks">
+							<!-- Surah books will be loaded here -->
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="surah-detail-container" id="surahDetail">
+				<!-- Surah detail will be loaded here -->
+			</div>
+		</div>
+
+		<footer>
+			<div class="container">
+				<div class="footer-content">
+					<div class="footer-section">
+						<h3>Perpustakaan Digital</h3>
+						<p>
+							Platform digital untuk mempelajari ilmu pengetahuan lebih mendalam
+							dan bacaan keseharian. Akses ribuan buku dan referensi dalam
+							genggaman Anda.
+						</p>
+						<p><i class="fas fa-envelope"></i> info@perpustakaandigital.com</p>
+						<p><i class="fas fa-phone"></i> +62 21 1234 5678</p>
+					</div>
+
+					<div class="footer-section">
+						<h3>Ikuti Kami</h3>
+						<p>
+							Dapatkan update terbaru tentang koleksi dan fitur terbaru dari
+							perpustakaan kami.
+						</p>
+						<div class="social-links">
+							<a href="https://github.com/vicky-project/perpustakaan-digital"
+								><i class="fab fa-github"></i
+							></a>
+							<a href="https://vickyserver.my.id"
+								><i class="fas fa-globe"></i
+							></a>
+						</div>
+					</div>
+				</div>
+
+				<div class="copyright">
+					&copy; 2023 Perpustakaan Digital - Vicky Server. Semua Hak
+					<p>Dilindungi.</p>
+				</div>
+			</div>
+		</footer>
+		<script
+			src="module-helper.js"
+			type="text/javascript"
+			charset="utf-8"></script>
+
+		<script src="script.js" type="text/javascript" charset="utf-8"></script>
+	</body>
+</html>

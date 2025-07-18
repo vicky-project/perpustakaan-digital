@@ -1,0 +1,1087 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+:root {
+	--primary: #8b4513;
+	--wood-light: #a0522d;
+	--wood-accent: #cd853f;
+	--wood-dark: #5d4037;
+	--light: #f5f5dc;
+	--dark: #3d2b1f;
+	--gold: #d4af37;
+	--gold-light: #ffd700;
+	--islam: #2e7d32;
+	--science: #1565c0;
+	--arabic-font: "Scheherazade New", serif;
+
+	--book-primary: #5c4033;
+	--book-secondary: #6d4c41;
+	--book-tertiary: #8d6e63;
+	--book-spine: #4e342e;
+	--book-highlight: #7e5c4a;
+	--book-text: #f5f5f5;
+}
+
+body {
+	font-family: "Poppins", sans-serif;
+	background: linear-gradient(135deg, #f5f0e5 0%, #e8dfd1 100%);
+	color: var(--dark);
+	min-height: 100vh;
+	background-attachment: fixed;
+	padding-top: 60px;
+}
+
+.container {
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 0 15px;
+}
+
+/* Header Styles - Mobile First */
+header {
+	background: linear-gradient(
+		to right,
+		var(--wood-dark) 0%,
+		var(--primary) 100%
+	);
+	padding: 0.8rem 0;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+	position: fixed;
+	top: 0;
+	width: 100%;
+	z-index: 100;
+	border-bottom: 3px solid var(--wood-accent);
+}
+
+.header-content {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.logo {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-shrink: 0;
+}
+
+.logo i {
+	font-size: 1.8rem;
+	color: var(--gold);
+}
+
+.logo h1 {
+	font-family: "Playfair Display", serif;
+	font-weight: 700;
+	color: var(--light);
+	font-size: 1.2rem;
+	letter-spacing: 0.5px;
+}
+
+.logo span {
+	color: var(--gold);
+}
+
+.nav-controls {
+	display: flex;
+	gap: 8px;
+}
+
+.nav-btn {
+	background: var(--gold);
+	color: var(--dark);
+	border: none;
+	padding: 8px 12px;
+	border-radius: 5px;
+	font-size: 0.9rem;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 500;
+}
+
+.nav-btn:hover {
+	background: #c19d2a;
+}
+
+.nav-btn i {
+	font-size: 1rem;
+}
+
+.nav-btn span {
+	display: none;
+}
+
+@media (min-width: 768px) {
+	.nav-btn span {
+		display: inline;
+	}
+}
+
+/* Bookshelf Section - Mobile First */
+.bookshelf-container {
+	margin: 20px 0 40px;
+}
+
+.section-title {
+	font-family: "Playfair Display", serif;
+	font-size: 1.6rem;
+	text-align: center;
+	margin-bottom: 30px;
+	color: var(--primary);
+	position: relative;
+}
+
+.section-title::after {
+	content: "";
+	position: absolute;
+	bottom: -8px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 80px;
+	height: 2px;
+	background: var(--gold);
+}
+
+/* Header rak buku */
+.shelf-header {
+	background: linear-gradient(
+		to bottom,
+		var(--wood-dark) 0%,
+		var(--primary) 100%
+	);
+	padding: 10px 15px;
+	border-radius: 6px 6px 0 0;
+	color: var(--light);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 1.1rem;
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+	position: relative;
+	z-index: 2;
+}
+
+.shelf-header i {
+	color: var(--gold);
+	font-size: 1rem;
+}
+
+/* Rak buku dengan tekstur kayu */
+.bookshelf {
+	background: linear-gradient(
+			to bottom,
+			var(--primary) 0%,
+			var(--wood-dark) 100%
+		),
+		url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	padding: 12px 12px 20px;
+	border-radius: 0 0 8px 8px;
+	box-shadow:
+		0 10px 20px rgba(0, 0, 0, 0.25),
+		0 8px 8px rgba(0, 0, 0, 0.15) inset;
+	margin-bottom: 40px;
+	position: relative;
+	border: 1px solid var(--wood-accent);
+	border-top: none;
+}
+
+.bookshelf::before {
+	content: "";
+	position: absolute;
+	top: -10px;
+	left: 0;
+	width: 100%;
+	height: 10px;
+	background: var(--wood-accent);
+	border-radius: 8px 8px 0 0;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) inset;
+}
+
+/* Container untuk buku-buku dengan scroll horizontal */
+.books-container {
+	overflow-x: auto;
+	padding: 8px 4px 20px;
+	white-space: nowrap;
+	scrollbar-width: thin;
+	scrollbar-color: var(--wood-accent) var(--wood-dark);
+	-webkit-overflow-scrolling: touch;
+}
+
+.books-container::-webkit-scrollbar {
+	height: 6px;
+}
+
+.books-container::-webkit-scrollbar-track {
+	background: var(--wood-dark);
+	border-radius: 3px;
+}
+
+.books-container::-webkit-scrollbar-thumb {
+	background-color: var(--wood-accent);
+	border-radius: 3px;
+}
+
+.books {
+	display: inline-flex;
+	gap: 15px;
+	padding: 0 10px;
+	flex-wrap: nowrap;
+}
+
+/* Desain buku - Ukuran lebih kecil untuk mobile */
+.book {
+	width: 140px;
+	height: 200px;
+	background: var(--book-primary);
+	border-radius: 4px;
+	overflow: hidden;
+	box-shadow:
+		0 10px 20px rgba(0, 0, 0, 0.35),
+		0 4px 8px rgba(0, 0, 0, 0.15) inset,
+		-6px 0 8px -4px rgba(0, 0, 0, 0.4);
+	transition: all 0.4s ease;
+	cursor: pointer;
+	position: relative;
+	transform-origin: center;
+	perspective: 1000px;
+	transform-style: preserve-3d;
+	border-left: 12px solid var(--book-spine);
+	flex-shrink: 0;
+}
+
+/* Ukuran lebih kecil untuk buku di daftar surah */
+.book.small {
+	width: 120px;
+	height: 190px;
+}
+
+.book:hover {
+	transform: translateY(-10px) rotateX(5deg) rotateY(-5deg) scale(1.05);
+	box-shadow:
+		0 20px 30px rgba(0, 0, 0, 0.4),
+		0 4px 8px rgba(0, 0, 0, 0.15) inset,
+		-8px 0 12px -4px rgba(0, 0, 0, 0.5);
+	z-index: 10;
+}
+
+.book::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(
+		120deg,
+		transparent 0%,
+		rgba(255, 255, 255, 0.1) 50%,
+		transparent 100%
+	);
+	transform: translateX(-100%);
+	transition: transform 0.6s ease;
+}
+
+.book:hover::before {
+	transform: translateX(100%);
+}
+
+.book-image {
+	height: 140px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	padding: 15px;
+	background: linear-gradient(
+		145deg,
+		var(--book-primary),
+		var(--book-highlight)
+	);
+}
+
+.book.small .book-image {
+	height: 130px;
+	padding: 12px;
+}
+
+.book-image i {
+	font-size: 3rem;
+	color: rgba(212, 175, 55, 0.7);
+	margin-bottom: 15px;
+	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+	transition: all 0.3s ease;
+}
+
+.book.small .book-image i {
+	font-size: 2.5rem;
+	margin-bottom: 10px;
+}
+
+.book:hover .book-image i {
+	color: var(--gold-light);
+	transform: scale(1.08);
+	text-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+}
+
+.book-title {
+	padding: 12px 8px;
+	text-align: center;
+	font-weight: 500;
+	background: rgba(0, 0, 0, 0.2);
+	min-height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	color: var(--book-text);
+	backdrop-filter: blur(2px);
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+	white-space: normal;
+}
+
+.book.small .book-title {
+	min-height: 60px;
+	padding: 8px;
+}
+
+.book-title h3 {
+	font-size: 0.95rem;
+	color: var(--book-text);
+	line-height: 1.3;
+	margin-bottom: 3px;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.book.small .book-title h3 {
+	font-size: 0.95rem;
+	font-weight: 700;
+}
+
+.book-title p {
+	font-size: 0.8rem;
+	color: #ddd;
+}
+
+.book.small .book-title p {
+	font-size: 0.75rem;
+}
+
+/* Nomor surah di pojok kanan atas */
+.surah-number-badge {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	width: 28px;
+	height: 28px;
+	background: var(--gold);
+	color: var(--dark);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 0.85rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+	z-index: 2;
+}
+
+/* Search Box - Mobile First */
+.search-container {
+	max-width: 100%;
+	margin: 0 auto 25px;
+	position: relative;
+}
+
+.search-box {
+	width: 100%;
+	padding: 12px 18px;
+	padding-right: 45px;
+	border-radius: 30px;
+	border: 1px solid var(--wood-accent);
+	font-size: 1rem;
+	background: rgba(255, 255, 255, 0.95);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+	transition: all 0.3s ease;
+}
+
+.search-box:focus {
+	outline: none;
+	border-color: var(--gold);
+	box-shadow: 0 4px 15px rgba(139, 69, 19, 0.15);
+}
+
+.search-icon {
+	position: absolute;
+	right: 15px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: var(--primary);
+	font-size: 1.1rem;
+}
+
+/* Surah Detail Section - Mobile First */
+.surah-detail-container {
+	display: none;
+	margin: 25px 0 40px;
+}
+
+.surah-header {
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	color: white;
+	padding: 20px;
+	border-radius: 10px;
+	margin-bottom: 25px;
+	position: relative;
+	overflow: hidden;
+	box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+	border: 1px solid var(--wood-accent);
+}
+
+.surah-header::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	opacity: 0.2;
+}
+
+.surah-header h2 {
+	font-size: 2rem;
+	font-family: "Playfair Display", serif;
+	margin-bottom: 8px;
+	position: relative;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+	text-align: center;
+	color: var(--gold);
+}
+
+.surah-header h3 {
+	font-size: 1.6rem;
+	font-weight: 400;
+	margin-bottom: 15px;
+	position: relative;
+	text-align: center;
+}
+
+.surah-meta {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: 15px;
+	margin-top: 15px;
+	position: relative;
+}
+
+.meta-item {
+	background: rgba(255, 255, 255, 0.2);
+	padding: 8px 15px;
+	border-radius: 25px;
+	font-size: 0.9rem;
+	backdrop-filter: blur(4px);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Deskripsi surah */
+.surah-description {
+	background: rgba(0, 0, 0, 0.2);
+	padding: 15px;
+	border-radius: 8px;
+	margin-top: 20px;
+	line-height: 1.6;
+	font-size: 1rem;
+	position: relative;
+	backdrop-filter: blur(2px);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.verses-container {
+	background: white;
+	border-radius: 10px;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+	padding: 25px 20px;
+	margin-bottom: 35px;
+	border: 1px solid #e0e0e0;
+	background: linear-gradient(135deg, #e8dfd1 0%, #d9c9a9 100%),
+		url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+}
+
+.verse-item {
+	padding: 20px;
+	margin-bottom: 20px;
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	position: relative;
+	overflow: hidden;
+	border: 1px solid var(--wood-accent);
+}
+
+.verse-item::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	opacity: 0.2;
+}
+
+.verse-item:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.verse-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15px;
+	padding-bottom: 12px;
+	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+	position: relative;
+	z-index: 2;
+}
+
+.verse-number {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 35px;
+	height: 35px;
+	background: var(--gold);
+	color: var(--dark);
+	border-radius: 50%;
+	font-weight: 600;
+	font-size: 1rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.verse-audio button {
+	background: var(--gold);
+	color: var(--dark);
+	border: none;
+	padding: 7px 12px;
+	border-radius: 50%;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.3s ease;
+	font-weight: 500;
+	width: 40px;
+	height: 40px;
+}
+
+.verse-audio button:hover {
+	background: var(--gold-light);
+	transform: scale(1.04);
+}
+
+.verse-audio button i {
+	font-size: 1.1rem;
+}
+
+.arabic-text {
+	font-family: var(--arabic-font);
+	font-size: 2.2rem;
+	text-align: right;
+	line-height: 1.8;
+	margin-bottom: 20px;
+	color: #fff;
+	padding: 15px;
+	border-radius: 6px;
+	background: rgba(0, 0, 0, 0.3);
+	backdrop-filter: blur(2px);
+	position: relative;
+	z-index: 2;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.latin-text {
+	font-family: "Poppins", sans-serif;
+	font-size: 1.1rem;
+	line-height: 1.6;
+	color: #f0f0f0;
+	padding: 15px;
+	direction: ltr;
+	text-align: left;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 6px;
+	margin-bottom: 15px;
+	backdrop-filter: blur(2px);
+	position: relative;
+	z-index: 2;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.translation-text {
+	padding: 15px;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 6px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+	font-size: 1rem;
+	line-height: 1.6;
+	color: #f0f0f0;
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+	margin-top: 12px;
+	backdrop-filter: blur(2px);
+	position: relative;
+	z-index: 2;
+}
+
+/* Footer - Mobile First */
+footer {
+	background: var(--wood-dark);
+	color: var(--light);
+	padding: 30px 0 15px;
+	margin-top: 50px;
+	border-top: 3px solid var(--wood-accent);
+}
+
+.footer-content {
+	display: flex;
+	flex-direction: column;
+	gap: 25px;
+	margin-bottom: 25px;
+}
+
+.footer-section {
+	flex: 1;
+	min-width: 100%;
+}
+
+.footer-section h3 {
+	font-family: "Playfair Display", serif;
+	font-size: 1.3rem;
+	margin-bottom: 15px;
+	color: var(--gold);
+	position: relative;
+	padding-bottom: 8px;
+}
+
+.footer-section h3::after {
+	content: "";
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 40px;
+	height: 2px;
+	background: var(--gold);
+}
+
+.footer-section p {
+	margin-bottom: 12px;
+	line-height: 1.5;
+}
+
+.social-links {
+	display: flex;
+	gap: 12px;
+	margin-top: 15px;
+}
+
+.social-links a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	background: var(--primary);
+	color: var(--light);
+	border-radius: 50%;
+	transition: all 0.3s ease;
+}
+
+.social-links a:hover {
+	background: var(--gold);
+	color: var(--dark);
+	transform: translateY(-3px);
+}
+
+.copyright {
+	text-align: center;
+	padding-top: 15px;
+	border-top: 1px solid rgba(210, 180, 140, 0.3);
+	font-size: 0.85rem;
+}
+
+/* Loading indicator */
+.loading-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 30px 0;
+}
+
+.loading-spinner {
+	width: 40px;
+	height: 40px;
+	border: 4px solid rgba(0, 0, 0, 0.1);
+	border-radius: 50%;
+	border-top-color: var(--primary);
+	animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* Error message */
+.error-message {
+	text-align: center;
+	padding: 20px;
+	background: rgba(255, 99, 71, 0.2);
+	border-radius: 8px;
+	margin: 20px 0;
+	color: #d32f2f;
+}
+
+/* Media Queries untuk Tablet */
+@media (min-width: 576px) {
+	body {
+		padding-top: 70px;
+	}
+
+	header {
+		padding: 1rem 0;
+		border-bottom: 4px solid var(--wood-accent);
+	}
+
+	.logo i {
+		font-size: 2rem;
+	}
+
+	.logo h1 {
+		font-size: 1.4rem;
+	}
+
+	.nav-btn {
+		padding: 9px 16px;
+		font-size: 0.95rem;
+	}
+
+	.nav-btn i {
+		font-size: 1.1rem;
+	}
+
+	.section-title {
+		font-size: 1.8rem;
+		margin-bottom: 35px;
+	}
+
+	.section-title::after {
+		bottom: -9px;
+		width: 90px;
+		height: 3px;
+	}
+
+	.shelf-header {
+		padding: 11px 18px;
+		font-size: 1.2rem;
+	}
+
+	.shelf-header i {
+		font-size: 1.1rem;
+	}
+
+	.bookshelf {
+		padding: 14px 14px 22px;
+		border-radius: 0 0 10px 10px;
+		margin-bottom: 45px;
+		border: 2px solid var(--wood-accent);
+	}
+
+	.bookshelf::before {
+		top: -12px;
+		height: 12px;
+	}
+
+	.book {
+		width: 160px;
+		height: 230px;
+	}
+
+	.book.small {
+		width: 140px;
+		height: 210px;
+	}
+
+	.book-image {
+		height: 160px;
+	}
+
+	.book.small .book-image {
+		height: 150px;
+	}
+
+	.book-image i {
+		font-size: 3.5rem;
+	}
+
+	.book.small .book-image i {
+		font-size: 3rem;
+	}
+
+	.book-title h3 {
+		font-size: 1rem;
+	}
+
+	.book.small .book-title h3 {
+		font-size: 1rem;
+	}
+
+	.surah-header h2 {
+		font-size: 2.3rem;
+	}
+
+	.surah-header h3 {
+		font-size: 1.8rem;
+	}
+
+	.arabic-text {
+		font-size: 2.5rem;
+	}
+}
+
+/* Media Queries untuk Desktop */
+@media (min-width: 768px) {
+	body {
+		padding-top: 80px;
+	}
+
+	header {
+		padding: 1.2rem 0;
+		border-bottom: 5px solid var(--wood-accent);
+	}
+
+	.logo i {
+		font-size: 2.3rem;
+	}
+
+	.logo h1 {
+		font-size: 1.6rem;
+	}
+
+	.nav-btn {
+		padding: 10px 18px;
+		font-size: 1rem;
+	}
+
+	.nav-btn i {
+		font-size: 1.2rem;
+	}
+
+	.section-title {
+		font-size: 2rem;
+		margin-bottom: 40px;
+	}
+
+	.section-title::after {
+		bottom: -10px;
+		width: 100px;
+		height: 3px;
+	}
+
+	.shelf-header {
+		padding: 12px 20px;
+		font-size: 1.3rem;
+	}
+
+	.shelf-header i {
+		font-size: 1.2rem;
+	}
+
+	.bookshelf {
+		padding: 15px 15px 25px;
+		border-radius: 0 0 12px 12px;
+		margin-bottom: 50px;
+		min-height: 3px;
+	}
+
+	.bookshelf::before {
+		top: -15px;
+		height: 15px;
+	}
+
+	.books-container {
+		overflow: visible;
+		padding: 15px 20px 30px;
+	}
+
+	.books {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 20px;
+		white-space: normal;
+	}
+
+	.book {
+		width: 180px;
+		height: 260px;
+		margin-bottom: 20px;
+		flex: 0 0 calc(25%-20px);
+		max-width: calc(25%-20px);
+	}
+
+	.book.small {
+		width: 160px;
+		height: 240px;
+		flex: 0 0 calc(20%-20px);
+		max-width: calc(20%-20px);
+	}
+
+	.book-image {
+		height: 180px;
+	}
+
+	.book.small .book-image {
+		height: 170px;
+	}
+
+	.book-image i {
+		font-size: 4rem;
+	}
+
+	.book.small .book-image i {
+		font-size: 3.5rem;
+	}
+
+	.book-title h3 {
+		font-size: 1.05rem;
+	}
+
+	.book.small .book-title h3 {
+		font-size: 1.05rem;
+	}
+
+	.surah-header h2 {
+		font-size: 2.6rem;
+	}
+
+	.surah-header h3 {
+		font-size: 2rem;
+	}
+
+	.arabic-text {
+		font-size: 2.8rem;
+	}
+
+	.footer-content {
+		flex-direction: row;
+		gap: 30px;
+	}
+
+	.footer-section {
+		min-width: auto;
+	}
+}
+
+/* Media Queries untuk Layar Lebar */
+@media (min-width: 992px) {
+	.container {
+		padding: 0 20px;
+	}
+
+	.book {
+		width: 200px;
+		height: 280px;
+		flex: 0 0 calc(20%-20px);
+		max-width: calc(20%-20px);
+	}
+
+	.book.small {
+		width: 180px;
+		height: 260px;
+		flex: 0 0 calc(16.666%-20px);
+		max-width: calc(16.666%-20px);
+	}
+
+	.book-image {
+		height: 200px;
+	}
+
+	.book.small .book-image {
+		height: 190px;
+	}
+
+	.book-image i {
+		font-size: 4.5rem;
+	}
+
+	.book.small .book-image i {
+		font-size: 4rem;
+	}
+
+	.surah-header h2 {
+		font-size: 3rem;
+	}
+
+	.surah-header h3 {
+		font-size: 2.2rem;
+	}
+
+	.arabic-text {
+		font-size: 3rem;
+	}
+}
+
+/* Media Queries untuk Layar Sangat Lebar */
+@media (min-width: 1200px) {
+	.book {
+		width: 220px;
+		height: 300px;
+		flex: 0 0 calc(16.666%-20px);
+		max-width: calc(16.666%-20px);
+	}
+
+	.book.small {
+		width: 200px;
+		height: 280px;
+		flex: 0 0 calc(12.5%-20px);
+		max-width: calc(12.5%-20px);
+	}
+
+	.book-image {
+		height: 220px;
+	}
+
+	.book.small .book-image {
+		height: 210px;
+	}
+
+	.book-image i {
+		font-size: 5rem;
+	}
+
+	.book.small .book-image i {
+		font-size: 4.5rem;
+	}
+
+	.surah-header h2 {
+		font-size: 3.2rem;
+	}
+}
