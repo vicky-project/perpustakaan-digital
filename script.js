@@ -1,141 +1,205 @@
+// URL untuk data Al-Quran
+const QURAN_DATA_URL = "data/quran_data.json";
+const HADITH_DATA_URL = "data/hadits_data.json";
+const QURAN_CACHE_KEY = "quran_data_cache";
+const HADITH_DATA_CACHE_KEY = "hadith_data_cache";
+const CACHE_EXPIRY_DAYS = 7; // Data akan disimpan selama 7 hari
+const CACHE_EXPIRY_MS = CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000; // Milidetik
 
-			// URL untuk data Al-Quran
-			const QURAN_DATA_URL = "data/quran_data.json";
-			const QURAN_CACHE_KEY = "quran_data_cache";
-			const CACHE_EXPIRY_DAYS = 7; // Data akan disimpan selama 7 hari
-			const CACHE_EXPIRY_MS = CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000; // Milidetik
+// Variabel global untuk menyimpan data
+let quranData = null;
+let hadithCollections = null;
+let currentHadithCollection = null;
+let loadingError = false;
 
-			// Variabel global untuk menyimpan data
-			let quranData = null;
-			let loadingError = false;
+// Event listener saat halaman dimuat
+document.addEventListener("DOMContentLoaded", function () {
+	document.getElementById("quranBook").addEventListener("click", function () {
+		showSurahList();
+	});
 
-			// Event listener saat halaman dimuat
-			document.addEventListener("DOMContentLoaded", function () {
-				document
-					.getElementById("quranBook")
-					.addEventListener("click", function () {
-						showSurahList();
-					});
+	document.getElementById("hadithBook").addEventListener("click", function () {
+		showHadithCollections();
+	});
 
-				document
-					.getElementById("hadithBook")
-					.addEventListener("click", function () {
-						alert("Fitur Hadits akan segera hadir!");
-					});
+	document.getElementById("backToShelf").addEventListener("click", function () {
+		showMainShelf();
+	});
 
-				document
-					.getElementById("backToShelf")
-					.addEventListener("click", function () {
-						showMainShelf();
-					});
+	document.getElementById("backToSurah").addEventListener("click", function () {
+		showSurahList();
+	});
 
-				document
-					.getElementById("backToSurah")
-					.addEventListener("click", function () {
-						showSurahList();
-					});
+	document
+		.getElementById("backToHadithList")
+		.addEventListener("click", function () {
+			showHadithCollections();
+		});
 
-				document
-					.getElementById("searchInput")
-					.addEventListener("input", function () {
-						filterSurahs(this.value);
-					});
-			});
-
-			function showMainShelf() {
-				document.getElementById("mainShelf").style.display = "block";
-				document.getElementById("surahList").style.display = "none";
-				document.getElementById("surahDetail").style.display = "none";
-				document.getElementById("backToShelf").style.display = "none";
-				document.getElementById("backToSurah").style.display = "none";
-				window.scrollTo({ top: 0, behavior: "smooth" });
+	document
+		.getElementById("backToHadithBook")
+		.addEventListener("click", function () {
+			if (currentHadithCollection) {
+				showHadithList(currentHadithCollection);
 			}
+		});
 
-			function showSurahList() {
-				document.getElementById("mainShelf").style.display = "none";
-				document.getElementById("surahList").style.display = "block";
-				document.getElementById("surahDetail").style.display = "none";
-				document.getElementById("backToShelf").style.display = "flex";
-				document.getElementById("backToSurah").style.display = "none";
+	document.getElementById("searchInput").addEventListener("input", function () {
+		filterSurahs(this.value);
+	});
+});
 
-				document.getElementById("searchInput").value = "";
+function showMainShelf() {
+	document.getElementById("mainShelf").style.display = "block";
+	document.getElementById("surahList").style.display = "none";
+	document.getElementById("surahDetail").style.display = "none";
+	document.getElementById("hadithCollections").style.display = "none";
+	document.getElementById("hadithList").style.display = "none";
+	document.getElementById("hadithDetail").style.display = "none";
+	document.getElementById("backToShelf").style.display = "none";
+	document.getElementById("backToSurah").style.display = "none";
+	document.getElementById("backToHadithList").style.display = "none";
+	document.getElementById("backToHadithBook").style.display = "none";
+	window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
-				if (!quranData && !loadingError) {
-					fetchQuranData();
-				} else if (quranData) {
-					renderSurahBooks();
-				}
-				window.scrollTo({ top: 0, behavior: "smooth" });
+function showSurahList() {
+	document.getElementById("mainShelf").style.display = "none";
+	document.getElementById("surahList").style.display = "block";
+	document.getElementById("surahDetail").style.display = "none";
+	document.getElementById("hadithCollections").style.display = "none";
+	document.getElementById("hadithList").style.display = "none";
+	document.getElementById("hadithDetail").style.display = "none";
+	document.getElementById("backToShelf").style.display = "flex";
+	document.getElementById("backToSurah").style.display = "none";
+	document.getElementById("backToHadithList").style.display = "none";
+	document.getElementById("backToHadithBook").style.display = "none";
+
+	document.getElementById("searchInput").value = "";
+
+	if (!quranData && !loadingError) {
+		fetchQuranData();
+	} else if (quranData) {
+		renderSurahBooks();
+	}
+	window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showSurahDetail(surah) {
+	document.getElementById("mainShelf").style.display = "none";
+	document.getElementById("surahList").style.display = "none";
+	document.getElementById("surahDetail").style.display = "block";
+	document.getElementById("hadithCollections").style.display = "none";
+	document.getElementById("hadithList").style.display = "none";
+	document.getElementById("hadithDetail").style.display = "none";
+	document.getElementById("backToShelf").style.display = "none";
+	document.getElementById("backToSurah").style.display = "flex";
+	document.getElementById("backToHadithList").style.display = "none";
+	document.getElementById("backToHadithBook").style.display = "none";
+
+	renderSurahDetail(surah);
+	window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showHadithCollections() {
+	document.getElementById("mainShelf").style.display = "none";
+	document.getElementById("surahList").style.display = "none";
+	document.getElementById("surahDetail").style.display = "none";
+	document.getElementById("hadithCollections").style.display = "block";
+	document.getElementById("hadithList").style.display = "none";
+	document.getElementById("hadithDetail").style.display = "none";
+	document.getElementById("backToShelf").style.display = "flex";
+	document.getElementById("backToSurah").style.display = "none";
+	document.getElementById("backToHadithList").style.display = "none";
+	document.getElementById("backToHadithBook").style.display = "none";
+
+	fetchHadithCollections();
+	window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showHadithList(collectionId) {
+	document.getElementById("mainShelf").style.display = "none";
+	document.getElementById("surahList").style.display = "none";
+	document.getElementById("surahDetail").style.display = "none";
+	document.getElementById("hadithCollections").style.display = "none";
+	document.getElementById("hadithList").style.display = "block";
+	document.getElementById("hadithDetail").style.display = "none";
+	document.getElementById("backToShelf").style.display = "none";
+	document.getElementById("backToSurah").style.display = "none";
+	document.getElementById("backToHadithList").style.display = "flex";
+	document.getElementById("backToHadithBook").style.display = "none";
+
+	document.getElementById("searchHadithInput").value = "";
+	fetchHadithCollection(collectionId);
+	window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showHadithDetail(hadith) {
+	document.getElementById("mainShelf").style.display = "none";
+	document.getElementById("surahList").style.display = "none";
+	document.getElementById("surahDetail").style.display = "none";
+	document.getElementById("hadithCollections").style.display = "none";
+	document.getElementById("hadithList").style.display = "none";
+	document.getElementById("hadithDetail").style.display = "block";
+	document.getElementById("backToShelf").style.display = "none";
+	document.getElementById("backToSurah").style.display = "none";
+	document.getElementById("backToHadithList").style.display = "none";
+	document.getElementById("backToHadithBook").style.display = "flex";
+
+	renderHadithDetail(hadith);
+	window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Fungsi untuk mengambil data dari server
+async function fetchQuranData() {
+	const loadingContainer = document.getElementById("surahLoading");
+	const surahBooksContainer = document.getElementById("surahBooks");
+
+	// Tampilkan loading indicator
+	loadingContainer.style.display = "flex";
+	surahBooksContainer.innerHTML = "";
+
+	try {
+		// 1. Coba ambil dari cache terlebih dahulu
+		const cachedData = await CacheManager.getItem(QURAN_CACHE_KEY);
+
+		if (cachedData) {
+			quranData = cachedData;
+			renderSurahBooks();
+			return;
+		}
+
+		// 2. Jika tidak ada di cache, ambil dari server
+		const response = await fetch(QURAN_DATA_URL);
+
+		if (!response.ok) {
+			throw new Error("Gagal mengambil data Al-Quran");
+		}
+
+		quranData = await response.json();
+
+		// 3. Simpan ke cache untuk penggunaan selanjutnya
+		await CacheManager.setItem(QURAN_CACHE_KEY, quranData, CACHE_EXPIRY_MS);
+
+		renderSurahBooks();
+	} catch (error) {
+		console.error("Error fetching Quran data:", error);
+		loadingError = true;
+
+		// 4. Coba gunakan cache jika ada meskipun mungkin expired
+		try {
+			const fallbackCache = await CacheManager.getItem(QURAN_CACHE_KEY, true);
+			if (fallbackCache) {
+				quranData = fallbackCache;
+				renderSurahBooks();
+				return;
 			}
+		} catch (cacheError) {
+			console.error("Fallback cache error:", cacheError);
+		}
 
-			function showSurahDetail(surah) {
-				document.getElementById("mainShelf").style.display = "none";
-				document.getElementById("surahList").style.display = "none";
-				document.getElementById("surahDetail").style.display = "block";
-				document.getElementById("backToShelf").style.display = "none";
-				document.getElementById("backToSurah").style.display = "flex";
-
-				renderSurahDetail(surah);
-				window.scrollTo({ top: 0, behavior: "smooth" });
-			}
-
-			// Fungsi untuk mengambil data dari server
-			async function fetchQuranData() {
-				const loadingContainer = document.getElementById("surahLoading");
-				const surahBooksContainer = document.getElementById("surahBooks");
-
-				// Tampilkan loading indicator
-				loadingContainer.style.display = "flex";
-				surahBooksContainer.innerHTML = "";
-
-				try {
-					// 1. Coba ambil dari cache terlebih dahulu
-					const cachedData = await CacheManager.getItem(QURAN_CACHE_KEY);
-
-					if (cachedData) {
-						quranData = cachedData;
-						renderSurahBooks();
-						return;
-					}
-
-					// 2. Jika tidak ada di cache, ambil dari server
-					const response = await fetch(QURAN_DATA_URL);
-
-					if (!response.ok) {
-						throw new Error("Gagal mengambil data Al-Quran");
-					}
-
-					quranData = await response.json();
-
-					// 3. Simpan ke cache untuk penggunaan selanjutnya
-					await CacheManager.setItem(
-						QURAN_CACHE_KEY,
-						quranData,
-						CACHE_EXPIRY_MS
-					);
-
-					renderSurahBooks();
-				} catch (error) {
-					console.error("Error fetching Quran data:", error);
-					loadingError = true;
-
-					// 4. Coba gunakan cache jika ada meskipun mungkin expired
-					try {
-						const fallbackCache = await CacheManager.getItem(
-							QURAN_CACHE_KEY,
-							true
-						);
-						if (fallbackCache) {
-							quranData = fallbackCache;
-							renderSurahBooks();
-							return;
-						}
-					} catch (cacheError) {
-						console.error("Fallback cache error:", cacheError);
-					}
-
-					// 5. Tampilkan pesan error jika tidak ada data sama sekali
-					surahBooksContainer.innerHTML = `
+		// 5. Tampilkan pesan error jika tidak ada data sama sekali
+		surahBooksContainer.innerHTML = `
 			             <div class="error-message">
 			                 <i class="fas fa-exclamation-triangle"></i>
 			                 <p>Gagal memuat data Al-Quran. Silakan coba lagi nanti.</p>
@@ -144,33 +208,31 @@
 			                 </button>
 			             </div>
 			         `;
-				} finally {
-					loadingContainer.style.display = "none";
-				}
-			}
+	} finally {
+		loadingContainer.style.display = "none";
+	}
+}
 
-			function renderSurahBooks() {
-				const surahBooksContainer = document.getElementById("surahBooks");
+function renderSurahBooks() {
+	const surahBooksContainer = document.getElementById("surahBooks");
 
-				if (!quranData) return;
+	if (!quranData) return;
 
-				surahBooksContainer.innerHTML = "";
+	surahBooksContainer.innerHTML = "";
 
-				// Urutkan surah berdasarkan nomor
-				const sortedSurahs = [...quranData.quran].sort(
-					(a, b) => a.number - b.number
-				);
+	// Urutkan surah berdasarkan nomor
+	const sortedSurahs = [...quranData.quran].sort((a, b) => a.number - b.number);
 
-				sortedSurahs.forEach(surah => {
-					const surahBook = document.createElement("div");
-					surahBook.className = "book small";
-					surahBook.dataset.number = surah.number;
-					surahBook.dataset.name = surah.name_latin;
-					surahBook.dataset.nameAr = surah.name;
+	sortedSurahs.forEach(surah => {
+		const surahBook = document.createElement("div");
+		surahBook.className = "book small";
+		surahBook.dataset.number = surah.number;
+		surahBook.dataset.name = surah.name_latin;
+		surahBook.dataset.nameAr = surah.name;
 
-					surahBook.classList.add("surah-book-item");
+		surahBook.classList.add("surah-book-item");
 
-					surahBook.innerHTML = `
+		surahBook.innerHTML = `
 			                 <div class="book-image">
 			                     <i class="fas fa-book"></i>
 			                     <div class="surah-number-badge">${surah.number}</div>
@@ -181,43 +243,43 @@
 			                 </div>
 			             `;
 
-					surahBook.addEventListener("click", () => {
-						showSurahDetail(surah);
-					});
+		surahBook.addEventListener("click", () => {
+			showSurahDetail(surah);
+		});
 
-					surahBooksContainer.appendChild(surahBook);
-				});
-			}
+		surahBooksContainer.appendChild(surahBook);
+	});
+}
 
-			function filterSurahs(query) {
-				if (!quranData) return;
+function filterSurahs(query) {
+	if (!quranData) return;
 
-				const books = document.querySelectorAll("#surahBooks .book");
-				const lowerQuery = query.toLowerCase().trim();
+	const books = document.querySelectorAll("#surahBooks .book");
+	const lowerQuery = query.toLowerCase().trim();
 
-				books.forEach(book => {
-					const name = book.dataset.name.toLowerCase();
-					const nameAr = book.dataset.nameAr;
-					const number = book.dataset.number;
+	books.forEach(book => {
+		const name = book.dataset.name.toLowerCase();
+		const nameAr = book.dataset.nameAr;
+		const number = book.dataset.number;
 
-					if (
-						lowerQuery === "" ||
-						name.includes(lowerQuery) ||
-						nameAr.includes(query) ||
-						number === query ||
-						number === lowerQuery
-					) {
-						book.style.display = "inline-block";
-					} else {
-						book.style.display = "none";
-					}
-				});
-			}
+		if (
+			lowerQuery === "" ||
+			name.includes(lowerQuery) ||
+			nameAr.includes(query) ||
+			number === query ||
+			number === lowerQuery
+		) {
+			book.style.display = "inline-block";
+		} else {
+			book.style.display = "none";
+		}
+	});
+}
 
-			function renderSurahDetail(surah) {
-				const surahDetailContainer = document.getElementById("surahDetail");
+function renderSurahDetail(surah) {
+	const surahDetailContainer = document.getElementById("surahDetail");
 
-				let surahDetailHTML = `
+	let surahDetailHTML = `
 			             <div class="surah-header">
 			                 <h2>${surah.name}</h2>
 			                 <h3>${surah.name_latin}</h3>
@@ -233,13 +295,13 @@
 			             <div class="verses-container">
 			         `;
 
-				// Urutkan ayat berdasarkan nomor
-				const sortedVerses = [...surah.verses].sort(
-					(a, b) => a.verse_number - b.verse_number
-				);
+	// Urutkan ayat berdasarkan nomor
+	const sortedVerses = [...surah.verses].sort(
+		(a, b) => a.verse_number - b.verse_number
+	);
 
-				sortedVerses.forEach(verse => {
-					surahDetailHTML += `
+	sortedVerses.forEach(verse => {
+		surahDetailHTML += `
 			                 <div class="verse-item">
 			                     <div class="verse-header">
 			                         <div class="verse-number">${verse.verse_number}</div>
@@ -254,14 +316,240 @@
 			                     <div class="translation-text">${verse.translation}</div>
 			                 </div>
 			             `;
-				});
+	});
 
-				surahDetailHTML += `</div>`;
-				surahDetailContainer.innerHTML = surahDetailHTML;
-			}
+	surahDetailHTML += `</div>`;
+	surahDetailContainer.innerHTML = surahDetailHTML;
+}
 
-			function playAudio(url) {
-				const audio = new Audio(url);
-				audio.play().catch(e => console.log("Audio play failed:", e));
-			}
-		
+function playAudio(url) {
+	const audio = new Audio(url);
+	audio.play().catch(e => console.log("Audio play failed:", e));
+}
+
+// Fungsi untuk mengambil koleksi hadits
+async function fetchHadithCollections() {
+	const loadingContainer = document.getElementById("hadithCollectionsLoading");
+	const collectionsContainer = document.getElementById(
+		"hadithCollectionsBooks"
+	);
+
+	// Tampilkan loading indicator
+	loadingContainer.style.display = "flex";
+	collectionsContainer.innerHTML = "";
+
+	try {
+		// 1. Coba ambil dari cache terlebih dahulu
+		const cachedData = await CacheManager.getItem(HADITH_COLLECTIONS_CACHE_KEY);
+
+		if (cachedData) {
+			hadithCollections = cachedData;
+			renderHadithCollections();
+			return;
+		}
+
+		// 2. Jika tidak ada di cache, ambil dari server
+		const response = await fetch(HADITH_COLLECTIONS_URL);
+
+		if (!response.ok) {
+			throw new Error("Gagal mengambil data koleksi hadits");
+		}
+
+		hadithCollections = await response.json();
+
+		// 3. Simpan ke cache untuk penggunaan selanjutnya
+		await CacheManager.setItem(
+			HADITH_COLLECTIONS_CACHE_KEY,
+			hadithCollections,
+			CACHE_EXPIRY_MS
+		);
+
+		renderHadithCollections();
+	} catch (error) {
+		console.error("Error fetching hadith collections:", error);
+		loadingError = true;
+
+		// 4. Tampilkan pesan error
+		collectionsContainer.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Gagal memuat data koleksi hadits. Silakan coba lagi nanti.</p>
+                        <button class="nav-btn" onclick="fetchHadithCollections()">
+                            <i class="fas fa-redo"></i> Muat Ulang
+                        </button>
+                    </div>
+                `;
+	} finally {
+		loadingContainer.style.display = "none";
+	}
+}
+
+function renderHadithCollections() {
+	const collectionsContainer = document.getElementById(
+		"hadithCollectionsBooks"
+	);
+
+	if (!hadithCollections) return;
+
+	collectionsContainer.innerHTML = "";
+
+	hadithCollections.hadiths.forEach(collection => {
+		const collectionBook = document.createElement("div");
+		collectionBook.className = "book small";
+		collectionBook.dataset.id = collection.id;
+
+		collectionBook.innerHTML = `
+                    <div class="book-image">
+                        <i class="fas fa-book"></i>
+                        <div class="surah-number-badge">${collection.id
+													.charAt(0)
+													.toUpperCase()}</div>
+                    </div>
+                    <div class="book-title">
+                        <h3>${collection.name}</h3>
+                        <p>${collection.total_hadiths} Hadits</p>
+                    </div>
+                `;
+
+		collectionBook.addEventListener("click", () => {
+			showHadithList(collection.id);
+		});
+
+		collectionsContainer.appendChild(collectionBook);
+	});
+}
+
+// Fungsi untuk mengambil koleksi hadits tertentu
+async function fetchHadithCollection(collectionId) {
+	const loadingContainer = document.getElementById("hadithLoading");
+	const hadithsContainer = document.getElementById("hadithBooks");
+
+	// Tampilkan loading indicator
+	loadingContainer.style.display = "flex";
+	hadithsContainer.innerHTML = "";
+
+	try {
+		// 1. Coba ambil dari cache terlebih dahulu
+		const cachedData = await CacheManager.getItem(
+			`${HADITH_DATA_CACHE_KEY}_${collectionId}`
+		);
+
+		if (cachedData) {
+			currentHadithCollection = cachedData;
+			renderHadithList(cachedData.hadiths);
+			return;
+		}
+
+		// 2. Jika tidak ada di cache, ambil dari server
+		const response = await fetch(
+			HADITH_DATA_URL.replace("abu-daud", collectionId)
+		);
+
+		if (!response.ok) {
+			throw new Error("Gagal mengambil data hadits");
+		}
+
+		const hadithData = await response.json();
+		currentHadithCollection = hadithData;
+
+		// 3. Simpan ke cache untuk penggunaan selanjutnya
+		await CacheManager.setItem(
+			`${HADITH_DATA_CACHE_KEY}_${collectionId}`,
+			hadithData,
+			CACHE_EXPIRY_MS
+		);
+
+		renderHadithList(hadithData.hadiths);
+	} catch (error) {
+		console.error(`Error fetching hadith collection ${collectionId}:`, error);
+		loadingError = true;
+
+		// 4. Tampilkan pesan error
+		hadithsContainer.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Gagal memuat data hadits. Silakan coba lagi nanti.</p>
+                        <button class="nav-btn" onclick="fetchHadithCollection('${collectionId}')">
+                            <i class="fas fa-redo"></i> Muat Ulang
+                        </button>
+                    </div>
+                `;
+	} finally {
+		loadingContainer.style.display = "none";
+	}
+}
+
+function renderHadithList(hadiths) {
+	const hadithsContainer = document.getElementById("hadithBooks");
+
+	if (!hadiths) return;
+
+	hadithsContainer.innerHTML = "";
+
+	hadiths.forEach(hadith => {
+		const hadithBook = document.createElement("div");
+		hadithBook.className = "book small";
+		hadithBook.dataset.number = hadith.number;
+
+		hadithBook.innerHTML = `
+                    <div class="book-image">
+                        <i class="fas fa-book-open"></i>
+                        <div class="surah-number-badge">${hadith.number}</div>
+                    </div>
+                    <div class="book-title">
+                        <h3>Hadits ${hadith.number}</h3>
+                        <p>${currentHadithCollection.name}</p>
+                    </div>
+                `;
+
+		hadithBook.addEventListener("click", () => {
+			showHadithDetail(hadith);
+		});
+
+		hadithsContainer.appendChild(hadithBook);
+	});
+}
+
+function filterHadiths(query) {
+	const books = document.querySelectorAll("#hadithBooks .book");
+	const lowerQuery = query.toLowerCase().trim();
+
+	books.forEach(book => {
+		const number = book.dataset.number;
+
+		if (lowerQuery === "" || number.includes(lowerQuery)) {
+			book.style.display = "inline-block";
+		} else {
+			book.style.display = "none";
+		}
+	});
+}
+
+function renderHadithDetail(hadith) {
+	const hadithDetailContainer = document.getElementById("hadithDetail");
+
+	hadithDetailContainer.innerHTML = `
+	<div class="surah-header">
+                    <h2>Hadits ${hadith.number}</h2>
+                    <h3>${currentHadithCollection.name}</h3>
+                    <div class="surah-meta">
+                        <div class="meta-item">Nomor: ${hadith.number}</div>
+                        <div class="meta-item">Kitab: ${currentHadithCollection.name}</div>
+                    </div>
+                </div>
+                <div class="verses-container">
+                    <div class="hadith-item">
+                        <div class="hadith-header">
+                            <div class="hadith-number">${hadith.number}</div>
+                        </div>
+                        <div class="hadith-arabic">
+                            ${hadith.arabic}
+                        </div>
+                        <div class="hadith-translation">
+                            <strong>Terjemahan:</strong>
+                            <p>${hadith.translation}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+}

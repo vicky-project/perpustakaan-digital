@@ -30,6 +30,12 @@
 						<button class="nav-btn" id="backToSurah" style="display: none">
 							<i class="fas fa-arrow-left"></i> <span>Daftar Surah</span>
 						</button>
+						<button class="nav-btn" id="backToHadithList" style="display: none">
+							<i class="fas fa-arrow-left"></i> <span>Daftar Kitab</span>
+						</button>
+						<button class="nav-btn" id="backToHadithBook" style="display: none">
+							<i class="fas fa-arrow-left"></i> <span>Daftar Hadits</span>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -63,7 +69,7 @@
 								</div>
 								<div class="book-title">
 									<h3>Sahih Al-Bukhari</h3>
-									<p>9 Volume Lengkap</p>
+									<p>Daftar Kitab Hadiths</p>
 								</div>
 							</div>
 
@@ -114,6 +120,68 @@
 
 			<div class="surah-detail-container" id="surahDetail">
 				<!-- Surah detail will be loaded here -->
+			</div>
+
+			<!-- Daftar Kitab Hadits -->
+			<div
+				class="bookshelf-container"
+				id="hadithCollections"
+				style="display: none">
+				<h2 class="section-title">Kitab Hadits Utama</h2>
+
+				<div class="shelf-header">
+					<i class="fas fa-book"></i>
+					<h3>Pilih Kitab Hadits</h3>
+				</div>
+				<div class="bookshelf">
+					<div class="books-container">
+						<div class="loading-container" id="hadithCollectionsLoading">
+							<div class="loading-spinner"></div>
+						</div>
+						<div class="books" id="hadithCollectionsBooks">
+							<!-- Kitab hadits akan dimuat di sini -->
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Daftar Hadits dalam Satu Kitab -->
+			<div class="bookshelf-container" id="hadithList" style="display: none">
+				<h2 class="section-title">Daftar Hadits</h2>
+
+				<div class="search-container">
+					<input
+						type="text"
+						id="searchHadithInput"
+						class="search-box"
+						placeholder="Cari hadits berdasarkan nomor..." />
+					<div class="search-icon">
+						<i class="fas fa-search"></i>
+					</div>
+				</div>
+
+				<div class="shelf-header">
+					<i class="fas fa-book"></i>
+					<h3>Pilih Hadits</h3>
+				</div>
+				<div class="bookshelf">
+					<div class="books-container">
+						<div class="loading-container" id="hadithLoading">
+							<div class="loading-spinner"></div>
+						</div>
+						<div class="books" id="hadithBooks">
+							<!-- Daftar hadits akan dimuat di sini -->
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Detail Hadits -->
+			<div
+				class="surah-detail-container"
+				id="hadithDetail"
+				style="display: none">
+				<!-- Detail hadits akan dimuat di sini -->
 			</div>
 		</div>
 
