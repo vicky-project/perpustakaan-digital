@@ -1,6 +1,7 @@
 // URL untuk data Al-Quran
 const QURAN_DATA_URL = "data/quran_data.json";
-const HADITH_DATA_URL = "data/hadits_data.json";
+const HADITH_DATA_URL =
+	"https://vickyserver.my.id/server/api/books/hadith-book";
 const QURAN_CACHE_KEY = "quran_data_cache";
 const HADITH_DATA_CACHE_KEY = "hadith_data_cache";
 const CACHE_EXPIRY_DAYS = 7; // Data akan disimpan selama 7 hari
@@ -8,6 +9,7 @@ const CACHE_EXPIRY_MS = CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000; // Milidetik
 
 // Variabel global untuk menyimpan data
 let quranData = null;
+let hadithData = null;
 let hadithCollections = null;
 let currentHadithCollection = null;
 let loadingError = false;
@@ -47,6 +49,12 @@ document.addEventListener("DOMContentLoaded", function () {
 	document.getElementById("searchInput").addEventListener("input", function () {
 		filterSurahs(this.value);
 	});
+
+	document
+		.getElementById("searchHadithInput")
+		.addEventListener("input", function () {
+			filterHadiths(this.value);
+		});
 });
 
 function showMainShelf() {
@@ -113,7 +121,7 @@ function showHadithCollections() {
 	document.getElementById("backToHadithList").style.display = "none";
 	document.getElementById("backToHadithBook").style.display = "none";
 
-	fetchHadithCollections();
+	fetchHadithData();
 	window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -130,11 +138,11 @@ function showHadithList(collectionId) {
 	document.getElementById("backToHadithBook").style.display = "none";
 
 	document.getElementById("searchHadithInput").value = "";
-	fetchHadithCollection(collectionId);
+	renderHadithList(collectionId);
 	window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-function showHadithDetail(hadith) {
+function showHadithDetail(collectionId, hadith) {
 	document.getElementById("mainShelf").style.display = "none";
 	document.getElementById("surahList").style.display = "none";
 	document.getElementById("surahDetail").style.display = "none";
@@ -146,7 +154,7 @@ function showHadithDetail(hadith) {
 	document.getElementById("backToHadithList").style.display = "none";
 	document.getElementById("backToHadithBook").style.display = "flex";
 
-	renderHadithDetail(hadith);
+	renderHadithDetail(collectionId, hadith);
 	window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -327,8 +335,8 @@ function playAudio(url) {
 	audio.play().catch(e => console.log("Audio play failed:", e));
 }
 
-// Fungsi untuk mengambil koleksi hadits
-async function fetchHadithCollections() {
+// Fungsi untuk mengambil data Hadits
+async function fetchHadithData() {
 	const loadingContainer = document.getElementById("hadithCollectionsLoading");
 	const collectionsContainer = document.getElementById(
 		"hadithCollectionsBooks"
@@ -340,7 +348,7 @@ async function fetchHadithCollections() {
 
 	try {
 		// 1. Coba ambil dari cache terlebih dahulu
-		const cachedData = await CacheManager.getItem(HADITH_COLLECTIONS_CACHE_KEY);
+		const cachedData = await CacheManager.getItem(HADITH_DATA_CACHE_KEY);
 
 		if (cachedData) {
 			hadithCollections = cachedData;
@@ -349,32 +357,38 @@ async function fetchHadithCollections() {
 		}
 
 		// 2. Jika tidak ada di cache, ambil dari server
-		const response = await fetch(HADITH_COLLECTIONS_URL);
+		const response = await fetch(HADITH_DATA_URL);
 
 		if (!response.ok) {
-			throw new Error("Gagal mengambil data koleksi hadits");
+			throw new Error("Gagal mengambil data hadits");
 		}
 
-		hadithCollections = await response.json();
+		const data = await response.json();
+
+		if (!data || !data?.success) {
+			throw new Error("Error mendapatkan data hadits.");
+		}
+
+		hadithCollections = data;
 
 		// 3. Simpan ke cache untuk penggunaan selanjutnya
 		await CacheManager.setItem(
-			HADITH_COLLECTIONS_CACHE_KEY,
+			HADITH_DATA_CACHE_KEY,
 			hadithCollections,
 			CACHE_EXPIRY_MS
 		);
 
 		renderHadithCollections();
 	} catch (error) {
-		console.error("Error fetching hadith collections:", error);
+		console.error("Error fetching hadith data:", error);
 		loadingError = true;
 
 		// 4. Tampilkan pesan error
 		collectionsContainer.innerHTML = `
                     <div class="error-message">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <p>Gagal memuat data koleksi hadits. Silakan coba lagi nanti.</p>
-                        <button class="nav-btn" onclick="fetchHadithCollections()">
+                        <p>Gagal memuat data hadits. Silakan coba lagi nanti.</p>
+                        <button class="nav-btn" onclick="fetchHadithData()">
                             <i class="fas fa-redo"></i> Muat Ulang
                         </button>
                     </div>
@@ -393,7 +407,7 @@ function renderHadithCollections() {
 
 	collectionsContainer.innerHTML = "";
 
-	hadithCollections.hadiths.forEach(collection => {
+	hadithCollections.data.forEach(collection => {
 		const collectionBook = document.createElement("div");
 		collectionBook.className = "book small";
 		collectionBook.dataset.id = collection.id;
@@ -412,6 +426,7 @@ function renderHadithCollections() {
                 `;
 
 		collectionBook.addEventListener("click", () => {
+			currentHadithCollection = collection;
 			showHadithList(collection.id);
 		});
 
@@ -419,8 +434,28 @@ function renderHadithCollections() {
 	});
 }
 
-// Fungsi untuk mengambil koleksi hadits tertentu
-async function fetchHadithCollection(collectionId) {
+// Fungsi untuk mengambil hadits per kitab
+async function fetchHadithsByBook(bookId) {
+	try {
+		const res = await fetch(`${HADITH_DATA_URL}/${bookId}/hadiths`);
+		if (!res.ok) {
+			throw new Error("Gagal mengambil data hadiths.");
+		}
+
+		const data = await res.json();
+
+		if (!data.success || !data.hadiths || !data.hadiths.data) {
+			throw new Error("Format hadits tidak dapat di render.");
+		}
+
+		return data.hadiths.data;
+	} catch (error) {
+		console.error("Error fetching hadiths.", error);
+		throw error;
+	}
+}
+
+async function renderHadithList(collectionId, page = 1) {
 	const loadingContainer = document.getElementById("hadithLoading");
 	const hadithsContainer = document.getElementById("hadithBooks");
 
@@ -429,69 +464,14 @@ async function fetchHadithCollection(collectionId) {
 	hadithsContainer.innerHTML = "";
 
 	try {
-		// 1. Coba ambil dari cache terlebih dahulu
-		const cachedData = await CacheManager.getItem(
-			`${HADITH_DATA_CACHE_KEY}_${collectionId}`
-		);
+		const hadiths = await fetchHadithsByBook(collectionId);
 
-		if (cachedData) {
-			currentHadithCollection = cachedData;
-			renderHadithList(cachedData.hadiths);
-			return;
-		}
+		hadiths.forEach(hadith => {
+			const hadithBook = document.createElement("div");
+			hadithBook.className = "book small";
+			hadithBook.dataset.number = hadith.number;
 
-		// 2. Jika tidak ada di cache, ambil dari server
-		const response = await fetch(
-			HADITH_DATA_URL.replace("abu-daud", collectionId)
-		);
-
-		if (!response.ok) {
-			throw new Error("Gagal mengambil data hadits");
-		}
-
-		const hadithData = await response.json();
-		currentHadithCollection = hadithData;
-
-		// 3. Simpan ke cache untuk penggunaan selanjutnya
-		await CacheManager.setItem(
-			`${HADITH_DATA_CACHE_KEY}_${collectionId}`,
-			hadithData,
-			CACHE_EXPIRY_MS
-		);
-
-		renderHadithList(hadithData.hadiths);
-	} catch (error) {
-		console.error(`Error fetching hadith collection ${collectionId}:`, error);
-		loadingError = true;
-
-		// 4. Tampilkan pesan error
-		hadithsContainer.innerHTML = `
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Gagal memuat data hadits. Silakan coba lagi nanti.</p>
-                        <button class="nav-btn" onclick="fetchHadithCollection('${collectionId}')">
-                            <i class="fas fa-redo"></i> Muat Ulang
-                        </button>
-                    </div>
-                `;
-	} finally {
-		loadingContainer.style.display = "none";
-	}
-}
-
-function renderHadithList(hadiths) {
-	const hadithsContainer = document.getElementById("hadithBooks");
-
-	if (!hadiths) return;
-
-	hadithsContainer.innerHTML = "";
-
-	hadiths.forEach(hadith => {
-		const hadithBook = document.createElement("div");
-		hadithBook.className = "book small";
-		hadithBook.dataset.number = hadith.number;
-
-		hadithBook.innerHTML = `
+			hadithBook.innerHTML = `
                     <div class="book-image">
                         <i class="fas fa-book-open"></i>
                         <div class="surah-number-badge">${hadith.number}</div>
@@ -502,12 +482,22 @@ function renderHadithList(hadiths) {
                     </div>
                 `;
 
-		hadithBook.addEventListener("click", () => {
-			showHadithDetail(hadith);
-		});
+			hadithBook.addEventListener("click", () => {
+				showHadithDetail(collectionId, hadith);
+			});
 
-		hadithsContainer.appendChild(hadithBook);
-	});
+			hadithsContainer.appendChild(hadithBook);
+		});
+	} catch (err) {
+		hadithsContainer.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>${err.message}</p>
+                    </div>
+                `;
+	} finally {
+		loadingContainer.style.display = "none";
+	}
 }
 
 function filterHadiths(query) {
@@ -525,16 +515,30 @@ function filterHadiths(query) {
 	});
 }
 
-function renderHadithDetail(hadith) {
+function renderHadithDetail(collectionId, hadith) {
 	const hadithDetailContainer = document.getElementById("hadithDetail");
 
+	// Cari koleksi hadits berdasarkan ID
+	const collection = hadithCollections.find(c => c.id === collectionId);
+
+	if (!collection) {
+		hadithDetailContainer.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Kitab hadits tidak ditemukan.</p>
+                    </div>
+                `;
+		return;
+	}
+
 	hadithDetailContainer.innerHTML = `
-	<div class="surah-header">
+                <div class="surah-header">
                     <h2>Hadits ${hadith.number}</h2>
-                    <h3>${currentHadithCollection.name}</h3>
+                    <h3>${collection.name}</h3>
                     <div class="surah-meta">
                         <div class="meta-item">Nomor: ${hadith.number}</div>
-                        <div class="meta-item">Kitab: ${currentHadithCollection.name}</div>
+                        <div class="meta-item">Kitab: ${collection.name}</div>
+                        <div class="meta-item">Total Hadits: ${collection.total_hadiths}</div>
                     </div>
                 </div>
                 <div class="verses-container">
