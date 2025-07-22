@@ -13,7 +13,7 @@
 		<link
 			href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap"
 			rel="stylesheet" />
-			<link rel="stylesheet" href="style.css" type="text/css" media="all" />
+		<link rel="stylesheet" href="style.css" type="text/css" media="all" />
 	</head>
 	<body>
 		<header>
@@ -23,6 +23,9 @@
 						<i class="fas fa-book-quran"></i>
 						<h1>Perpustakaan <span>Digital</span></h1>
 					</div>
+					<button id="themeToggle" class="theme-toggle">
+						<i class="fas fa-moon"></i>
+					</button>
 					<div class="nav-controls">
 						<button class="nav-btn" id="backToShelf" style="display: none">
 							<i class="fas fa-arrow-left"></i> <span>Kembali ke Rak</span>
@@ -35,6 +38,9 @@
 						</button>
 						<button class="nav-btn" id="backToHadithBook" style="display: none">
 							<i class="fas fa-arrow-left"></i> <span>Daftar Hadits</span>
+						</button>
+						<button class="nav-btn" id="backFromSearch" style="display: none">
+							<i class="fas fa-arrow-left"></i> <span>Kembali</span>
 						</button>
 					</div>
 				</div>
@@ -129,6 +135,17 @@
 				style="display: none">
 				<h2 class="section-title">Kitab Hadits Utama</h2>
 
+				<div class="search-container">
+					<input
+						type="text"
+						id="searchGlobalHadithInput"
+						class="search-box"
+						placeholder="Cari hadits dalam semua kitab..." />
+					<div class="search-icon">
+						<i class="fas fa-search"></i>
+					</div>
+				</div>
+
 				<div class="shelf-header">
 					<i class="fas fa-book"></i>
 					<h3>Pilih Kitab Hadits</h3>
@@ -146,7 +163,7 @@
 			</div>
 
 			<!-- Daftar Hadits dalam Satu Kitab -->
-			<div class="bookshelf-container" id="hadithList" style="display: none">
+			<div id="hadithList" style="display: none">
 				<h2 class="section-title">Daftar Hadits</h2>
 
 				<div class="search-container">
@@ -154,35 +171,21 @@
 						type="text"
 						id="searchHadithInput"
 						class="search-box"
-						placeholder="Cari hadits berdasarkan nomor..." />
+						placeholder="Cari hadits berdasarkan dalam kitab..." />
 					<div class="search-icon">
 						<i class="fas fa-search"></i>
 					</div>
 				</div>
 
-				<div class="shelf-header">
-					<i class="fas fa-book"></i>
-					<h3>Pilih Hadits</h3>
-				</div>
-				<div class="bookshelf">
-					<div class="books-container">
-						<div class="loading-container" id="hadithLoading">
-							<div class="loading-spinner"></div>
-						</div>
-						<div class="books" id="hadithBooks">
-							<!-- Daftar hadits akan dimuat di sini -->
-						</div>
-						<!-- Pagination akan ditambahkan di sini oleh JavaScript -->
-					</div>
-				</div>
-			</div>
+				<div id="hadithHeaderContainer"></div>
 
-			<!-- Detail Hadits -->
-			<div
-				class="surah-detail-container"
-				id="hadithDetail"
-				style="display: none">
-				<!-- Detail hadits akan dimuat di sini -->
+				<div class="hadith-content-container">
+					<div class="loading-container" id="hadithLoading">
+						<div class="loading-spinner"></div>
+					</div>
+					<div class="verse-container" id="hadithBooks"></div>
+				</div>
+				<div class="pagination-container" id="hadithPagination"></div>
 			</div>
 		</div>
 
@@ -223,6 +226,15 @@
 				</div>
 			</div>
 		</footer>
+		<!-- Tombol Back to Top -->
+		<button id="backToTopBtn" title="Kembali ke atas">
+			<i class="fas fa-arrow-up"></i>
+		</button>
+
+		<script
+			src="module-helper.js"
+			type="text/javascript"
+			charset="utf-8"></script>
 		<script src="script.js" type="text/javascript" charset="utf-8"></script>
 	</body>
 </html>
