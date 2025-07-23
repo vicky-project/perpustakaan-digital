@@ -1,9 +1,4 @@
-* {
-	margin: 0;
-	padding: 0;
-	box-sizing: border-box;
-}
-
+/* VARIABLES & BASE STYLES */
 :root {
 	--primary: #8b4513;
 	--wood-light: #a0522d;
@@ -23,15 +18,37 @@
 	--book-spine: #4e342e;
 	--book-highlight: #7e5c4a;
 	--book-text: #f5f5f5;
+
+	/* Dark mode variables */
+	--bg-dark: #1e1e1e;
+	--text-dark: #e0e0e0;
+	--card-dark: #2d2d2d;
+	--border-dark: #444;
+}
+
+[data-theme="light"] {
+	--bg-dark: #f5f0e5;
+	--text-dark: #333;
+	--card-dark: #fff;
+	--border-dark: #ddd;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
 }
 
 body {
 	font-family: "Poppins", sans-serif;
-	background: linear-gradient(135deg, #f5f0e5 0%, #e8dfd1 100%);
-	color: var(--dark);
+	background: var(--bg-dark);
+	color: var(--text-dark);
 	min-height: 100vh;
 	background-attachment: fixed;
 	padding-top: 60px;
+	transition:
+		background-color 0.3s,
+		color 0.3s;
 }
 
 .container {
@@ -40,7 +57,9 @@ body {
 	padding: 0 15px;
 }
 
-/* Header Styles - Mobile First */
+/* ============================================= */
+/* HEADER STYLES - MOBILE FIRST */
+/* ============================================= */
 header {
 	background: linear-gradient(
 		to right,
@@ -60,6 +79,8 @@ header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	position: relative;
+	flex-wrap: wrap;
 }
 
 .logo {
@@ -86,24 +107,32 @@ header {
 	color: var(--gold);
 }
 
+.header-right {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
 .nav-controls {
 	display: flex;
-	gap: 8px;
+	gap: 4px;
+	margin-right: 8px;
 }
 
 .nav-btn {
 	background: var(--gold);
 	color: var(--dark);
 	border: none;
-	padding: 8px 12px;
+	padding: 8px;
 	border-radius: 5px;
-	font-size: 0.9rem;
 	cursor: pointer;
 	transition: all 0.3s ease;
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	justify-content: center;
 	font-weight: 500;
+	height: 40px;
+	width: 40px;
 }
 
 .nav-btn:hover {
@@ -118,13 +147,405 @@ header {
 	display: none;
 }
 
-@media (min-width: 768px) {
-	.nav-btn span {
-		display: inline;
-	}
+.theme-toggle {
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	width: 40px;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	transition: all 0.3s ease;
+	z-index: 101;
+	flex-shrink: 0;
 }
 
-/* Bookshelf Section - Mobile First */
+.theme-toggle:hover {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.theme-toggle i {
+	font-size: 1.3rem;
+	color: var(--gold);
+}
+
+/* ============================================= */
+/* SURAH & HADITH DETAIL STYLES */
+/* ============================================= */
+.surah-detail-container {
+	display: none;
+	margin: 25px 0 40px;
+}
+
+.surah-header {
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	color: white;
+	padding: 15px;
+	border-radius: 8px;
+	margin-bottom: 15px;
+	position: relative;
+	overflow: hidden;
+	text-align: center;
+}
+
+.surah-header::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	opacity: 0.2;
+}
+
+.surah-header h2 {
+	font-size: 1.8rem;
+	font-family: "Playfair Display", serif;
+	margin-bottom: 8px;
+	position: relative;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+	color: var(--gold);
+}
+
+.surah-header h3 {
+	font-size: 1.4rem;
+	font-weight: 400;
+	margin-bottom: 15px;
+	position: relative;
+}
+
+.surah-meta {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	margin-top: 10px;
+}
+
+.meta-item {
+	background: rgba(255, 255, 255, 0.2);
+	padding: 6px 12px;
+	border-radius: 25px;
+	font-size: 0.85rem;
+	backdrop-filter: blur(4px);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.surah-description {
+	background: rgba(0, 0, 0, 0.2);
+	padding: 15px;
+	border-radius: 8px;
+	margin-top: 15px;
+	line-height: 1.6;
+	font-size: 1rem;
+	position: relative;
+	backdrop-filter: blur(2px);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.verses-container {
+	background: var(--card-dark);
+	border-radius: 8px;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+	padding: 15px 10px;
+	margin-bottom: 25px;
+	border: 1px solid var(--border-dark);
+}
+
+.verse-item {
+	padding: 15px;
+	margin-bottom: 15px;
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	position: relative;
+	overflow: hidden;
+	border: 1px solid var(--wood-accent);
+}
+
+.verse-item::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	opacity: 0.2;
+}
+
+.verse-item:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.verse-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+	padding-bottom: 8px;
+	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+	position: relative;
+	z-index: 2;
+}
+
+.verse-number {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	background: var(--gold);
+	color: var(--dark);
+	border-radius: 50%;
+	font-weight: 600;
+	font-size: 0.9rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.verse-controls {
+	display: flex;
+	gap: 8px;
+}
+
+.verse-audio button {
+	background: var(--gold);
+	color: var(--dark);
+	border: none;
+	padding: 7px 12px;
+	border-radius: 50%;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.3s ease;
+	font-weight: 500;
+	width: 40px;
+	height: 40px;
+}
+
+.verse-audio button:hover {
+	background: var(--gold-light);
+	transform: scale(1.04);
+}
+
+.verse-audio button i {
+	font-size: 1.1rem;
+}
+
+.verse-share button {
+	background: var(--gold);
+	color: var(--dark);
+	border: none;
+	padding: 7px 12px;
+	border-radius: 50%;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.3s ease;
+	font-weight: 500;
+	width: 40px;
+	height: 40px;
+}
+
+.verse-share button:hover {
+	background: var(--gold-light);
+	transform: scale(1.04);
+}
+
+.arabic-text {
+	font-family: var(--arabic-font);
+	font-size: 1.8rem;
+	text-align: right;
+	line-height: 1.6;
+	margin-bottom: 15px;
+	color: #fff;
+	padding: 10px;
+	border-radius: 6px;
+	background: rgba(0, 0, 0, 0.3);
+	backdrop-filter: blur(2px);
+	position: relative;
+	z-index: 2;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	hyphens: auto;
+}
+
+.latin-text {
+	font-family: "Poppins", sans-serif;
+	font-size: 1.1rem;
+	line-height: 1.6;
+	color: #f0f0f0;
+	padding: 15px;
+	direction: ltr;
+	text-align: left;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 6px;
+	margin-bottom: 15px;
+	backdrop-filter: blur(2px);
+	position: relative;
+	z-index: 2;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.translation-text {
+	padding: 10px;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 6px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+	font-size: 0.95rem;
+	line-height: 1.6;
+	color: #f0f0f0;
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+	margin-top: 12px;
+	backdrop-filter: blur(2px);
+	position: relative;
+	z-index: 2;
+}
+
+/* ============================================= */
+/* HADITH STYLES */
+/* ============================================= */
+.hadith-content-container {
+	width: 100%;
+	margin-top: 15px;
+	position: relative;
+}
+
+#hadithList {
+	position: relative;
+}
+
+.hadith-item {
+	padding: 15px;
+	margin-bottom: 15px;
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	position: relative;
+	overflow: hidden;
+	border: 1px solid var(--wood-accent);
+}
+
+.hadith-item::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	opacity: 0.2;
+}
+
+.hadith-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+	padding-bottom: 8px;
+	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+	position: relative;
+	z-index: 2;
+}
+
+.hadith-number {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	background: var(--gold);
+	color: var(--dark);
+	border-radius: 50%;
+	font-weight: 600;
+	font-size: 0.9rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.hadith-controls {
+	display: flex;
+	gap: 8px;
+}
+
+.hadith-share button {
+	background: var(--gold);
+	color: var(--dark);
+	border: none;
+	padding: 7px 12px;
+	border-radius: 50%;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.3s ease;
+	font-weight: 500;
+	width: 40px;
+	height: 40px;
+}
+
+.hadith-share button:hover {
+	background: var(--gold-light);
+	transform: scale(1.04);
+}
+
+.hadith-arabic {
+	font-family: var(--arabic-font);
+	font-size: 1.8rem;
+	text-align: right;
+	line-height: 1.6;
+	margin-bottom: 15px;
+	color: #fff;
+	padding: 10px;
+	border-radius: 6px;
+	background: rgba(0, 0, 0, 0.3);
+	backdrop-filter: blur(2px);
+	position: relative;
+	z-index: 2;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	hyphens: auto;
+}
+
+.hadith-translation {
+	padding: 10px;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 6px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+	font-size: 0.95rem;
+	line-height: 1.6;
+	color: #f0f0f0;
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+	margin-top: 12px;
+	backdrop-filter: blur(2px);
+	position: relative;
+	z-index: 2;
+}
+
+/* ============================================= */
+/* BOOKSHELF STYLES */
+/* ============================================= */
 .bookshelf-container {
 	margin: 20px 0 40px;
 }
@@ -149,7 +570,6 @@ header {
 	background: var(--gold);
 }
 
-/* Header rak buku */
 .shelf-header {
 	background: linear-gradient(
 		to bottom,
@@ -173,7 +593,6 @@ header {
 	font-size: 1rem;
 }
 
-/* Rak buku dengan tekstur kayu */
 .bookshelf {
 	background: linear-gradient(
 			to bottom,
@@ -204,7 +623,6 @@ header {
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) inset;
 }
 
-/* Container untuk buku-buku dengan scroll horizontal */
 .books-container {
 	overflow-x: auto;
 	padding: 8px 4px 20px;
@@ -235,7 +653,9 @@ header {
 	flex-wrap: nowrap;
 }
 
-/* Desain buku - Ukuran lebih kecil untuk mobile */
+/* ============================================= */
+/* BOOK STYLES */
+/* ============================================= */
 .book {
 	width: 140px;
 	height: 200px;
@@ -256,7 +676,6 @@ header {
 	flex-shrink: 0;
 }
 
-/* Ukuran lebih kecil untuk buku di daftar surah */
 .book.small {
 	width: 120px;
 	height: 190px;
@@ -374,7 +793,6 @@ header {
 	font-size: 0.75rem;
 }
 
-/* Nomor surah di pojok kanan atas */
 .surah-number-badge {
 	position: absolute;
 	top: 8px;
@@ -393,7 +811,9 @@ header {
 	z-index: 2;
 }
 
-/* Search Box - Mobile First */
+/* ============================================= */
+/* SEARCH BOX */
+/* ============================================= */
 .search-container {
 	max-width: 100%;
 	margin: 0 auto 25px;
@@ -405,9 +825,10 @@ header {
 	padding: 12px 18px;
 	padding-right: 45px;
 	border-radius: 30px;
-	border: 1px solid var(--wood-accent);
+	border: 1px solid var(--border-dark);
 	font-size: 1rem;
-	background: rgba(255, 255, 255, 0.95);
+	background: var(--card-dark);
+	color: var(--text-dark);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 	transition: all 0.3s ease;
 }
@@ -427,102 +848,24 @@ header {
 	font-size: 1.1rem;
 }
 
-/* Surah Detail Section - Mobile First */
-.surah-detail-container {
-	display: none;
-	margin: 25px 0 40px;
-}
-
-.surah-header {
+/* Style untuk header hasil pencarian */
+.search-header {
 	background: linear-gradient(
 		to right,
 		var(--primary) 0%,
 		var(--wood-dark) 100%
 	);
 	color: white;
-	padding: 20px;
-	border-radius: 10px;
-	margin-bottom: 25px;
-	position: relative;
-	overflow: hidden;
-	box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-	border: 1px solid var(--wood-accent);
-}
-
-.surah-header::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	opacity: 0.2;
-}
-
-.surah-header h2 {
-	font-size: 2rem;
-	font-family: "Playfair Display", serif;
-	margin-bottom: 8px;
-	position: relative;
-	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
-	text-align: center;
-	color: var(--gold);
-}
-
-.surah-header h3 {
-	font-size: 1.6rem;
-	font-weight: 400;
-	margin-bottom: 15px;
-	position: relative;
-	text-align: center;
-}
-
-.surah-meta {
-	display: flex;
-	justify-content: center;
-	flex-wrap: wrap;
-	gap: 15px;
-	margin-top: 15px;
-	position: relative;
-}
-
-.meta-item {
-	background: rgba(255, 255, 255, 0.2);
-	padding: 8px 15px;
-	border-radius: 25px;
-	font-size: 0.9rem;
-	backdrop-filter: blur(4px);
-	border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Deskripsi surah */
-.surah-description {
-	background: rgba(0, 0, 0, 0.2);
 	padding: 15px;
 	border-radius: 8px;
-	margin-top: 20px;
-	line-height: 1.6;
-	font-size: 1rem;
-	position: relative;
-	backdrop-filter: blur(2px);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	margin-bottom: 15px;
+	text-align: center;
 }
 
-.verses-container {
-	background: white;
-	border-radius: 10px;
-	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-	padding: 25px 20px;
-	margin-bottom: 35px;
-	border: 1px solid #e0e0e0;
-	background: linear-gradient(135deg, #e8dfd1 0%, #d9c9a9 100%),
-		url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-}
-
-.verse-item {
-	padding: 20px;
-	margin-bottom: 20px;
+/* Style untuk item hadits dalam hasil pencarian */
+.search-hadith-item {
+	padding: 15px;
+	margin-bottom: 15px;
 	border-radius: 8px;
 	transition: all 0.3s ease;
 	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
@@ -536,7 +879,7 @@ header {
 	border: 1px solid var(--wood-accent);
 }
 
-.verse-item::before {
+.search-hadith-item::before {
 	content: "";
 	position: absolute;
 	top: 0;
@@ -547,110 +890,23 @@ header {
 	opacity: 0.2;
 }
 
-.verse-item:hover {
+.search-hadith-item:hover {
 	transform: translateY(-2px);
 	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
-.verse-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 15px;
-	padding-bottom: 12px;
-	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
-	position: relative;
-	z-index: 2;
-}
-
-.verse-number {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 35px;
-	height: 35px;
-	background: var(--gold);
+/* Highlight untuk teks yang cocok dengan pencarian */
+.search-highlight {
+	background-color: var(--gold-light);
 	color: var(--dark);
-	border-radius: 50%;
-	font-weight: 600;
-	font-size: 1rem;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+	font-weight: bold;
+	padding: 0 2px;
+	border-radius: 3px;
 }
 
-.verse-audio button {
-	background: var(--gold);
-	color: var(--dark);
-	border: none;
-	padding: 7px 12px;
-	border-radius: 50%;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: all 0.3s ease;
-	font-weight: 500;
-	width: 40px;
-	height: 40px;
-}
-
-.verse-audio button:hover {
-	background: var(--gold-light);
-	transform: scale(1.04);
-}
-
-.verse-audio button i {
-	font-size: 1.1rem;
-}
-
-.arabic-text {
-	font-family: var(--arabic-font);
-	font-size: 2.2rem;
-	text-align: right;
-	line-height: 1.8;
-	margin-bottom: 20px;
-	color: #fff;
-	padding: 15px;
-	border-radius: 6px;
-	background: rgba(0, 0, 0, 0.3);
-	backdrop-filter: blur(2px);
-	position: relative;
-	z-index: 2;
-	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.latin-text {
-	font-family: "Poppins", sans-serif;
-	font-size: 1.1rem;
-	line-height: 1.6;
-	color: #f0f0f0;
-	padding: 15px;
-	direction: ltr;
-	text-align: left;
-	background: rgba(0, 0, 0, 0.3);
-	border-radius: 6px;
-	margin-bottom: 15px;
-	backdrop-filter: blur(2px);
-	position: relative;
-	z-index: 2;
-	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.translation-text {
-	padding: 15px;
-	background: rgba(0, 0, 0, 0.3);
-	border-radius: 6px;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-	font-size: 1rem;
-	line-height: 1.6;
-	color: #f0f0f0;
-	border-top: 1px solid rgba(255, 255, 255, 0.1);
-	margin-top: 12px;
-	backdrop-filter: blur(2px);
-	position: relative;
-	z-index: 2;
-}
-
-/* Footer - Mobile First */
+/* ============================================= */
+/* FOOTER STYLES */
+/* ============================================= */
 footer {
 	background: var(--wood-dark);
 	color: var(--light);
@@ -693,6 +949,7 @@ footer {
 .footer-section p {
 	margin-bottom: 12px;
 	line-height: 1.5;
+	font-size: 0.95rem;
 }
 
 .social-links {
@@ -726,21 +983,179 @@ footer {
 	font-size: 0.85rem;
 }
 
-/* Loading indicator */
 .loading-container {
-	display: flex;
+	display: none;
 	justify-content: center;
 	align-items: center;
 	padding: 30px 0;
+	min-height: 200px;
 }
 
 .loading-spinner {
 	width: 40px;
 	height: 40px;
-	border: 4px solid rgba(0, 0, 0, 0.1);
+	border: 4px solid rgba(139, 69, 19, 0.1);
 	border-radius: 50%;
 	border-top-color: var(--primary);
 	animation: spin 1s ease-in-out infinite;
+}
+
+/* ============================================= */
+/* PAGINATION STYLES - MOBILE FIRST */
+/* ============================================= */
+.pagination-container {
+	width: 100%;
+	margin-top: 20px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+}
+
+.pagination-info {
+	font-size: 0.85rem;
+	color: var(--wood-dark);
+	text-align: center;
+}
+
+.pagination-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+	align-items: center;
+	justify-content: center;
+}
+
+.pagination-btn {
+	padding: 8px 15px;
+	background: var(--wood-accent);
+	color: white;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.pagination-btn:hover:not(.disabled) {
+	background: var(--wood-dark);
+	transform: translateY(-2px);
+}
+
+.pagination-btn.disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.pagination-text {
+	display: none;
+}
+
+.page-numbers {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	justify-content: center;
+}
+
+.page-number {
+	min-width: 35px;
+	height: 35px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: white;
+	border: 1px solid var(--wood-accent);
+	border-radius: 5px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	font-size: 0.9rem;
+}
+
+.page-number:hover:not(.active) {
+	background: #f0f0f0;
+}
+
+.page-number.active {
+	background: var(--wood-dark);
+	color: white;
+	border-color: var(--wood-dark);
+}
+
+.page-dots {
+	display: flex;
+	align-items: center;
+	padding: 0 5px;
+}
+
+/* Tambahkan di bagian Utilities */
+.search-highlight {
+	background-color: var(--gold-light);
+	color: var(--dark);
+	font-weight: bold;
+	padding: 0 2px;
+	border-radius: 3px;
+}
+
+/* Style untuk header hasil pencarian */
+.search-header {
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	color: white;
+	padding: 15px;
+	border-radius: 8px;
+	margin-bottom: 15px;
+	text-align: center;
+}
+
+/* Style untuk item hadits dalam hasil pencarian */
+.search-hadith-item {
+	background: rgba(0, 0, 0, 0.1);
+	padding: 15px;
+	border-radius: 8px;
+	margin-bottom: 15px;
+	border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+#backToTopBtn {
+	display: none;
+	position: fixed;
+	bottom: 30px;
+	right: 30px;
+	z-index: 99;
+	border: none;
+	outline: none;
+	background-color: #2c3e50;
+	color: white;
+	cursor: pointer;
+	padding: 15px 18px;
+	border-radius: 50%;
+	font-size: 18px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+	transition: background-color 0.3s;
+}
+
+#backToTopBtn:hover {
+	background-color: #1a252f;
+}
+
+#backToTopBtn.show {
+	display: block;
+	animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
 }
 
 @keyframes spin {
@@ -749,17 +1164,9 @@ footer {
 	}
 }
 
-/* Error message */
-.error-message {
-	text-align: center;
-	padding: 20px;
-	background: rgba(255, 99, 71, 0.2);
-	border-radius: 8px;
-	margin: 20px 0;
-	color: #d32f2f;
-}
-
-/* Media Queries untuk Tablet */
+/* ============================================= */
+/* TABLET STYLES (min-width: 576px) */
+/* ============================================= */
 @media (min-width: 576px) {
 	body {
 		padding-top: 70px;
@@ -781,10 +1188,15 @@ footer {
 	.nav-btn {
 		padding: 9px 16px;
 		font-size: 0.95rem;
+		width: auto;
 	}
 
 	.nav-btn i {
 		font-size: 1.1rem;
+	}
+
+	.nav-btn span {
+		display: inline;
 	}
 
 	.section-title {
@@ -853,20 +1265,73 @@ footer {
 		font-size: 1rem;
 	}
 
+	.surah-header {
+		padding: 18px;
+	}
+
 	.surah-header h2 {
-		font-size: 2.3rem;
+		font-size: 2rem;
 	}
 
 	.surah-header h3 {
-		font-size: 1.8rem;
+		font-size: 1.6rem;
+	}
+
+	.surah-meta {
+		flex-direction: row;
+		justify-content: center;
+		gap: 15px;
+		margin-top: 10px;
+	}
+
+	.meta-item {
+		font-size: 0.9rem;
+		padding: 8px 15px;
 	}
 
 	.arabic-text {
-		font-size: 2.5rem;
+		font-size: 2rem;
+	}
+
+	.hadith-content-container {
+		margin-top: 20px;
+	}
+
+	.pagination-container {
+		margin-top: 25px;
+	}
+
+	.pagination-info {
+		font-size: 0.9rem;
+	}
+
+	.pagination-controls {
+		gap: 8px;
+	}
+
+	.pagination-btn {
+		padding: 7px 14px;
+		font-size: 0.9rem;
+	}
+
+	.page-number {
+		min-width: 32px;
+		height: 32px;
+		font-size: 0.9rem;
+	}
+
+	.footer-content {
+		flex-direction: row;
+	}
+
+	.footer-section {
+		min-width: auto;
 	}
 }
 
-/* Media Queries untuk Desktop */
+/* ============================================= */
+/* DESKTOP STYLES (min-width: 768px) */
+/* ============================================= */
 @media (min-width: 768px) {
 	body {
 		padding-top: 80px;
@@ -978,16 +1443,24 @@ footer {
 		font-size: 1.05rem;
 	}
 
+	.surah-header {
+		padding: 20px;
+	}
+
 	.surah-header h2 {
-		font-size: 2.6rem;
+		font-size: 2.4rem;
 	}
 
 	.surah-header h3 {
-		font-size: 2rem;
+		font-size: 1.8rem;
 	}
 
 	.arabic-text {
-		font-size: 2.8rem;
+		font-size: 2.4rem;
+	}
+
+	.hadith-arabic {
+		font-size: 2.4rem;
 	}
 
 	.footer-content {
@@ -998,9 +1471,34 @@ footer {
 	.footer-section {
 		min-width: auto;
 	}
+
+	.pagination-container {
+		margin-top: 30px;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+
+	.pagination-controls {
+		gap: 10px;
+	}
+
+	.pagination-text {
+		display: inline-block;
+	}
+
+	.page-numbers {
+		gap: 5px;
+	}
+
+	.page-number {
+		min-width: 35px;
+		height: 35px;
+	}
 }
 
-/* Media Queries untuk Layar Lebar */
+/* ============================================= */
+/* LARGE DESKTOP STYLES (min-width: 992px) */
+/* ============================================= */
 @media (min-width: 992px) {
 	.container {
 		padding: 0 20px;
@@ -1037,19 +1535,17 @@ footer {
 	}
 
 	.surah-header h2 {
-		font-size: 3rem;
-	}
-
-	.surah-header h3 {
-		font-size: 2.2rem;
+		font-size: 2.6rem;
 	}
 
 	.arabic-text {
-		font-size: 3rem;
+		font-size: 2.6rem;
 	}
 }
 
-/* Media Queries untuk Layar Sangat Lebar */
+/* ============================================= */
+/* EXTRA LARGE DESKTOP STYLES (min-width: 1200px) */
+/* ============================================= */
 @media (min-width: 1200px) {
 	.book {
 		width: 220px;
@@ -1082,6 +1578,10 @@ footer {
 	}
 
 	.surah-header h2 {
-		font-size: 3.2rem;
+		font-size: 2.8rem;
+	}
+
+	.arabic-text {
+		font-size: 2.8rem;
 	}
 }
