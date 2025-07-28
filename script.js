@@ -179,7 +179,8 @@ async function fetchData(type, cacheKey, processData) {
 		if (!response.ok) throw new Error(`Gagal mengambil data ${type}`);
 
 		data = await response.json();
-		if (type === "hadith") data = data?.data || [];
+
+		if (type === "hadith") data = data || [];
 
 		// Simpan ke cache
 		await CacheManager.setItem(cacheKey, data);
@@ -407,6 +408,7 @@ async function fetchVersesBySurah(surahNumber, page = 1) {
 // Render koleksi hadits
 function renderHadithCollections() {
 	const container = document.getElementById("hadithCollectionsBooks");
+
 	if (!container || !appState.hadithCollections) return;
 
 	container.innerHTML = appState.hadithCollections
@@ -1147,8 +1149,3 @@ function goToSurah(surahNumber) {
 	const surah = appState.quranData.find(s => s.number === surahNumber);
 	if (surah) showView("surahDetail", { surah });
 }
-
-// Fungsi pencarian (implementasi lainnya tetap sama seperti sebelumnya)
-// [Tetap mempertahankan fungsi:
-//  searchHadithsGlobal, searchHadithsInBook, renderSearchResults, dll]
-// [Disesuaikan dengan struktur state baru]
