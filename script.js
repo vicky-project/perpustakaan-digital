@@ -1,517 +1,292 @@
-// URL untuk data Al-Quran dan Hadits
-const QURAN_DATA_URL = "https://vickyserver.my.id/server/api/books/quran";
-const HADITH_DATA_URL =
-	"https://vickyserver.my.id/server/api/books/hadith-book";
-const QURAN_CACHE_KEY = "quran_data_cache___";
-const HADITH_DATA_CACHE_KEY = "hadith_data_cache___";
-const CACHE_EXPIRY_DAYS = 7; // Data akan disimpan selama 7 hari
-const CACHE_EXPIRY_MS = CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000; // Milidetik
+// Konfigurasi URL dan cache
+const API_CONFIG = {
+	quran: {
+		url: "https://vickyserver.my.id/server/api/books/quran",
+		cacheKey: "quran_data_cache___"
+	},
+	hadith: {
+		url: "https://vickyserver.my.id/server/api/books/hadith-book",
+		cacheKey: "hadith_data_cache___"
+	},
+	search: {
+		url: "https://vickyserver.my.id/server/api/search"
+	},
+	cacheExpiry: 7 * 24 * 60 * 60 * 1000 // 7 hari dalam ms
+};
 
-// Variabel global untuk menyimpan data
-let quranData = null;
-let hadithCollections = null;
-let currentHadithCollection = null;
-let loadingError = false;
+// State aplikasi
+const appState = {
+	quranData: null,
+	hadithCollections: null,
+	currentSurah: null,
+	currentCollection: null,
+	currentQuery: null,
+	loadingError: false
+};
 
-// Variabel untuk instance paginasi
-let surahPaginationInstance = null;
-let hadithCollectionsPaginationInstance = null;
-let hadithListPaginationInstance = null;
-let surahDetailPaginationInstance = null;
+// Elemen DOM
+const domElements = {
+	views: [
+		"mainShelf",
+		"surahList",
+		"surahDetail",
+		"hadithCollections",
+		"hadithList",
+		"hadithPagination"
+	],
+	backButtons: [
+		"backToShelf",
+		"backToSurah",
+		"backToHadithList",
+		"backToHadithBook",
+		"backFromSearch"
+	]
+};
 
-// Back to Top Button
-const backToTopBtn = document.getElementById("backToTopBtn");
-// Theme Toggle button
-const themeToggle = document.getElementById("themeToggle");
-const themeIcon = themeToggle.querySelector("i");
-const html = document.documentElement;
+// Inisialisasi tema
+function initTheme() {
+	const savedTheme = localStorage.getItem("theme") || "dark";
+	document.documentElement.setAttribute("data-theme", savedTheme);
 
-// Memuat preferensi tema dari localStorage
-const savedTheme = localStorage.getItem("theme") || "dark";
-html.setAttribute("data-theme", savedTheme);
-
-// Update ikon berdasarkan tema
-if (savedTheme === "light") {
-	themeIcon.classList.replace("fa-moon", "fa-sun");
+	const themeIcon = document.querySelector("#themeToggle i");
+	if (savedTheme === "light") {
+		themeIcon.classList.replace("fa-moon", "fa-sun");
+	}
 }
 
-themeToggle.addEventListener("click", () => {
-	const currentTheme = html.getAttribute("data-theme");
-	const newTheme = currentTheme === "dark" ? "light" : "dark";
-
-	// Update tema
-	html.setAttribute("data-theme", newTheme);
-	localStorage.setItem("theme", newTheme);
-
-	// Update ikon
-	if (newTheme === "light") {
-		themeIcon.classList.replace("fa-moon", "fa-sun");
-	} else {
-		themeIcon.classList.replace("fa-sun", "fa-moon");
-	}
-});
-
-// Tampilkan/sembunyikan tombol saat scroll
-window.addEventListener("scroll", () => {
-	if (window.pageYOffset > 300) {
-		backToTopBtn.classList.add("show");
-	} else {
-		backToTopBtn.classList.remove("show");
-	}
-});
-
-// Fungsi untuk kembali ke atas
-backToTopBtn.addEventListener("click", () => {
-	window.scrollTo({
-		top: 0,
-		behavior: "smooth"
+// Manajemen tampilan
+function showView(viewId, options = {}) {
+	// Sembunyikan semua view dan tombol kembali
+	domElements.views.forEach(id => {
+		const el = document.getElementById(id);
+		if (el) el.style.display = "none";
 	});
-});
-
-// Event listener saat halaman dimuat
-document.addEventListener("DOMContentLoaded", function () {
-	// Event listener untuk buku Quran
-	document.getElementById("quranBook").addEventListener("click", function () {
-		showSurahList();
+	domElements.backButtons.forEach(id => {
+		const el = document.getElementById(id);
+		if (el) el.style.display = "none";
 	});
 
-	// Event listener untuk buku Hadits
-	document.getElementById("hadithBook").addEventListener("click", function () {
-		showHadithCollections();
-	});
+	// Atur tampilan input pencarian
+	const globalHadithSearch = document.getElementById("searchGlobalHadithInput");
+	const hadithSearch = document.getElementById("searchHadithInput");
+	const inSurahSearch = document.getElementById("searchInSurahInput");
 
-	// Event listener untuk tombol kembali
-	document.getElementById("backToShelf").addEventListener("click", function () {
-		showMainShelf();
-	});
-
-	document.getElementById("backToSurah").addEventListener("click", function () {
-		showSurahList();
-	});
-
-	document
-		.getElementById("backToHadithList")
-		.addEventListener("click", function () {
-			showHadithCollections();
-		});
-
-	document
-		.getElementById("backToHadithBook")
-		.addEventListener("click", function () {
-			if (currentHadithCollection) {
-				showHadithList(currentHadithCollection.id);
-			}
-		});
-
-	// Event listener untuk pencarian surah (tekan Enter)
-	document
-		.getElementById("searchInput")
-		.addEventListener("keypress", function (e) {
-			if (e.key === "Enter") {
-				filterSurahs(this.value);
-			}
-		});
-
-	// Event listener untuk pencarian global hadits (tekan Enter)
-	document
-		.getElementById("searchGlobalHadithInput")
-		.addEventListener("keypress", async function (e) {
-			if (e.key === "Enter") {
-				const query = this.value.trim();
-				if (query.length >= 3) {
-					await searchHadithsGlobal(query);
-				} else if (query.length === 0) {
-					backFromSearch();
-				}
-			}
-		});
-
-	// Event listener untuk pencarian hadits dalam buku (tekan Enter)
-	document
-		.getElementById("searchHadithInput")
-		.addEventListener("keypress", async function (e) {
-			if (e.key === "Enter") {
-				const query = this.value.trim();
-				if (query.length >= 3) {
-					await searchHadithsInBook(currentHadithCollection.id, query);
-				} else if (query.length === 0) {
-					backFromSearch();
-				}
-			}
-		});
-
-	document.addEventListener("click", function (e) {
-		if (e.target.closest(".share-btn")) {
-			const btn = e.target.closest(".share-btn");
-			const content = btn.getAttribute("data-content");
-			shareContent(content);
+	[globalHadithSearch, hadithSearch, inSurahSearch].forEach(input => {
+		if (input && input.parentElement) {
+			input.parentElement.style.display = "none";
 		}
 	});
-});
 
-// Fungsi untuk membagikan konten
-function shareContent(content) {
-	if (navigator.share) {
-		// Web Share API (mobile)
-		navigator
-			.share({
-				title: "Perpustakaan Digital",
-				text: decodeURIComponent(content)
-			})
-			.catch(error => console.log("Error sharing:", error));
-	} else {
-		// Fallback untuk desktop
-		const text = decodeURIComponent(content);
-		navigator.clipboard
-			.writeText(text)
-			.then(() => alert("Teks disalin ke clipboard!"))
-			.catch(err => {
-				console.error("Gagal menyalin teks:", err);
-				alert("Gagal menyalin teks");
-			});
-	}
-}
+	// Tampilkan view yang diminta
+	const viewEl = document.getElementById(viewId);
+	if (viewEl) viewEl.style.display = "block";
 
-// Fungsi untuk menampilkan rak utama
-function showMainShelf() {
-	document.getElementById("mainShelf").style.display = "block";
-	document.getElementById("surahList").style.display = "none";
-	document.getElementById("surahDetail").style.display = "none";
-	document.getElementById("hadithCollections").style.display = "none";
-	document.getElementById("hadithList").style.display = "none";
-	document.getElementById("backToShelf").style.display = "none";
-	document.getElementById("backToSurah").style.display = "none";
-	document.getElementById("backToHadithList").style.display = "none";
-	document.getElementById("backToHadithBook").style.display = "none";
-	document.getElementById("backFromSearch").style.display = "none";
-	window.scrollTo({ top: 0, behavior: "smooth" });
-}
+	// Proses berdasarkan view
+	switch (viewId) {
+		case "mainShelf":
+			break;
 
-// Fungsi untuk menampilkan daftar surah
-function showSurahList() {
-	document.getElementById("mainShelf").style.display = "none";
-	document.getElementById("surahList").style.display = "block";
-	document.getElementById("surahDetail").style.display = "none";
-	document.getElementById("hadithCollections").style.display = "none";
-	document.getElementById("hadithList").style.display = "none";
-	document.getElementById("backToShelf").style.display = "flex";
-	document.getElementById("backToSurah").style.display = "none";
-	document.getElementById("backToHadithList").style.display = "none";
-	document.getElementById("backToHadithBook").style.display = "none";
-	document.getElementById("backFromSearch").style.display = "none";
+		case "surahList":
+			const backToSelf = document.getElementById("backToShelf");
+			if (backToShelf) backToShelf.style.display = "flex";
 
-	document.getElementById("searchInput").value = "";
+			const searchInput = document.getElementById("searchInput");
+			if (searchInput) searchInput.value = "";
 
-	// Sembunyikan input pencarian hadits
-	document.getElementById(
-		"searchGlobalHadithInput"
-	).parentElement.style.display = "none";
-	document.getElementById("searchHadithInput").parentElement.style.display =
-		"none";
+			if (!appState.quranData && !appState.loadingError) {
+				fetchQuranData();
+			} else if (appState.quranData) {
+				renderSurahBooks();
+			}
+			break;
 
-	if (!quranData && !loadingError) {
-		fetchQuranData();
-	} else if (quranData) {
-		renderSurahBooks();
-	}
-	window.scrollTo({ top: 0, behavior: "smooth" });
-}
+		case "surahDetail":
+			const backToSurah = document.getElementById("backToSurah");
+			if (backToSurah) backToSurah.style.display = "flex";
 
-// Fungsi untuk menampilkan detail surah
-function showSurahDetail(surah, page = 1) {
-	document.getElementById("mainShelf").style.display = "none";
-	document.getElementById("surahList").style.display = "none";
-	document.getElementById("surahDetail").style.display = "block";
-	document.getElementById("hadithCollections").style.display = "none";
-	document.getElementById("hadithList").style.display = "none";
-	document.getElementById("backToShelf").style.display = "none";
-	document.getElementById("backToSurah").style.display = "flex";
-	document.getElementById("backToHadithList").style.display = "none";
-	document.getElementById("backToHadithBook").style.display = "none";
-	document.getElementById("backFromSearch").style.display = "none";
+			if (options.isSearch) {
+				viewEl.innerHTML =
+					'<div class="loading">Memuat hasil pencarian...</div>';
+			} else {
+				appState.currentSurah = options.surah;
+				renderSurahDetail(options.surah, options.page || 1);
+			}
+			break;
 
-	// Sembunyikan input pencarian hadits
-	document.getElementById(
-		"searchGlobalHadithInput"
-	).parentElement.style.display = "none";
-	document.getElementById("searchHadithInput").parentElement.style.display =
-		"none";
+		case "hadithCollections":
+			const backToShelf2 = document.getElementById("backToShelf");
+			if (backToShelf2) backToShelf2.style.display = "flex";
 
-	renderSurahDetail(surah, page);
-	window.scrollTo({ top: 0, behavior: "smooth" });
-}
+			if (globalHadithSearch && globalHadithSearch.parentElement) {
+				globalHadithSearch.parentElement.style.display = "block";
+				globalHadithSearch.value = "";
+			}
+			fetchHadithData();
+			break;
 
-// Fungsi untuk menampilkan daftar kitab hadits
-function showHadithCollections() {
-	document.getElementById("mainShelf").style.display = "none";
-	document.getElementById("surahList").style.display = "none";
-	document.getElementById("surahDetail").style.display = "none";
-	document.getElementById("hadithCollections").style.display = "block";
-	document.getElementById("hadithList").style.display = "none";
-	document.getElementById("backToShelf").style.display = "flex";
-	document.getElementById("backToSurah").style.display = "none";
-	document.getElementById("backToHadithList").style.display = "none";
-	document.getElementById("backToHadithBook").style.display = "none";
-	document.getElementById("backFromSearch").style.display = "none";
+		case "hadithList":
+			const hadithPagination = document.getElementById("hadithPagination");
+			if (hadithPagination) hadithPagination.style.display = "block";
 
-	// Tampilkan input pencarian global
-	document.getElementById(
-		"searchGlobalHadithInput"
-	).parentElement.style.display = "block";
-	document.getElementById("searchHadithInput").parentElement.style.display =
-		"none";
+			const backToHadithList = document.getElementById("backToHadithList");
+			if (backToHadithList) backToHadithList.style.display = "flex";
 
-	fetchHadithData();
-	window.scrollTo({ top: 0, behavior: "smooth" });
-}
+			if (hadithSearch && hadithSearch.parentElement) {
+				hadithSearch.parentElement.style.display = "block";
+				hadithSearch.value = "";
+			}
 
-// Fungsi untuk menampilkan daftar hadits dalam satu kitab
-function showHadithList(collectionId, page = 1) {
-	document.getElementById("mainShelf").style.display = "none";
-	document.getElementById("surahList").style.display = "none";
-	document.getElementById("surahDetail").style.display = "none";
-	document.getElementById("hadithCollections").style.display = "none";
-	document.getElementById("hadithList").style.display = "block";
-	document.getElementById("backToShelf").style.display = "none";
-	document.getElementById("backToSurah").style.display = "none";
-	document.getElementById("backToHadithList").style.display = "flex";
-	document.getElementById("backToHadithBook").style.display = "none";
-	document.getElementById("backFromSearch").style.display = "none";
+			if (options.isSearch) {
+				const headerContainer = document.getElementById(
+					"hadithHeaderContainer"
+				);
+				const hadithsContainer = document.getElementById("hadithBooks");
 
-	document.getElementById("searchHadithInput").value = "";
+				if (headerContainer) headerContainer.innerHTML = "";
 
-	// Tampilkan input pencarian dalam buku
-	document.getElementById(
-		"searchGlobalHadithInput"
-	).parentElement.style.display = "none";
-	document.getElementById("searchHadithInput").parentElement.style.display =
-		"block";
+				if (hadithsContainer) hadithsContainer.innerHTML = "";
+			} else if (options.collection) {
+				appState.currentCollection = options.collection;
+				renderHadithList(options.collection.id, options.page || 1);
+			}
 
-	// Cari kitab hadits yang sesuai
-	currentHadithCollection = hadithCollections.find(c => c.id === collectionId);
-
-	if (!currentHadithCollection) {
-		console.error("Kitab hadits tidak ditemukan:", collectionId);
-		showHadithCollections();
-		return;
+			break;
 	}
 
-	renderHadithList(collectionId, page);
 	window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// Fungsi untuk mengambil data Al-Quran dari server atau cache
-async function fetchQuranData() {
-	const loadingContainer = document.getElementById("surahLoading");
-	const surahBooksContainer = document.getElementById("surahBooks");
+// Fetch data dengan caching
+async function fetchData(type, cacheKey, processData) {
+	const loadingId =
+		type === "quran" ? "surahLoading" : "hadithCollectionsLoading";
+	const containerId =
+		type === "quran" ? "surahBooks" : "hadithCollectionsBooks";
 
-	// Tampilkan loading indicator
-	loadingContainer.style.display = "flex";
-	surahBooksContainer.innerHTML = "";
+	const loadingEl = document.getElementById(loadingId);
+	const containerEl = document.getElementById(containerId);
+
+	if (loadingEl) loadingEl.style.display = "flex";
+	if (containerEl) containerEl.innerHTML = "";
 
 	try {
-		// 1. Coba ambil dari cache terlebih dahulu
-		const cachedData = await CacheManager.getItem(QURAN_CACHE_KEY);
+		// Coba ambil dari cache
+		let data = await CacheManager.getItem(cacheKey);
+		if (data) return processData(data);
 
-		if (cachedData) {
-			quranData = cachedData;
-			renderSurahBooks();
-			return;
-		}
+		// Ambil dari server
+		const response = await fetch(API_CONFIG[type].url);
+		if (!response.ok) throw new Error(`Gagal mengambil data ${type}`);
 
-		// 2. Jika tidak ada di cache, ambil dari server
-		const response = await fetch(QURAN_DATA_URL);
+		data = await response.json();
+		if (type === "hadith") data = data?.data || [];
 
-		if (!response.ok) {
-			throw new Error("Gagal mengambil data Al-Quran");
-		}
-
-		quranData = await response.json();
-
-		// 3. Simpan ke cache untuk penggunaan selanjutnya
-		await CacheManager.setItem(QURAN_CACHE_KEY, quranData, CACHE_EXPIRY_MS);
-
-		renderSurahBooks();
+		// Simpan ke cache
+		await CacheManager.setItem(cacheKey, data);
+		processData(data);
 	} catch (error) {
-		console.error("Error fetching Quran data:", error);
-		loadingError = true;
+		console.error(`Error fetching ${type} data:`, error);
+		appState.loadingError = true;
 
-		// 4. Coba gunakan cache jika ada meskipun mungkin expired
-		try {
-			const fallbackCache = await CacheManager.getItem(QURAN_CACHE_KEY, true);
-			if (fallbackCache) {
-				quranData = fallbackCache;
-				renderSurahBooks();
-				return;
-			}
-		} catch (cacheError) {
-			console.error("Fallback cache error:", cacheError);
-		}
+		// Coba gunakan cache yang ada
+		const fallback = await CacheManager.getItem(cacheKey, true);
+		if (fallback) return processData(fallback);
 
-		// 5. Tampilkan pesan error jika tidak ada data sama sekali
-		surahBooksContainer.innerHTML = `
+		// Tampilkan pesan error
+		if (containerEl) {
+			containerEl.innerHTML = `
             <div class="error-message">
                 <i class="fas fa-exclamation-triangle"></i>
-                <p>Gagal memuat data Al-Quran. Silakan coba lagi nanti.</p>
-                <button class="nav-btn" onclick="fetchQuranData()">
+                <p>Gagal memuat data. Silakan coba lagi nanti.</p>
+                <button class="nav-btn" onclick="${
+									type === "quran" ? "fetchQuranData" : "fetchHadithData"
+								}()">
                     <i class="fas fa-redo"></i> Muat Ulang
                 </button>
             </div>
         `;
+		}
 	} finally {
-		loadingContainer.style.display = "none";
+		if (loadingEl) loadingEl.style.display = "none";
 	}
 }
 
-// Fungsi untuk menampilkan buku-buku surah dengan paginasi
+// Fetch data Al-Quran
+function fetchQuranData() {
+	fetchData("quran", API_CONFIG.quran.cacheKey, data => {
+		appState.quranData = data;
+		renderSurahBooks();
+	});
+}
+
+// Fetch data Hadits
+function fetchHadithData() {
+	fetchData("hadith", API_CONFIG.hadith.cacheKey, data => {
+		appState.hadithCollections = data;
+		renderHadithCollections();
+	});
+}
+
+// Render daftar surah
 function renderSurahBooks() {
-	const surahBooksContainer = document.getElementById("surahBooks");
-	surahBooksContainer.innerHTML = "";
+	const container = document.getElementById("surahBooks");
+	if (!container || !appState.quranData) return;
 
-	if (!quranData) return;
-
-	// Hapus instance sebelumnya jika ada
-	if (surahPaginationInstance) {
-		surahPaginationInstance.destroy();
-	}
-
-	// Urutkan surah berdasarkan nomor
-	const sortedSurahs = [...quranData].sort((a, b) => a.number - b.number);
-
-	// Fungsi untuk merender setiap item surah
-	const renderItem = surah => {
-		return `
-            <div class="book small surah-book-item" 
-                 data-number="${surah.number}" 
-                 data-name="${surah.name_latin}" 
-                 data-name-ar="${surah.name}" 
-                 data-meaning="${surah.meaning.toLowerCase()}">
-                <div class="book-image">
-                    <i class="fas fa-book"></i>
-                    <div class="surah-number-badge">${surah.number}</div>
-                </div>
-                <div class="book-title">
-                    <h3>${surah.name_latin}</h3>
-                    <p>${surah.number_of_verses} Ayat • ${surah.place}</p>
-                    <p class="meaning-text">${surah.meaning}</p>
-                </div>
-            </div>
-        `;
-	};
-
-	// Inisialisasi paginasi dengan modul
-	surahPaginationInstance = PaginationModule.init({
-		container: surahBooksContainer,
-		data: sortedSurahs,
-		perPage: 12,
-		dataRenderFn: pageData => {
-			return pageData.map(renderItem).join("");
-		},
-		pagingContainer: document.getElementById("surahPaginationContainer"),
-		onPageChange: page => {
-			window.scrollTo({ top: 0, behavior: "smooth" });
-		},
-		infoTemplate: "Menampilkan surah {from}-{to} dari {total}"
-	});
-
-	// Tambahkan event listener untuk buku
-	surahBooksContainer.addEventListener("click", e => {
-		const book = e.target.closest(".book");
-		if (book) {
-			const surahNumber = parseInt(book.dataset.number);
-			const surah = quranData.find(s => s.number === surahNumber);
-			if (surah) showSurahDetail(surah);
-		}
-	});
-}
-
-// Fungsi untuk menyaring surah berdasarkan query
-function filterSurahs(query) {
-	if (!quranData || !surahPaginationInstance) return;
-
-	const lowerQuery = query.toLowerCase().trim();
-
-	// Gunakan filter dari modul paginasi
-	surahPaginationInstance.filterData(
-		PaginationModule.createSimpleFilter(
-			["name_latin", "name", "meaning"],
-			lowerQuery
-		)
+	const sortedSurahs = [...appState.quranData].sort(
+		(a, b) => a.number - b.number
 	);
+
+	container.innerHTML = sortedSurahs
+		.map(
+			surah => `
+        <div class="book small surah-book-item" 
+             data-number="${surah.number}" 
+             data-name="${surah.name_latin}" 
+             data-name-ar="${surah.name}" 
+             data-meaning="${surah.meaning.toLowerCase()}">
+            <div class="book-image">
+                <i class="fas fa-book"></i>
+                <div class="surah-number-badge">${surah.number}</div>
+            </div>
+            <div class="book-title">
+                <h3>${surah.name_latin}</h3>
+                <p>${surah.number_of_verses} Ayat • ${surah.place}</p>
+                <p class="meaning-text">${surah.meaning}</p>
+            </div>
+        </div>
+    `
+		)
+		.join("");
+
+	container.addEventListener("click", e => {
+		const book = e.target.closest(".book");
+		if (!book) return;
+
+		const surahNumber = parseInt(book.dataset.number);
+		const surah = appState.quranData.find(s => s.number === surahNumber);
+		if (surah) showView("surahDetail", { surah });
+	});
 }
 
-// Fungsi untuk mengambil ayat per surah
-async function fetchVersesBySurah(surahNumber, page = 1) {
-	const CACHE_KEY = `quran_verses_${surahNumber}_${page}`;
-	const VERSES_URL = `https://vickyserver.my.id/server/api/books/quran/${surahNumber}/verses?page=${page}`;
-
-	try {
-		// Coba ambil dari cache terlebih dahulu
-		const cachedData = await CacheManager.getItem(CACHE_KEY);
-
-		if (cachedData) {
-			return cachedData;
-		}
-
-		// Ambil dari server
-		const response = await fetch(VERSES_URL);
-
-		if (!response.ok) {
-			throw new Error("Gagal mengambil data ayat");
-		}
-
-		const data = await response.json();
-
-		// Simpan ke cache
-		await CacheManager.setItem(CACHE_KEY, data, CACHE_EXPIRY_MS);
-
-		return data;
-	} catch (error) {
-		console.error(`Error fetching verses for surah ${surahNumber}:`, error);
-		throw error;
-	}
-}
-
-// Fungsi untuk menampilkan detail surah dengan paginasi ayat
+// Render detail surah
 async function renderSurahDetail(surah, page = 1) {
-	const surahDetailContainer = document.getElementById("surahDetail");
-	surahDetailContainer.innerHTML = '<div class="loading">Memuat ayat...</div>';
+	const container = document.getElementById("surahDetail");
+	if (!container) return;
+
+	container.innerHTML = '<div class="loading">Memuat ayat...</div>';
 
 	try {
 		const versesData = await fetchVersesBySurah(surah.number, page);
 
-		// Fungsi untuk merender setiap ayat
-		const renderItem = verse => {
-			const audioUrl = verse.audio?.["05"] || "";
-			const shareContent = `Q.S. ${surah.name_latin}:${verse.verse_number}\n\n${verse.arabic_text}\n\nTerjemahan: ${verse.translation}`;
-			const encodedContent = encodeURIComponent(shareContent);
+		if (!versesData || !versesData.data || !Array.isArray(versesData.data)) {
+			throw new Error("Data ayat tidak valid atau tidak ditemukan.");
+		}
 
-			return `
-                <div class="verse-item">
-                    <div class="verse-header">
-                        <div class="verse-number">${verse.verse_number}</div>
-                        <div class="verse-controls">
-                            <div class="verse-audio">
-                                <button onclick="playAudio('${audioUrl}')">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                            </div>
-                            <div class="verse-share">
-                                <button class="share-btn" data-content="${encodedContent}">
-                                    <i class="fas fa-share-alt"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="arabic-text">${verse.arabic_text}</div>
-                    <div class="latin-text">${verse.latin_text}</div>
-                    <div class="translation-text">${verse.translation}</div>
-                </div>
-            `;
-		};
+		const versesHTML = versesData.data
+			.map(verse => renderVerseItem(verse, surah))
+			.join("");
 
-		// Render header surah
-		let surahDetailHTML = `
+		container.innerHTML = `
             <div class="surah-header">
                 <h2>${surah.name}</h2>
                 <h3>${surah.name_latin}</h3>
@@ -523,45 +298,47 @@ async function renderSurahDetail(surah, page = 1) {
                 <div class="surah-description">
                     <p>${surah.description}</p>
                 </div>
+                <div class="search-container">
+                    <input type="text" id="searchInSurahInput" placeholder="Cari dalam surah..." class="search-box">
+                    <div class="search-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
             </div>
-            <div class="verses-container">
-                ${versesData.data.map(renderItem).join("")}
-            </div>
+            <div class="verses-container">${versesHTML}</div>
             <div id="surahDetailPaginationContainer"></div>
         `;
 
-		surahDetailContainer.innerHTML = surahDetailHTML;
+		// Paginasi
+		const paginationContainer = document.getElementById(
+			"surahDetailPaginationContainer"
+		);
 
-		// Hapus instance sebelumnya jika ada
-		if (surahDetailPaginationInstance) {
-			surahDetailPaginationInstance.destroy();
+		if (paginationContainer && paginationModule.render) {
+			paginationModule.render(paginationContainer, versesData, url => {
+				const newPage = url ? parseInt(url.match(/page=(\d+)/)[1]) : 1;
+				showView("surahDetail", { surah, page: newPage });
+			});
 		}
 
-		// Inisialisasi paginasi dengan modul (server-side)
-		surahDetailPaginationInstance = PaginationModule.init({
-			container: null, // Tidak digunakan untuk server-side
-			pagingContainer: document.getElementById(
-				"surahDetailPaginationContainer"
-			),
-			perPage: versesData.per_page,
-			currentPage: versesData.current_page,
-			serverSide: true,
-			totalRecords: versesData.total,
-			onPageChange: newPage => {
-				renderSurahDetail(surah, newPage);
-			},
-			showInfo: true,
-			infoTemplate: "Menampilkan ayat {from}-{to} dari {total}"
-		});
+		// Event listener pencarian dalam surah
+		const searchInput = document.getElementById("searchInSurahInput");
+		if (searchInput)
+			searchInput.addEventListener("keypress", e => {
+				if (e.key === "Enter") {
+					const query = e.target.value.toLowerCase().trim();
+					searchInSurah(surah.number, query);
+				}
+			});
 	} catch (error) {
-		console.error("Error fetching verses:", error);
-		surahDetailContainer.innerHTML = `
+		console.error("Error rendering surah detail:", error);
+		container.innerHTML = `
             <div class="error-message">
                 <i class="fas fa-exclamation-triangle"></i>
                 <p>Gagal memuat ayat. Silakan coba lagi nanti.</p>
                 <button class="nav-btn" onclick="renderSurahDetail(${JSON.stringify(
 									surah
-								).replace(/"/g, "&quot;")}, ${page})">
+								)}, ${page})">
                     <i class="fas fa-redo"></i> Muat Ulang
                 </button>
             </div>
@@ -569,241 +346,147 @@ async function renderSurahDetail(surah, page = 1) {
 	}
 }
 
-// Fungsi untuk memutar audio ayat
-function playAudio(url) {
-	if (!url) return;
+// Render item ayat
+function renderVerseItem(verse, surah) {
+	const audioUrl = verse.audio?.["05"] || "";
+	const shareContent = `Q.S. ${surah.name_latin}:${verse.verse_number}\n\n${verse.arabic_text}\n\nTerjemahan: ${verse.translation}`;
+	const encodedContent = encodeURIComponent(shareContent);
 
-	const audio = new Audio(url);
-	audio.play().catch(e => console.log("Audio play failed:", e));
-}
-
-// Fungsi untuk mengambil data koleksi kitab hadits
-async function fetchHadithData() {
-	const loadingContainer = document.getElementById("hadithCollectionsLoading");
-	const collectionsContainer = document.getElementById(
-		"hadithCollectionsBooks"
-	);
-
-	loadingContainer.style.display = "flex";
-	collectionsContainer.innerHTML = "";
-
-	try {
-		// Coba ambil dari cache
-		const cachedData = await CacheManager.getItem(HADITH_DATA_CACHE_KEY);
-
-		if (cachedData) {
-			hadithCollections = cachedData;
-			renderHadithCollections();
-			return;
-		}
-
-		// Ambil data dari API
-		const response = await fetch(HADITH_DATA_URL);
-
-		if (!response.ok) {
-			throw new Error("Gagal mengambil data kitab hadits");
-		}
-
-		const { data } = await response.json();
-
-		// Pastikan format respons benar
-		if (!data || !Array.isArray(data)) {
-			throw new Error("Format data tidak valid");
-		}
-
-		hadithCollections = data;
-
-		// Simpan ke cache
-		await CacheManager.setItem(
-			HADITH_DATA_CACHE_KEY,
-			hadithCollections,
-			CACHE_EXPIRY_MS
-		);
-
-		renderHadithCollections();
-	} catch (error) {
-		console.error("Error fetching hadith data:", error);
-		collectionsContainer.innerHTML = `
-            <div class="error-message">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Gagal memuat data kitab hadits. Silakan coba lagi nanti.</p>
-                <button class="nav-btn" onclick="fetchHadithData()">
-                    <i class="fas fa-redo"></i> Muat Ulang
-                </button>
-            </div>
-        `;
-	} finally {
-		loadingContainer.style.display = "none";
-	}
-}
-
-// Fungsi untuk menampilkan daftar kitab hadits dengan paginasi
-function renderHadithCollections() {
-	const collectionsContainer = document.getElementById(
-		"hadithCollectionsBooks"
-	);
-
-	if (!hadithCollections) return;
-
-	// Hapus instance sebelumnya jika ada
-	//if (hadithCollectionsPaginationInstance) {
-	//	hadithCollectionsPaginationInstance.destroy();
-	//}
-
-	// Fungsi untuk merender setiap item koleksi hadits
-	const renderItem = collection => {
-		return `
-            <div class="book small" data-id="${collection.id}">
-                <div class="book-image">
-                    <i class="fas fa-book"></i>
-                    <div class="surah-number-badge">${collection.id
-											.charAt(0)
-											.toUpperCase()}</div>
-                </div>
-                <div class="book-title">
-                    <h3>${collection.name}</h3>
-                    <p>${collection.total_hadiths} Hadits</p>
+	return `
+        <div class="verse-item">
+            <div class="verse-header">
+                <div class="verse-number">${verse.verse_number}</div>
+                <div class="verse-controls">
+                    <div class="verse-audio">
+                        <button onclick="playAudio('${audioUrl}')">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                    <div class="verse-share">
+                        <button class="share-btn" data-content="${encodedContent}">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-        `;
-	};
-
-	// Inisialisasi paginasi dengan modul
-	hadithCollectionsPaginationInstance = PaginationModule.init({
-		container: collectionsContainer,
-		data: hadithCollections,
-		perPage: 10,
-		dataRenderFn: pageData => {
-			return pageData.map(renderItem).join("");
-		},
-		pagingContainer: document.getElementById(
-			"hadithCollectionsPaginationContainer"
-		),
-		onPageChange: page => {
-			window.scrollTo({ top: 0, behavior: "smooth" });
-		},
-		infoTemplate: "Menampilkan kitab {from}-{to} dari {total}"
-	});
-
-	// Tambahkan event listener untuk buku
-	collectionsContainer.addEventListener("click", e => {
-		const book = e.target.closest(".book");
-		if (book) {
-			const collectionId = book.dataset.id;
-			currentHadithCollection = hadithCollections.find(
-				c => c.id === collectionId
-			);
-			if (currentHadithCollection) showHadithList(currentHadithCollection.id);
-		}
-	});
-
-	// Setel pencarian global hadits
-	document
-		.getElementById("searchGlobalHadithInput")
-		.addEventListener("input", e => {
-			const query = e.target.value.trim();
-			hadithCollectionsPaginationInstance.filterData(
-				PaginationModule.createSimpleFilter(["name"], query)
-			);
-		});
+            <div class="arabic-text">${verse.arabic_text}</div>
+            <div class="latin-text">${verse.latin_text}</div>
+            <div class="translation-text">${verse.translation}</div>
+        </div>
+    `;
 }
 
-// Fungsi untuk mengambil hadits per kitab
-async function fetchHadithsByBook(bookId, page = 1) {
-	try {
-		const response = await fetch(
-			`${HADITH_DATA_URL}/${bookId}/hadiths?page=${page}`
-		);
+// Fetch ayat per surah
+async function fetchVersesBySurah(surahNumber, page = 1) {
+	const cacheKey = `quran_verses_${surahNumber}_${page}`;
+	const url = `${API_CONFIG.quran.url}/${surahNumber}/verses?page=${page}`;
 
-		if (!response.ok) {
-			throw new Error("Gagal mengambil data hadits");
+	try {
+		const cached = await CacheManager.getItem(cacheKey);
+		if (cached) return cached;
+
+		const response = await fetch(url);
+		if (!response.ok) throw new Error("Gagal mengambil data ayat");
+
+		const data = await response.json();
+
+		// Validasi struktur data sebelum disimpan
+		if (!data || !data.data || !Array.isArray(data.data)) {
+			throw new Error("Struktur data ayat tidak valid");
 		}
 
-		return await response.json();
+		await CacheManager.setItem(cacheKey, data);
+
+		return data;
 	} catch (error) {
-		console.error("Error fetching hadiths:", error);
+		console.error(`Error fetching verses for surah ${surahNumber}:`, error);
 		throw error;
 	}
 }
 
-// Fungsi untuk menampilkan daftar hadits dengan paginasi
+// Render koleksi hadits
+function renderHadithCollections() {
+	const container = document.getElementById("hadithCollectionsBooks");
+	if (!container || !appState.hadithCollections) return;
+
+	container.innerHTML = appState.hadithCollections
+		.map(
+			collection => `
+        <div class="book small" data-id="${collection.id}">
+            <div class="book-image">
+                <i class="fas fa-book"></i>
+                <div class="surah-number-badge">${collection.id
+									.charAt(0)
+									.toUpperCase()}</div>
+            </div>
+            <div class="book-title">
+                <h3>${collection.name}</h3>
+                <p>${collection.total_hadiths} Hadits</p>
+            </div>
+        </div>
+    `
+		)
+		.join("");
+
+	container.addEventListener("click", e => {
+		const book = e.target.closest(".book");
+		if (!book) return;
+
+		const collectionId = book.dataset.id;
+		const collection = appState.hadithCollections.find(
+			c => c.id === collectionId
+		);
+		if (collection) showView("hadithList", { collection });
+	});
+}
+
+// Render daftar hadits
 async function renderHadithList(collectionId, page = 1) {
-	window.scrollTo({ top: 0, behavior: "smooth" });
 	const loadingContainer = document.getElementById("hadithLoading");
 	const hadithsContainer = document.getElementById("hadithBooks");
-	const paginationContainer = document.getElementById(
-		"hadithListPaginationContainer"
-	);
+	const paginationContainer = document.getElementById("hadithPagination");
 	const headerContainer = document.getElementById("hadithHeaderContainer");
 
-	loadingContainer.style.display = "flex";
-	headerContainer.innerHTML = "";
-	hadithsContainer.innerHTML = "";
-	paginationContainer.innerHTML = "";
+	if (loadingContainer) loadingContainer.style.display = "flex";
+	if (headerContainer) headerContainer.innerHTML = "";
+	if (hadithsContainer) hadithsContainer.innerHTML = "";
+	if (paginationContainer) paginationContainer.innerHTML = "";
 
 	try {
-		const data = await fetchHadithsByBook(collectionId, page);
+		const response = await fetchHadithsByBook(collectionId, page);
+		if (!response || !response.id || !response.hadiths) {
+			throw new Error("Format respons API tidak valid");
+		}
 
-		const hadithsData = data.hadiths;
-
-		// Render header kitab hadits
-		headerContainer.innerHTML = `<div class="surah-header">
-            <h2>${data.name}</h2>
-            <div class="surah-meta">
-                <div class="meta-item">Total Hadits: ${data.total_hadiths}</div>
-                <div class="meta-item">Halaman ${page} dari ${hadithsData.last_page}</div>
-            </div>
-        </div>`;
-
-		// Fungsi untuk merender setiap hadits
-		const renderItem = hadith => {
-			const shareContent = `${data.name} - Hadits No. ${hadith.number}\n\n${hadith.arabic}\n\nTerjemahan: ${hadith.translation}`;
-			const encodedContent = encodeURIComponent(shareContent);
-
-			return `
-                <div class="verse-item">
-                    <div class="verse-header">
-                        <div class="verse-number">${hadith.number}</div>
-                        <div class="verse-controls">
-                            <div class="verse-share">
-                                <button class="share-btn" data-content="${encodedContent}">
-                                    <i class="fas fa-share-alt"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="arabic-text">${hadith.arabic}</div>
-                    <div class="translation-text">
-                        <strong>Terjemahan:</strong>
-                        <p>${hadith.translation}</p>
-                    </div>
+		// Render header
+		if (headerContainer) {
+			headerContainer.innerHTML = `
+            <div class="surah-header">
+                <h2>${response.name}</h2>
+                <div class="surah-meta">
+                    <div class="meta-item">Total Hadits: ${response.total_hadiths}</div>
+                    <div class="meta-item">Halaman ${response.hadiths.current_page} dari ${response.hadiths.last_page}</div>
                 </div>
-            `;
-		};
+            </div>
+        `;
+		}
 
-		// Render data untuk halaman saat ini
-		hadithsContainer.innerHTML = hadithsData.data.map(renderItem).join("");
+		// Render hadits
+		if (hadithsContainer) {
+			hadithsContainer.innerHTML = response.hadiths.data
+				.map(hadith => renderHadithItem(hadith, response))
+				.join("");
+		}
 
-		// Hapus instance sebelumnya jika ada
-		//if (hadithListPaginationInstance) {
-		//	hadithListPaginationInstance.destroy();
-		//}
-
-		// Inisialisasi paginasi dengan modul (server-side)
-		hadithListPaginationInstance = PaginationModule.init({
-			container: document.getElementById("surahDetailPaginationContainer"), // Tidak digunakan untuk server-side
-			pagingContainer: paginationContainer,
-			perPage: hadithsData.per_page,
-			currentPage: hadithsData.current_page,
-			serverSide: true,
-			totalRecords: hadithsData.total,
-			onPageChange: newPage => {
+		// Paginasi
+		if (paginationContainer && paginationModule.render) {
+			paginationModule.render(paginationContainer, response.hadiths, url => {
+				const newPage = url ? parseInt(url.match(/page=(\d+)/)[1]) : 1;
 				renderHadithList(collectionId, newPage);
-			},
-			showInfo: true,
-			infoTemplate: "Menampilkan hadits {from}-{to} dari {total}"
-		});
+			});
+		}
 	} catch (error) {
+		console.error("Error rendering hadith list:", error);
 		hadithsContainer.innerHTML = `
             <div class="error-message">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -814,53 +497,658 @@ async function renderHadithList(collectionId, page = 1) {
             </div>
         `;
 	} finally {
-		loadingContainer.style.display = "none";
+		if (loadingContainer) loadingContainer.style.display = "none";
 	}
-
-	// Setel pencarian hadits dalam buku
-	document.getElementById("searchHadithInput").addEventListener("input", e => {
-		const query = e.target.value.trim();
-		if (hadithListPaginationInstance) {
-			hadithListPaginationInstance.filterData(
-				PaginationModule.createSimpleFilter(["arabic", "translation"], query)
-			);
-		}
-	});
 }
 
-// ===== FUNGSI PENCARIAN HADITS =====
+// Render item hadits
+function renderHadithItem(hadith, collection) {
+	const shareContent = `${collection.name} - Hadits No. ${hadith.number}\n\n${hadith.arabic}\n\nTerjemahan: ${hadith.translation}`;
+	const encodedContent = encodeURIComponent(shareContent);
 
-// Fungsi untuk menampilkan hasil pencarian
-function showSearchResults() {
-	// ... (tetap sama seperti sebelumnya) ...
+	const highlightedArabic = highlightMatches(
+		hadith.arabic,
+		appState.currentQuery
+	);
+	const highlightedTranslation = highlightMatches(
+		hadith.translation,
+		appState.currentQuery
+	);
+
+	return `
+        <div class="verse-item">
+            <div class="verse-header">
+                <div class="verse-number">${hadith.number}</div>
+                <div class="verse-controls">
+                    <div class="verse-share">
+                        <button class="share-btn" data-content="${encodedContent}">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="arabic-text">${highlightedArabic}</div>
+            <div class="translation-text">
+                <strong>Terjemahan:</strong>
+                <p>${highlightedTranslation}</p>
+            </div>
+        </div>
+    `;
+}
+
+// Fetch hadits per kitab
+async function fetchHadithsByBook(bookId, page = 1) {
+	try {
+		const response = await fetch(
+			`${API_CONFIG.hadith.url}/${bookId}/hadiths?page=${page}`
+		);
+		if (!response.ok) throw new Error("Gagal mengambil data hadits");
+		return await response.json();
+	} catch (error) {
+		console.error("Error fetching hadiths:", error);
+		throw error;
+	}
+}
+
+// Fungsi utilitas
+function playAudio(url) {
+	if (!url) return;
+	new Audio(url).play().catch(e => console.log("Audio play failed:", e));
+}
+
+function highlightMatches(text, query) {
+	if (!query || !text) return text;
+	const regex = new RegExp(`(${escapeRegExp(query)})`, "gi");
+	return text.replace(regex, '<span class="search-highlight">$1</span>');
+}
+
+function escapeRegExp(string) {
+	return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Event listener saat halaman dimuat
+document.addEventListener("DOMContentLoaded", function () {
+	// Inisialisasi tema
+	initTheme();
+
+	// Event listener untuk tema
+	const themeToggle = document.getElementById("themeToggle");
+	if (themeToggle) {
+		themeToggle.addEventListener("click", () => {
+			const currentTheme = document.documentElement.getAttribute("data-theme");
+			const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+			document.documentElement.setAttribute("data-theme", newTheme);
+			localStorage.setItem("theme", newTheme);
+
+			const themeIcon = document.querySelector("#themeToggle i");
+			if (themeIcon) {
+				if (newTheme === "light") {
+					themeIcon.classList.replace("fa-moon", "fa-sun");
+				} else {
+					themeIcon.classList.replace("fa-sun", "fa-moon");
+				}
+			}
+		});
+	}
+
+	// Tombol kembali ke atas
+	const backToTopBtn = document.getElementById("backToTopBtn");
+	if (backToTopBtn) {
+		window.addEventListener("scroll", () => {
+			backToTopBtn.classList.toggle("show", window.pageYOffset > 300);
+		});
+
+		backToTopBtn.addEventListener("click", () => {
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		});
+	}
+
+	// Navigasi utama
+	const setupClickListener = (id, handler) => {
+		const el = document.getElementById(id);
+		if (el) el.addEventListener("click", handler);
+	};
+
+	setupClickListener("quranBook", () => showView("surahList"));
+	setupClickListener("hadithBook", () => showView("hadithCollections"));
+	setupClickListener("backToShelf", () => showView("mainShelf"));
+	setupClickListener("backToSurah", () => showView("surahList"));
+	setupClickListener("backToHadithList", () => showView("hadithCollections"));
+	setupClickListener("backToHadithBook", () => {
+		if (appState.currentCollection) {
+			showView("hadithList", { collection: appState.currentCollection });
+		}
+	});
+
+	// Pencarian
+	const initSearchInput = (id, handler) => {
+		const input = document.getElementById(id);
+		if (input) {
+			input.addEventListener("keypress", async function (e) {
+				if (e.key === "Enter") {
+					const query = this.value.trim();
+					if (query.length >= 3) {
+						handler(query);
+					} else if (query.length === 0) {
+						backFromSearch();
+					}
+				}
+			});
+
+			const icon = input.nextElementSibling;
+			if (icon) {
+				icon.addEventListener("click", async function () {
+					const query = this.value.trim();
+					if (query.length >= 3) {
+						handler(query);
+					} else if (query.length === 0) {
+						backFromSearch();
+					}
+				});
+			}
+		}
+	};
+
+	initSearchInput("searchInput", filterSurahs);
+	initSearchInput("searchGlobalHadithInput", searchHadithsGlobal);
+	initSearchInput("searchHadithInput", query => {
+		if (appState.currentCollection) {
+			searchHadithsInBook(appState.currentCollection.id, query);
+		}
+	});
+	initSearchInput("searchInSurahInput", query => {
+		if (appState.currentSurah) {
+			searchInSurah(appState.currentSurah.number, query);
+		}
+	});
+
+	// Berbagi konten
+	document.addEventListener("click", e => {
+		const btn = e.target.closest(".share-btn");
+		if (btn) {
+			const content = btn.getAttribute("data-content");
+			shareContent(content);
+		}
+	});
+});
+
+// Fungsi berbagi konten
+function shareContent(content) {
+	if (!content) return;
+
+	if (navigator.share) {
+		navigator
+			.share({
+				title: "Perpustakaan Digital",
+				text: decodeURIComponent(content)
+			})
+			.catch(error => console.log("Error sharing:", error));
+	} else {
+		navigator.clipboard
+			.writeText(decodeURIComponent(content))
+			.then(() => alert("Teks disalin ke clipboard!"))
+			.catch(err => console.error("Gagal menyalin teks:", err));
+	}
+}
+
+async function searchInSurah(surahId, query, page = 1) {
+	const container = document.getElementById("surahDetail");
+	if (!container) return;
+
+	container.innerHTML = '<div class="loading">Memuat hasil pencarian...</div>';
+
+	try {
+		const url = `${API_CONFIG.search.url}?query=${encodeURIComponent(
+			query
+		)}&type=quran&surah_id=${surahId}&page=${page}`;
+		const response = await fetch(url);
+
+		if (!response.ok) throw new Error("Pencarian dalam surah gagal");
+
+		const data = await response.json();
+		renderSearchInSurahResults(data.quran, query, surahId);
+	} catch (error) {
+		console.error("Error searching in surah:", error);
+		container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>${
+													error.message ||
+													"Terjadi kesalahan saat melakukan pencarian"
+												}</p>
+                    </div>
+                `;
+	}
+}
+
+function renderSearchInSurahResults(quran, query, surahId) {
+	const surahDetailContainer = document.getElementById("surahDetail");
+	if (!surahDetailContainer) return;
+
+	// Periksa apakah ada data
+	if (!quran || !quran.data || quran.data.length === 0) {
+		surahDetailContainer.innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-info-circle"></i>
+                <p>Tidak ditemukan hasil pencarian untuk "${query}" dalam surah ini</p>
+            </div>
+        `;
+		return;
+	}
+
+	// Cari data surah
+	const surah = appState.quranData.find(s => s.number === surahId);
+	if (!surah) {
+		surahDetailContainer.innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Data surah tidak ditemukan</p>
+            </div>
+        `;
+		return;
+	}
+
+	let html = `
+        <div class="search-header">
+            <h2>Hasil Pencarian: "${query}" dalam ${surah.name_latin}</h2>
+            <div class="surah-meta">
+                <div class="meta-item">Ditemukan ${quran.total} hasil</div>
+                <div class="meta-item">Halaman ${quran.current_page} dari ${quran.last_page}</div>
+            </div>
+        </div>
+        <div class="verses-container">
+    `;
+
+	// Render hasil pencarian
+	quran.data.forEach(verse => {
+		const audioUrl = verse.audio?.["05"] || "";
+		const shareContent = `Q.S. ${surah.name_latin}:${verse.verse_number}\n\n${verse.arabic_text}\n\nTerjemahan: ${verse.translation}`;
+		const encodedContent = encodeURIComponent(shareContent);
+
+		// Highlight matches in text
+		const highlightedArabic = highlightMatches(verse.arabic_text, query);
+		const highlightedLatin = highlightMatches(verse.latin_text, query);
+		const highlightedTranslation = highlightMatches(verse.translation, query);
+
+		html += `
+            <div class="verse-item">
+                <div class="verse-header">
+                    <div class="verse-number">${verse.verse_number}</div>
+                    <div class="verse-controls">
+                        <div class="verse-audio">
+                            <button onclick="playAudio('${audioUrl}')">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                        <div class="verse-share">
+                            <button class="share-btn" data-content="${encodedContent}">
+                                <i class="fas fa-share-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="arabic-text">${highlightedArabic}</div>
+                <div class="latin-text">${highlightedLatin}</div>
+                <div class="translation-text">${highlightedTranslation}</div>
+            </div>
+        `;
+	});
+
+	html += `</div><div id="searchInSurahPaginationContainer"></div>`;
+	surahDetailContainer.innerHTML = html;
+
+	// Render pagination
+	const paginationContainer = document.getElementById(
+		"searchInSurahPaginationContainer"
+	);
+	if (paginationContainer && paginationModule.render) {
+		paginationModule.render(paginationContainer, quran, url => {
+			const newPage = url ? parseInt(url.match(/page=(\d+)/)[1]) : 1;
+			searchInSurah(surahId, query, newPage);
+		});
+	}
 }
 
 // Fungsi untuk melakukan pencarian global hadits
 async function searchHadithsGlobal(query, page = 1) {
-	// ... (tetap sama seperti sebelumnya) ...
+	try {
+		showView("hadithList", { isSearch: true });
+		const url = `${API_CONFIG.search.url}?query=${encodeURIComponent(
+			query
+		)}&type=hadith&page=${page}`;
+		const response = await fetch(url);
+
+		if (!response.ok) throw new Error("Pencarian global hadits gagal");
+
+		const data = await response.json();
+		renderSearchHadithResults(data.hadiths, query);
+	} catch (error) {
+		console.error("Error searching global hadiths:", error);
+		const hadithsContainer = document.getElementById("hadithBooks");
+		if (hadithsContainer) {
+			hadithsContainer.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>${
+															error.message ||
+															"Terjadi kesalahan saat melakukan pencarian"
+														}</p>
+                        </div>
+                    `;
+		}
+	}
+}
+
+function renderSearchHadithResults(hadithData, query) {
+	const hadithsContainer = document.getElementById("hadithBooks");
+	const headerContainer = document.getElementById("hadithHeaderContainer");
+	const paginationContainer = document.getElementById("hadithPagination");
+
+	// Pastikan elemen DOM ada
+	if (!hadithsContainer || !headerContainer || !paginationContainer) return;
+
+	hadithsContainer.innerHTML = "";
+	headerContainer.innerHTML = "";
+	paginationContainer.innerHTML = "";
+
+	// Render header
+	headerContainer.innerHTML = `
+        <div class="surah-header">
+            <h2>Hasil Pencarian: "${query}"</h2>
+            <div class="surah-meta">
+                <div class="meta-item">Ditemukan ${hadithData.total} hasil</div>
+                <div class="meta-item">Halaman ${hadithData.current_page} dari ${hadithData.last_page}</div>
+            </div>
+        </div>
+    `;
+
+	// Render hasil pencarian
+	let html = "";
+
+	hadithData.data.forEach(hadith => {
+		// Highlight matches in hadith text
+		const highlightedArabic = highlightMatches(hadith.arabic, query);
+		const highlightedTranslation = highlightMatches(hadith.translation, query);
+
+		const shareContent = `${hadith.book_id} - Hadits No. ${hadith.number}\n\n${hadith.arabic}\n\nTerjemahan: ${hadith.translation}`;
+		const encodedContent = encodeURIComponent(shareContent);
+
+		html += `
+            <div class="verse-item">
+                <div class="verse-header">
+                    <div class="verse-reference">
+                        <div class="book-name">${hadith.book_id}</div>
+                        <div class="hadith-number">${hadith.number}</div>
+                    </div>
+                    <div class="verse-controls">
+                        <div class="verse-share">
+                            <button class="share-btn" data-content="${encodedContent}">
+                                <i class="fas fa-share-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="arabic-text">${highlightedArabic}</div>
+                <div class="translation-text">
+                    <p>${highlightedTranslation}</p>
+                </div>
+            </div>
+        `;
+	});
+
+	hadithsContainer.innerHTML = html;
+
+	// Render pagination jika ada lebih dari 1 halaman
+	if (hadithData.last_page > 1 && paginationModule.render) {
+		paginationModule.render(paginationContainer, hadithData, url => {
+			const match = url.match(/page=(\d+)/);
+			const newPage = match ? parseInt(match[1]) : 1;
+			searchHadithsGlobal(query, newPage);
+		});
+	}
 }
 
 // Fungsi untuk melakukan pencarian hadits dalam satu buku
 async function searchHadithsInBook(bookId, query, page = 1) {
-	// ... (tetap sama seperti sebelumnya) ...
+	try {
+		const url = `${API_CONFIG.search.url}?query=${encodeURIComponent(
+			query
+		)}&type=hadith&book_id=${bookId}&page=${page}`;
+		const response = await fetch(url);
+
+		if (!response.ok) throw new Error("Pencarian dalam kitab hadits gagal");
+
+		const data = await response.json();
+		renderHadithSearchResults(data.hadiths, query);
+	} catch (error) {
+		console.error("Error searching hadiths in book:", error);
+		const hadithsContainer = document.getElementById("hadithBooks");
+		if (hadithsContainer) {
+			hadithsContainer.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>${
+															error.message ||
+															"Terjadi kesalahan saat melakukan pencarian"
+														}</p>
+                        </div>
+                    `;
+		}
+	}
+}
+
+// Fungsi untuk menampilkan hasil pencarian hadits dalam buku
+function renderHadithSearchResults(hadithData, query) {
+	window.scrollTo({ top: 0, behavior: "smooth" });
+	const hadithsContainer = document.getElementById("hadithBooks");
+	const paginationContainer = document.getElementById("hadithPagination");
+	const headerContainer = document.getElementById("hadithHeaderContainer");
+
+	if (!hadithsContainer || !paginationContainer || !headerContainer) return;
+
+	hadithsContainer.innerHTML = "";
+	headerContainer.innerHTML = "";
+	paginationContainer.innerHTML = "";
+
+	// Render header
+	headerContainer.innerHTML = `
+        <div class="search-header">
+            <h2>Hasil Pencarian: "${query}" dalam ${appState.currentCollection.name}</h2>
+            <div class="surah-meta">
+                <div class="meta-item">Ditemukan ${hadithData.total} hasil</div>
+                <div class="meta-item">Halaman ${hadithData.current_page} dari ${hadithData.last_page}</div>
+            </div>
+        </div>
+    `;
+
+	let html = "";
+
+	// Render hasil pencarian
+	hadithData.data.forEach(hadith => {
+		// Highlight matches in hadith text
+		const highlightedArabic = highlightMatches(hadith.arabic, query);
+		const highlightedTranslation = highlightMatches(hadith.translation, query);
+
+		const shareContent = `${appState.currentCollection.name} - Hadits No. ${hadith.number}\n\n${hadith.arabic}\n\nTerjemahan: ${hadith.translation}`;
+		const encodedContent = encodeURIComponent(shareContent);
+
+		html += `
+            <div class="verse-item">
+                <div class="verse-header">
+                    <div class="verse-number">${hadith.number}</div>
+                    <div class="verse-controls">
+                        <div class="verse-share">
+                            <button class="share-btn" data-content="${encodedContent}">
+                                <i class="fas fa-share-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="arabic-text">${highlightedArabic}</div>
+                <div class="translation-text">
+                    <strong>Terjemahan:</strong>
+                    <p>${highlightedTranslation}</p>
+                </div>
+            </div>
+        `;
+	});
+
+	hadithsContainer.innerHTML = html;
+
+	// Render pagination
+	if (paginationModule.render) {
+		paginationModule.render(paginationContainer, hadithData, url => {
+			const newPage = url ? parseInt(url.match(/page=(\d+)/)[1]) : 1;
+			searchHadithsInBook(appState.currentCollection.id, query, newPage);
+		});
+	}
+}
+
+async function searchVersesGlobal(query, page = 1) {
+	try {
+		// Pastikan kita berada di view yang benar
+		showView("surahDetail", { isSearch: true });
+
+		const url = `${API_CONFIG.search.url}?query=${encodeURIComponent(
+			query
+		)}&type=quran&page=${page}`;
+		const response = await fetch(url);
+
+		if (!response.ok) {
+			throw new Error("Pencarian di semua surah gagal");
+		}
+
+		const data = await response.json();
+
+		// Validasi struktur data sebelum diproses
+		if (!data?.quran) {
+			throw new Error("Format respons pencarian tidak valid");
+		}
+
+		renderSearchResults(data.quran, query);
+	} catch (error) {
+		console.error("Error searching:", error);
+		const container = document.getElementById("surahDetail");
+
+		if (container) {
+			container.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>${
+											error.message ||
+											"Terjadi kesalahan saat melakukan pencarian"
+										}</p>
+                    <button class="nav-btn" onclick="searchVersesGlobal('${query}', ${page})">
+                        <i class="fas fa-redo"></i> Coba Lagi
+                    </button>
+                </div>
+            `;
+		}
+	}
 }
 
 // Fungsi untuk menampilkan hasil pencarian
-function renderSearchResults() {
-	// ... (tetap sama seperti sebelumnya) ...
+function renderSearchResults(quran, query) {
+	const container = document.getElementById("surahDetail");
+	if (!container || !quran || !appState.quranData) return;
+
+	let html = `
+                <div class="search-header">
+                    <h2>Hasil Pencarian: "${query}"</h2>
+                    <div class="surah-meta">
+                        <div class="meta-item">Ditemukan ${quran.total} hasil</div>
+                        <div class="meta-item">Halaman ${quran.current_page} dari ${quran.last_page}</div>
+                    </div>
+                </div>
+                <div class="verses-container">
+            `;
+
+	quran.data.forEach(verse => {
+		const surah = appState.quranData.find(s => s.number === verse.surah_number);
+		const surahName = surah ? surah.name_latin : `Surah ${verse.surah_number}`;
+		const audioUrl = verse.audio?.["05"] || "";
+		const shareContent = `Q.S. ${surahName}:${verse.verse_number}\n\n${verse.arabic_text}\n\nTerjemahan: ${verse.translation}`;
+		const encodedContent = encodeURIComponent(shareContent);
+
+		// Highlight matches
+		const highlightedArabic = highlightMatches(verse.arabic_text, query);
+		const highlightedLatin = highlightMatches(verse.latin_text, query);
+		const highlightedTranslation = highlightMatches(verse.translation, query);
+
+		html += `
+                    <div class="verse-item search-result-item">
+                        <div class="surah-info">
+                            <div class="surah-name">${surahName}</div>
+                            <button class="nav-btn" onclick="goToSurah(${verse.surah_number})">
+                                <i class="fas fa-book-open"></i> Buka Surah
+                            </button>
+                        </div>
+                        <div class="verse-header">
+                            <div class="verse-number">${verse.verse_number}</div>
+                            <div class="verse-controls">
+                                <div class="verse-audio">
+                                    <button onclick="playAudio('${audioUrl}')">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                </div>
+                                <div class="verse-share">
+                                    <button class="share-btn" data-content="${encodedContent}">
+                                        <i class="fas fa-share-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="arabic-text">${highlightedArabic}</div>
+                        <div class="latin-text">${highlightedLatin}</div>
+                        <div class="translation-text">${highlightedTranslation}</div>
+                    </div>
+                `;
+	});
+
+	html += `</div><div id="searchPaginationContainer" class="pagination"></div>`;
+	container.innerHTML = html;
+
+	const paginationContainer = document.getElementById(
+		"searchPaginationContainer"
+	);
+	if (paginationContainer && paginationModule.render) {
+		paginationModule.render(paginationContainer, quran, url => {
+			const newPage = url ? parseInt(url.match(/page=(\d+)/)[1]) : 1;
+			searchVersesGlobal(query, newPage);
+		});
+	}
 }
 
-// Fungsi untuk menampilkan item hadits dalam hasil pencarian
-function renderHadithItem(hadith, bookName) {
-	// ... (tetap sama seperti sebelumnya) ...
+// Fungsi untuk menyaring surah berdasarkan query
+async function filterSurahs(query) {
+	showView("surahDetail", {
+		isSearch: true,
+		surah: { number: -1, name_latin: "Hasil pencarian" }
+	}); // Gunakan placeholder
+
+	const container = document.getElementById("surahDetail");
+	if (container) container.innerHTML = '<div class="Mencari ayat..."></div>';
+
+	try {
+		await searchVersesGlobal(query);
+	} catch (error) {
+		console.error("Error filtering surah:", error);
+		if (container) {
+			container.innerHTML = `<div error-message>
+			<i class="fas fa-exclamation-triangle"></i>
+			<p>${error.message || "Terjadi kesalahan saat melakukan pencarian"}</p>
+			</div>`;
+		}
+	}
 }
 
-// Fungsi untuk mengubah halaman hasil pencarian
-function changeSearchPage(page) {
-	// ... (tetap sama seperti sebelumnya) ...
+function goToSurah(surahNumber) {
+	const surah = appState.quranData.find(s => s.number === surahNumber);
+	if (surah) showView("surahDetail", { surah });
 }
 
-// Fungsi untuk kembali dari hasil pencarian
-function backFromSearch() {
-	// ... (tetap sama seperti sebelumnya) ...
-}
+// Fungsi pencarian (implementasi lainnya tetap sama seperti sebelumnya)
+// [Tetap mempertahankan fungsi:
+//  searchHadithsGlobal, searchHadithsInBook, renderSearchResults, dll]
+// [Disesuaikan dengan struktur state baru]
