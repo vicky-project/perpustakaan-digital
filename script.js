@@ -12,10 +12,12 @@ const API_CONFIG = {
 		url: "https://vickyserver.my.id/server/api/books/asmaul-husna",
 		cacheKey: "asmaul_husna_cache___"
 	},
-	search: {
-		url: "https://vickyserver.my.id/server/api/search"
+	prophetStories: {
+		url: "https://vickyserver.my.id/server/api/books/prophet-stories",
+		cacheKey: "prophet_stories_cache___"
 	},
-	cacheExpiry: 7 * 24 * 60 * 60 * 1000 // 7 hari dalam ms
+	search: { url: "https://vickyserver.my.id/server/api/search" },
+	cacheExpiry: 604800000 // 7 hari
 };
 
 // State aplikasi
@@ -38,7 +40,9 @@ const domElements = {
 		"hadithList",
 		"hadithPagination",
 		"asmaulHusnaList",
-		"asmaDetail"
+		"asmaDetail",
+		"prophetStoriesList",
+		"prophetDetail"
 	],
 	backButtons: [
 		"backToShelf",
@@ -47,200 +51,184 @@ const domElements = {
 		"backToHadithBook",
 		"backFromSearch",
 		"backFromAsma",
-		"backToAsmaList"
+		"backToAsmaList",
+		"backFromProphets",
+		"backToProphetsList"
+	],
+	searchInputs: [
+		"searchInput",
+		"searchGlobalHadithInput",
+		"searchHadithInput",
+		"searchInSurahInput",
+		"searchAsmaInput",
+		"searchProphetInput"
 	]
 };
 
+const viewHandlers = {
+	mainShelf: () => {},
+	surahList: () => {
+		showElement("backToShelf");
+		!appState.quranData && !appState.loadingError && fetchQuranData();
+		resetInput("searchInput");
+	},
+	surahDetail: options => {
+		showElement("backToSurah");
+		options.surah && renderSurahDetail(options.surah, options.page || 1);
+		resetInput("searchInSurahInput");
+	},
+	hadithCollections: () => {
+		showElement("backToShelf");
+		showElement("searchGlobalHadithInput", true);
+		resetInput("searchGlobalHadithInput");
+		fetchHadithData();
+	},
+	hadithList: options => {
+		showElement("hadithPagination");
+		showElement("backToHadithList");
+		showElement("searchHadithInput", true);
+		resetInput("searchHadithInput");
+		options.collection &&
+			renderHadithList(options.collection.id, options.page || 1);
+	},
+	asmaulHusnaList: () => {
+		showElement("backFromAsma");
+		showElement("searchAsmaInput", true);
+		resetInput("searchAsmaInput");
+		fetchAsmaulHusna();
+	},
+	asmaDetail: options => {
+		showElement("backToAsmaList");
+		options.id && showAsmaDetail(options.id);
+	},
+	prophetStoriesList: () => {
+		showElement("backFromProphets");
+		showElement("searchProphetInput", true);
+		resetInput("searchProphetInput");
+		fetchProphetStories();
+	},
+	prophetDetail: options => {
+		showElement("backToProphetsList");
+		options.id && showProphetDetail(options.id);
+	}
+};
+
+// Fungsi utilitas DOM
+function hideElement(id, isParent = false) {
+	const el = document.getElementById(id);
+	if (!el) return;
+	if (isParent && el.parentElement) el.parentElement.style.display = "none";
+	else el.style.display = "none";
+}
+
+function showElement(id, isParent = false) {
+	const el = document.getElementById(id);
+	if (!el) return;
+	if (isParent && el.parentElement) el.parentElement.style.display = "block";
+	else el.style.display = "block";
+}
+
+function toggleElement(id, show) {
+	const el = document.getElementById(id);
+	if (el) el.style.display = show ? "flex" : "none";
+}
+
+function clearContainer(id) {
+	const el = document.getElementById(id);
+	if (el) el.innerHTML = "";
+}
+
+function resetInput(inputId) {
+	const input = document.getElementById(inputId);
+	if (input) input.value = "";
+}
+
+function resetSearchInputs() {
+	domElements.searchInputs.forEach(id => {
+		const input = document.getElementById(id);
+		if (input) input.value = "";
+	});
+}
+
+function errorMessage(error, retryFn = "") {
+	return `
+        <div class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>${error.message || "Terjadi kesalahan"}</p>
+            ${
+							retryFn
+								? `<button class="nav-btn" onclick="${retryFn}"><i class="fas fa-redo"></i> Coba Lagi</button>`
+								: ""
+						}
+        </div>
+    `;
+}
+
 // Inisialisasi tema
 function initTheme() {
-	const savedTheme = localStorage.getItem("theme") || "dark";
-	document.documentElement.setAttribute("data-theme", savedTheme);
-
-	const themeIcon = document.querySelector("#themeToggle i");
-	if (savedTheme === "light") {
-		themeIcon.classList.replace("fa-moon", "fa-sun");
-	}
+	const theme = localStorage.getItem("theme") || "dark";
+	document.documentElement.setAttribute("data-theme", theme);
+	const icon = document.querySelector("#themeToggle i");
+	if (icon) icon.classList.toggle("fa-sun", theme === "light");
 }
 
 // Manajemen tampilan
 function showView(viewId, options = {}) {
-	// Sembunyikan semua view dan tombol kembali
-	domElements.views.forEach(id => {
-		const el = document.getElementById(id);
-		if (el) el.style.display = "none";
-	});
-	domElements.backButtons.forEach(id => {
-		const el = document.getElementById(id);
-		if (el) el.style.display = "none";
-	});
+	// Sembunyikan semua view dan tombol
+	domElements.views.forEach(id => hideElement(id));
+	domElements.backButtons.forEach(id => hideElement(id));
 
-	// Atur tampilan input pencarian
-	const globalHadithSearch = document.getElementById("searchGlobalHadithInput");
-	const hadithSearch = document.getElementById("searchHadithInput");
-	const inSurahSearch = document.getElementById("searchInSurahInput");
-
-	[globalHadithSearch, hadithSearch, inSurahSearch].forEach(input => {
-		if (input && input.parentElement) {
-			input.parentElement.style.display = "none";
-		}
-	});
+	// Sembunyikan input pencarian
+	domElements.searchInputs.forEach(id => hideElement(id, true));
 
 	// Tampilkan view yang diminta
-	const viewEl = document.getElementById(viewId);
-	if (viewEl) viewEl.style.display = "block";
+	showElement(viewId);
 
-	// Proses berdasarkan view
-	switch (viewId) {
-		case "mainShelf":
-			break;
+	if (viewId === "mainShelf") resetSearchInputs();
 
-		case "surahList":
-			const backToSelf = document.getElementById("backToShelf");
-			if (backToShelf) backToShelf.style.display = "flex";
-
-			const searchInput = document.getElementById("searchInput");
-			if (searchInput) searchInput.value = "";
-
-			if (!appState.quranData && !appState.loadingError) {
-				fetchQuranData();
-			} else if (appState.quranData) {
-				renderSurahBooks();
-			}
-			break;
-
-		case "surahDetail":
-			const backToSurah = document.getElementById("backToSurah");
-			if (backToSurah) backToSurah.style.display = "flex";
-
-			if (options.isSearch) {
-				viewEl.innerHTML =
-					'<div class="loading">Memuat hasil pencarian...</div>';
-			} else {
-				appState.currentSurah = options.surah;
-				renderSurahDetail(options.surah, options.page || 1);
-			}
-			break;
-
-		case "hadithCollections":
-			const backToShelf2 = document.getElementById("backToShelf");
-			if (backToShelf2) backToShelf2.style.display = "flex";
-
-			if (globalHadithSearch && globalHadithSearch.parentElement) {
-				globalHadithSearch.parentElement.style.display = "block";
-				globalHadithSearch.value = "";
-			}
-			fetchHadithData();
-			break;
-
-		case "hadithList":
-			const hadithPagination = document.getElementById("hadithPagination");
-			if (hadithPagination) hadithPagination.style.display = "block";
-
-			const backToHadithList = document.getElementById("backToHadithList");
-			if (backToHadithList) backToHadithList.style.display = "flex";
-
-			if (hadithSearch && hadithSearch.parentElement) {
-				hadithSearch.parentElement.style.display = "block";
-				hadithSearch.value = "";
-			}
-
-			if (options.isSearch) {
-				const headerContainer = document.getElementById(
-					"hadithHeaderContainer"
-				);
-				const hadithsContainer = document.getElementById("hadithBooks");
-
-				if (headerContainer) headerContainer.innerHTML = "";
-
-				if (hadithsContainer) hadithsContainer.innerHTML = "";
-			} else if (options.collection) {
-				appState.currentCollection = options.collection;
-				renderHadithList(options.collection.id, options.page || 1);
-			}
-
-			break;
-
-		case "asmaulHusnaList":
-			const backFromAsma = document.getElementById("backFromAsma");
-			if (backFromAsma) backFromAsma.style.display = "flex";
-
-			if (
-				document.getElementById("searchAsmaInput") &&
-				document.getElementById("searchAsmaInput").parentElement
-			) {
-				document.getElementById("searchAsmaInput").parentElement.style.display =
-					"block";
-				document.getElementById("searchAsmaInput").value = "";
-			}
-
-			fetchAsmaulHusna();
-			break;
-
-		case "asmaDetail":
-			document.getElementById("backToAsmaList").style.display = "flex";
-
-			if (options.id) {
-				showAsmaDetail(options.id);
-			}
-			break;
-	}
+	// Eksekusi handler untuk view
+	viewHandlers[viewId]?.(options);
 
 	window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // Fetch data dengan caching
 async function fetchData(type, cacheKey, processData) {
-	const loadingId =
-		type === "quran" ? "surahLoading" : "hadithCollectionsLoading";
-	const containerId =
-		type === "quran" ? "surahBooks" : "hadithCollectionsBooks";
+	const [loadingId, containerId] =
+		type === "quran"
+			? ["surahLoading", "surahBooks"]
+			: ["hadithLoading", "hadithCollectionsBooks"];
 
-	const loadingEl = document.getElementById(loadingId);
-	const containerEl = document.getElementById(containerId);
-
-	if (loadingEl) loadingEl.style.display = "flex";
-	if (containerEl) containerEl.innerHTML = "";
+	toggleElement(loadingId, true);
+	clearContainer(containerId);
 
 	try {
-		// Coba ambil dari cache
 		let data = await CacheManager.getItem(cacheKey);
 		if (data) return processData(data);
 
-		// Ambil dari server
-		const response = await fetch(API_CONFIG[type].url);
-		if (!response.ok) throw new Error(`Gagal mengambil data ${type}`);
+		const res = await fetch(API_CONFIG[type].url);
+		if (!res.ok) throw new Error(`Gagal mengambil data ${type}`);
 
-		data = await response.json();
-
-		if (type === "hadith") data = data || [];
-
-		// Simpan ke cache
+		data = await res.json();
 		await CacheManager.setItem(cacheKey, data);
-		processData(data);
+		processData(type === "hadith" ? data || [] : data);
 	} catch (error) {
-		console.error(`Error fetching ${type} data:`, error);
+		console.error(`Error: ${error}`);
 		appState.loadingError = true;
 
-		// Coba gunakan cache yang ada
 		const fallback = await CacheManager.getItem(cacheKey, true);
-		if (fallback) return processData(fallback);
-
-		// Tampilkan pesan error
-		if (containerEl) {
-			containerEl.innerHTML = `
-            <div class="error-message">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Gagal memuat data. Silakan coba lagi nanti.</p>
-                <button class="nav-btn" onclick="${
-									type === "quran" ? "fetchQuranData" : "fetchHadithData"
-								}()">
-                    <i class="fas fa-redo"></i> Muat Ulang
-                </button>
-            </div>
-        `;
+		if (fallback) processData(fallback);
+		else {
+			const container = document.getElementById(containerId);
+			if (container) {
+				container.innerHTML = errorMessage(
+					error,
+					type === "quran" ? "fetchQuranData" : "fetchHadithData"
+				);
+			}
 		}
 	} finally {
-		if (loadingEl) loadingEl.style.display = "none";
+		toggleElement(loadingId, false);
 	}
 }
 
@@ -265,39 +253,32 @@ function renderSurahBooks() {
 	const container = document.getElementById("surahBooks");
 	if (!container || !appState.quranData) return;
 
-	const sortedSurahs = [...appState.quranData].sort(
-		(a, b) => a.number - b.number
-	);
-
-	container.innerHTML = sortedSurahs
+	container.innerHTML = [...appState.quranData]
+		.sort((a, b) => a.number - b.number)
 		.map(
 			surah => `
-        <div class="book small surah-book-item" 
-             data-number="${surah.number}" 
-             data-name="${surah.name_latin}" 
-             data-name-ar="${surah.name}" 
-             data-meaning="${surah.meaning.toLowerCase()}">
-            <div class="book-image">
-                <i class="fas fa-book"></i>
-                <div class="surah-number-badge">${surah.number}</div>
+            <div class="book small surah-book-item" data-number="${surah.number}">
+                <div class="book-image">
+                    <i class="fas fa-book"></i>
+                    <div class="surah-number-badge">${surah.number}</div>
+                </div>
+                <div class="book-title">
+                    <h3>${surah.name_latin}</h3>
+                    <p>${surah.number_of_verses} Ayat • ${surah.place}</p>
+                </div>
             </div>
-            <div class="book-title">
-                <h3>${surah.name_latin}</h3>
-                <p>${surah.number_of_verses} Ayat • ${surah.place}</p>
-                <p class="meaning-text">${surah.meaning}</p>
-            </div>
-        </div>
-    `
+        `
 		)
 		.join("");
 
 	container.addEventListener("click", e => {
-		const book = e.target.closest(".book");
+		const book = e.target.closest(".surah-book-item");
 		if (!book) return;
 
-		const surahNumber = parseInt(book.dataset.number);
-		const surah = appState.quranData.find(s => s.number === surahNumber);
-		if (surah) showView("surahDetail", { surah });
+		const surah = appState.quranData.find(
+			s => s.number === parseInt(book.dataset.number)
+		);
+		surah && showView("surahDetail", { surah });
 	});
 }
 
@@ -309,97 +290,58 @@ async function renderSurahDetail(surah, page = 1) {
 	container.innerHTML = '<div class="loading">Memuat ayat...</div>';
 
 	try {
-		const versesData = await fetchVersesBySurah(surah.number, page);
-
-		if (!versesData || !versesData.data || !Array.isArray(versesData.data)) {
-			throw new Error("Data ayat tidak valid atau tidak ditemukan.");
-		}
-
-		const versesHTML = versesData.data
-			.map(verse => renderVerseItem(verse, surah))
-			.join("");
+		const data = await fetchVersesBySurah(surah.number, page);
+		if (!data?.data?.length) throw new Error("Data ayat tidak valid");
 
 		container.innerHTML = `
             <div class="surah-header">
                 <h2>${surah.name}</h2>
                 <h3>${surah.name_latin}</h3>
                 <div class="surah-meta">
-                    <div class="meta-item">${surah.number_of_verses} Ayat</div>
-                    <div class="meta-item">${surah.place}</div>
-                    <div class="meta-item">Arti: ${surah.meaning}</div>
+                    <div>${surah.number_of_verses} Ayat</div>
+                    <div>${surah.place}</div>
+                    <div>Arti: ${surah.meaning}</div>
                 </div>
-                <div class="surah-description">
-                    <p>${surah.description}</p>
-                </div>
+                <div class="surah-description"><p>${surah.description}</p></div>
                 <div class="search-container">
                     <input type="text" id="searchInSurahInput" placeholder="Cari dalam surah..." class="search-box">
-                    <div class="search-icon">
-                        <i class="fas fa-search"></i>
-                    </div>
+                    <div class="search-icon"><i class="fas fa-search"></i></div>
                 </div>
             </div>
-            <div class="verses-container">${versesHTML}</div>
+            <div class="verses-container">${data.data
+							.map(v => renderVerseItem(v, surah))
+							.join("")}</div>
             <div id="surahDetailPaginationContainer"></div>
         `;
 
-		// Paginasi
-		const paginationContainer = document.getElementById(
-			"surahDetailPaginationContainer"
-		);
-
-		if (paginationContainer && paginationModule.render) {
-			paginationModule.render(paginationContainer, versesData, url => {
-				const newPage = url ? parseInt(url.match(/page=(\d+)/)[1]) : 1;
-				showView("surahDetail", { surah, page: newPage });
-			});
-		}
-
-		// Event listener pencarian dalam surah
-		const searchInput = document.getElementById("searchInSurahInput");
-		if (searchInput)
-			searchInput.addEventListener("keypress", e => {
-				if (e.key === "Enter") {
-					const query = e.target.value.toLowerCase().trim();
-					searchInSurah(surah.number, query);
-				}
+		document
+			.getElementById("searchInSurahInput")
+			?.addEventListener("keypress", e => {
+				if (e.key === "Enter")
+					searchInSurah(surah.number, e.target.value.trim());
 			});
 	} catch (error) {
-		console.error("Error rendering surah detail:", error);
-		container.innerHTML = `
-            <div class="error-message">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Gagal memuat ayat. Silakan coba lagi nanti.</p>
-                <button class="nav-btn" onclick="renderSurahDetail(${JSON.stringify(
-									surah
-								)}, ${page})">
-                    <i class="fas fa-redo"></i> Muat Ulang
-                </button>
-            </div>
-        `;
+		container.innerHTML = errorMessage(
+			error,
+			`renderSurahDetail(${JSON.stringify(surah)}, ${page})`
+		);
 	}
 }
 
 // Render item ayat
 function renderVerseItem(verse, surah) {
-	const audioUrl = verse.audio?.["05"] || "";
-	const shareContent = `Q.S. ${surah.name_latin}:${verse.verse_number}\n\n${verse.arabic_text}\n\nTerjemahan: ${verse.translation}`;
-	const encodedContent = encodeURIComponent(shareContent);
+	const audio = verse.audio?.["05"] || "";
+	const share = encodeURIComponent(
+		`Q.S. ${surah.name_latin}:${verse.verse_number}\n\n${verse.arabic_text}\n\nTerjemahan: ${verse.translation}`
+	);
 
 	return `
         <div class="verse-item">
             <div class="verse-header">
                 <div class="verse-number">${verse.verse_number}</div>
                 <div class="verse-controls">
-                    <div class="verse-audio">
-                        <button onclick="playAudio('${audioUrl}')">
-                            <i class="fas fa-play"></i>
-                        </button>
-                    </div>
-                    <div class="verse-share">
-                        <button class="share-btn" data-content="${encodedContent}">
-                            <i class="fas fa-share-alt"></i>
-                        </button>
-                    </div>
+                    <div><button onclick="playAudio('${audio}')"><i class="fas fa-play"></i></button></div>
+                    <div><button class="share-btn" data-content="${share}"><i class="fas fa-share-alt"></i></button></div>
                 </div>
             </div>
             <div class="arabic-text">${verse.arabic_text}</div>
@@ -418,21 +360,16 @@ async function fetchVersesBySurah(surahNumber, page = 1) {
 		const cached = await CacheManager.getItem(cacheKey);
 		if (cached) return cached;
 
-		const response = await fetch(url);
-		if (!response.ok) throw new Error("Gagal mengambil data ayat");
+		const res = await fetch(url);
+		if (!res.ok) throw new Error("Gagal mengambil data ayat");
 
-		const data = await response.json();
-
-		// Validasi struktur data sebelum disimpan
-		if (!data || !data.data || !Array.isArray(data.data)) {
-			throw new Error("Struktur data ayat tidak valid");
-		}
+		const data = await res.json();
+		if (!data?.data) throw new Error("Data ayat tidak valid");
 
 		await CacheManager.setItem(cacheKey, data);
-
 		return data;
 	} catch (error) {
-		console.error(`Error fetching verses for surah ${surahNumber}:`, error);
+		console.error(`Error fetching verses: ${error}`);
 		throw error;
 	}
 }
@@ -440,7 +377,6 @@ async function fetchVersesBySurah(surahNumber, page = 1) {
 // Render koleksi hadits
 function renderHadithCollections() {
 	const container = document.getElementById("hadithCollectionsBooks");
-
 	if (!container || !appState.hadithCollections) return;
 
 	container.innerHTML = appState.hadithCollections
@@ -466,87 +402,97 @@ function renderHadithCollections() {
 		const book = e.target.closest(".book");
 		if (!book) return;
 
-		const collectionId = book.dataset.id;
 		const collection = appState.hadithCollections.find(
-			c => c.id === collectionId
+			c => c.id === book.dataset.id
 		);
-		if (collection) showView("hadithList", { collection });
+		collection && showView("hadithList", { collection });
 	});
 }
 
 // Render daftar hadits
 async function renderHadithList(collectionId, page = 1) {
-	const loadingContainer = document.getElementById("hadithLoading");
+	const loadingEl = document.getElementById("hadithLoading");
 	const hadithsContainer = document.getElementById("hadithBooks");
 	const paginationContainer = document.getElementById("hadithPagination");
 	const headerContainer = document.getElementById("hadithHeaderContainer");
 
-	if (loadingContainer) loadingContainer.style.display = "flex";
-	if (headerContainer) headerContainer.innerHTML = "";
-	if (hadithsContainer) hadithsContainer.innerHTML = "";
-	if (paginationContainer) paginationContainer.innerHTML = "";
+	toggleElement("hadithLoading", true);
+	clearContainer("hadithBooks");
+	clearContainer("hadithPagination");
+	clearContainer("hadithHeaderContainer");
 
 	try {
-		const response = await fetchHadithsByBook(collectionId, page);
-		if (!response || !response.id || !response.hadiths) {
-			throw new Error("Format respons API tidak valid");
-		}
+		const data = await fetchHadithsByBook(collectionId, page);
+		if (!data?.hadiths?.data) throw new Error("Data hadits tidak valid");
 
 		// Render header
 		if (headerContainer) {
 			headerContainer.innerHTML = `
-            <div class="surah-header">
-                <h2>${response.name}</h2>
-                <div class="surah-meta">
-                    <div class="meta-item">Total Hadits: ${response.total_hadiths}</div>
-                    <div class="meta-item">Halaman ${response.hadiths.current_page} dari ${response.hadiths.last_page}</div>
+                <div class="surah-header">
+                    <h2>${data.name}</h2>
+                    <div class="surah-meta">
+                        <div>Total Hadits: ${data.total_hadiths}</div>
+                        <div>Halaman ${data.hadiths.current_page} dari ${data.hadiths.last_page}</div>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
 		}
 
 		// Render hadits
 		if (hadithsContainer) {
-			hadithsContainer.innerHTML = response.hadiths.data
-				.map(hadith => renderHadithItem(hadith, response))
+			hadithsContainer.innerHTML = data.hadiths.data
+				.map(hadith => renderHadithItem(hadith, data))
 				.join("");
 		}
 
-		// Paginasi
+		const searchInput = document.getElementById("searchHadithInput");
+		if (searchInput) {
+			searchInput.addEventListener("keypress", e => {
+				if (e.key === "Enter") {
+					const query = e.target.value.trim();
+
+					if (query.length >= 3 && appState.currentCollection) {
+						searchHadithsInBook(appState.currentCollection.id, query);
+					}
+				}
+			});
+
+			// Juga untuk ikon pencarian
+			const searchIcon = searchInput.nextElementSibling?.querySelector("i");
+			if (searchIcon) {
+				searchIcon.addEventListener("click", () => {
+					const query = searchInput.value.trim();
+					if (query.length >= 3 && appState.currentCollection) {
+						searchHadithsInBook(appState.currentCollection.id, query);
+					}
+				});
+			}
+		}
+
+		// Render paginasi
 		if (paginationContainer && paginationModule.render) {
-			paginationModule.render(paginationContainer, response.hadiths, url => {
+			paginationModule.render(paginationContainer, data.hadiths, url => {
 				const newPage = url ? parseInt(url.match(/page=(\d+)/)[1]) : 1;
 				renderHadithList(collectionId, newPage);
 			});
 		}
 	} catch (error) {
 		console.error("Error rendering hadith list:", error);
-		hadithsContainer.innerHTML = `
-            <div class="error-message">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>${error.message}</p>
-                <button class="nav-btn" onclick="renderHadithList('${collectionId}', ${page})">
-                    <i class="fas fa-redo"></i> Muat Ulang
-                </button>
-            </div>
-        `;
+		if (hadithsContainer) {
+			hadithsContainer.innerHTML = errorMessage(
+				error,
+				`renderHadithList('${collectionId}', ${page})`
+			);
+		}
 	} finally {
-		if (loadingContainer) loadingContainer.style.display = "none";
+		toggleElement("hadithLoading", false);
 	}
 }
 
 // Render item hadits
 function renderHadithItem(hadith, collection) {
-	const shareContent = `${collection.name} - Hadits No. ${hadith.number}\n\n${hadith.arabic}\n\nTerjemahan: ${hadith.translation}`;
-	const encodedContent = encodeURIComponent(shareContent);
-
-	const highlightedArabic = highlightMatches(
-		hadith.arabic,
-		appState.currentQuery
-	);
-	const highlightedTranslation = highlightMatches(
-		hadith.translation,
-		appState.currentQuery
+	const share = encodeURIComponent(
+		`${collection.name} - Hadits No. ${hadith.number}\n\n${hadith.arabic}\n\nTerjemahan: ${hadith.translation}`
 	);
 
 	return `
@@ -555,16 +501,16 @@ function renderHadithItem(hadith, collection) {
                 <div class="verse-number">${hadith.number}</div>
                 <div class="verse-controls">
                     <div class="verse-share">
-                        <button class="share-btn" data-content="${encodedContent}">
+                        <button class="share-btn" data-content="${share}">
                             <i class="fas fa-share-alt"></i>
                         </button>
                     </div>
                 </div>
             </div>
-            <div class="arabic-text">${highlightedArabic}</div>
+            <div class="arabic-text">${hadith.arabic}</div>
             <div class="translation-text">
                 <strong>Terjemahan:</strong>
-                <p>${highlightedTranslation}</p>
+                <p>${hadith.translation}</p>
             </div>
         </div>
     `;
@@ -573,11 +519,11 @@ function renderHadithItem(hadith, collection) {
 // Fetch hadits per kitab
 async function fetchHadithsByBook(bookId, page = 1) {
 	try {
-		const response = await fetch(
+		const res = await fetch(
 			`${API_CONFIG.hadith.url}/${bookId}/hadiths?page=${page}`
 		);
-		if (!response.ok) throw new Error("Gagal mengambil data hadits");
-		return await response.json();
+		if (!res.ok) throw new Error("Gagal mengambil data hadits");
+		return await res.json();
 	} catch (error) {
 		console.error("Error fetching hadiths:", error);
 		throw error;
@@ -586,8 +532,7 @@ async function fetchHadithsByBook(bookId, page = 1) {
 
 // Fungsi utilitas
 function playAudio(url) {
-	if (!url) return;
-	new Audio(url).play().catch(e => console.log("Audio play failed:", e));
+	if (url) new Audio(url).play().catch(console.log);
 }
 
 function highlightMatches(text, query) {
@@ -600,37 +545,93 @@ function escapeRegExp(string) {
 	return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function shareContent(content) {
+	if (!content) return;
+	const text = decodeURIComponent(content);
+
+	if (navigator.share) {
+		navigator
+			.share({
+				title: "Perpustakaan Digital",
+				text
+			})
+			.catch(console.log);
+	} else {
+		navigator.clipboard
+			.writeText(text)
+			.then(() => alert("Teks disalin!"))
+			.catch(console.error);
+	}
+}
+
 // Event listener saat halaman dimuat
 document.addEventListener("DOMContentLoaded", function () {
-	// Inisialisasi tema
 	initTheme();
 
-	// Event listener untuk tema
-	const themeToggle = document.getElementById("themeToggle");
-	if (themeToggle) {
-		themeToggle.addEventListener("click", () => {
-			const currentTheme = document.documentElement.getAttribute("data-theme");
-			const newTheme = currentTheme === "dark" ? "light" : "dark";
+	// Toggle tema
+	document.getElementById("themeToggle")?.addEventListener("click", () => {
+		const theme =
+			document.documentElement.getAttribute("data-theme") === "dark"
+				? "light"
+				: "dark";
+		document.documentElement.setAttribute("data-theme", theme);
+		localStorage.setItem("theme", theme);
 
-			document.documentElement.setAttribute("data-theme", newTheme);
-			localStorage.setItem("theme", newTheme);
+		const icon = document.querySelector("#themeToggle i");
+		if (icon) icon.classList.toggle("fa-sun", theme === "light");
+	});
 
-			const themeIcon = document.querySelector("#themeToggle i");
-			if (themeIcon) {
-				if (newTheme === "light") {
-					themeIcon.classList.replace("fa-moon", "fa-sun");
-				} else {
-					themeIcon.classList.replace("fa-sun", "fa-moon");
-				}
-			}
-		});
-	}
+	// Navigasi
+	const navHandlers = {
+		quranBook: () => showView("surahList"),
+		hadithBook: () => showView("hadithCollections"),
+		asmaulHusnaBook: () => showView("asmaulHusnaList"),
+		prophetStoriesBook: () => showView("prophetStoriesList"),
+		backToShelf: () => showView("mainShelf"),
+		backToSurah: () => showView("surahList"),
+		backToHadithList: () => showView("hadithCollections"),
+		backToAsmaList: () => showView("asmaulHusnaList"),
+		backToProphetsList: () => showView("prophetStoriesList"),
+		backToHadithBook: () =>
+			appState.currentCollection &&
+			showView("hadithList", { collection: appState.currentCollection }),
+		backFromAsma: () => showView("mainShelf"),
+		backFromProphets: () => showView("mainShelf")
+	};
+
+	Object.entries(navHandlers).forEach(([id, handler]) => {
+		document.getElementById(id)?.addEventListener("click", handler);
+	});
+
+	// Pencarian
+	const searchHandlers = {
+		searchInput: filterSurahs,
+		searchGlobalHadithInput: searchHadithsGlobal,
+		searchHadithInput: q =>
+			appState.currentCollection &&
+			searchHadithsInBook(appState.currentCollection.id, q),
+		searchInSurahInput: q =>
+			appState.currentSurah && searchInSurah(appState.currentSurah.number, q)
+	};
+
+	Object.entries(searchHandlers).forEach(([id, handler]) => {
+		const input = document.getElementById(id);
+		if (!input) return;
+
+		const search = () => {
+			const query = input.value.trim();
+			if (query.length >= 3) handler(query);
+		};
+
+		input.addEventListener("keypress", e => e.key === "Enter" && search());
+		input.nextElementSibling?.addEventListener("click", search);
+	});
 
 	// Tombol kembali ke atas
 	const backToTopBtn = document.getElementById("backToTopBtn");
 	if (backToTopBtn) {
 		window.addEventListener("scroll", () => {
-			backToTopBtn.classList.toggle("show", window.pageYOffset > 300);
+			backToTopBtn.classList.toggle("show", window.scrollY > 300);
 		});
 
 		backToTopBtn.addEventListener("click", () => {
@@ -638,98 +639,14 @@ document.addEventListener("DOMContentLoaded", function () {
 		});
 	}
 
-	// Navigasi utama
-	const setupClickListener = (id, handler) => {
-		const el = document.getElementById(id);
-		if (el) el.addEventListener("click", handler);
-	};
-
-	setupClickListener("quranBook", () => showView("surahList"));
-	setupClickListener("hadithBook", () => showView("hadithCollections"));
-	setupClickListener("asmaulHusnaBook", () => showView("asmaulHusnaList"));
-	setupClickListener("backFromAsma", () => showView("mainShelf"));
-	setupClickListener("backToAsmaList", () => showView("asmaulHusnaList"));
-	setupClickListener("backToShelf", () => showView("mainShelf"));
-	setupClickListener("backToSurah", () => showView("surahList"));
-	setupClickListener("backToHadithList", () => showView("hadithCollections"));
-	setupClickListener("backToHadithBook", () => {
-		if (appState.currentCollection) {
-			showView("hadithList", { collection: appState.currentCollection });
-		}
-	});
-	setupClickListener("backFromAsma", () => showView("mainShelf"));
-
-	// Pencarian
-	const initSearchInput = (id, handler) => {
-		const input = document.getElementById(id);
-		if (input) {
-			input.addEventListener("keypress", async function (e) {
-				if (e.key === "Enter") {
-					const query = this.value.trim();
-					if (query.length >= 3) {
-						handler(query);
-					} else if (query.length === 0) {
-						backFromSearch();
-					}
-				}
-			});
-
-			const icon = input.nextElementSibling;
-			if (icon) {
-				icon.addEventListener("click", async function () {
-					const query = this.value.trim();
-					if (query.length >= 3) {
-						handler(query);
-					} else if (query.length === 0) {
-						backFromSearch();
-					}
-				});
-			}
-		}
-	};
-
-	initSearchInput("searchInput", filterSurahs);
-	initSearchInput("searchGlobalHadithInput", searchHadithsGlobal);
-	initSearchInput("searchHadithInput", query => {
-		if (appState.currentCollection) {
-			searchHadithsInBook(appState.currentCollection.id, query);
-		}
-	});
-	initSearchInput("searchInSurahInput", query => {
-		if (appState.currentSurah) {
-			searchInSurah(appState.currentSurah.number, query);
-		}
-	});
-
 	// Berbagi konten
 	document.addEventListener("click", e => {
 		const btn = e.target.closest(".share-btn");
-		if (btn) {
-			const content = btn.getAttribute("data-content");
-			shareContent(content);
-		}
+		if (btn) shareContent(btn.dataset.content);
 	});
 });
 
-// Fungsi berbagi konten
-function shareContent(content) {
-	if (!content) return;
-
-	if (navigator.share) {
-		navigator
-			.share({
-				title: "Perpustakaan Digital",
-				text: decodeURIComponent(content)
-			})
-			.catch(error => console.log("Error sharing:", error));
-	} else {
-		navigator.clipboard
-			.writeText(decodeURIComponent(content))
-			.then(() => alert("Teks disalin ke clipboard!"))
-			.catch(err => console.error("Gagal menyalin teks:", err));
-	}
-}
-
+// Fungsi pencarian
 async function searchInSurah(surahId, query, page = 1) {
 	const container = document.getElementById("surahDetail");
 	if (!container) return;
@@ -740,33 +657,25 @@ async function searchInSurah(surahId, query, page = 1) {
 		const url = `${API_CONFIG.search.url}?query=${encodeURIComponent(
 			query
 		)}&type=quran&surah_id=${surahId}&page=${page}`;
-		const response = await fetch(url);
+		const res = await fetch(url);
+		if (!res.ok) throw new Error("Pencarian dalam surah gagal");
 
-		if (!response.ok) throw new Error("Pencarian dalam surah gagal");
-
-		const data = await response.json();
+		const data = await res.json();
 		renderSearchInSurahResults(data.quran, query, surahId);
 	} catch (error) {
 		console.error("Error searching in surah:", error);
-		container.innerHTML = `
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>${
-													error.message ||
-													"Terjadi kesalahan saat melakukan pencarian"
-												}</p>
-                    </div>
-                `;
+		if (container) {
+			container.innerHTML = errorMessage(error);
+		}
 	}
 }
 
 function renderSearchInSurahResults(quran, query, surahId) {
-	const surahDetailContainer = document.getElementById("surahDetail");
-	if (!surahDetailContainer) return;
+	const container = document.getElementById("surahDetail");
+	if (!container) return;
 
-	// Periksa apakah ada data
-	if (!quran || !quran.data || quran.data.length === 0) {
-		surahDetailContainer.innerHTML = `
+	if (!quran?.data?.length) {
+		container.innerHTML = `
             <div class="error-message">
                 <i class="fas fa-info-circle"></i>
                 <p>Tidak ditemukan hasil pencarian untuk "${query}" dalam surah ini</p>
@@ -775,15 +684,9 @@ function renderSearchInSurahResults(quran, query, surahId) {
 		return;
 	}
 
-	// Cari data surah
-	const surah = appState.quranData.find(s => s.number === surahId);
+	const surah = appState.quranData?.find(s => s.number === surahId);
 	if (!surah) {
-		surahDetailContainer.innerHTML = `
-            <div class="error-message">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Data surah tidak ditemukan</p>
-            </div>
-        `;
+		container.innerHTML = errorMessage(new Error("Data surah tidak ditemukan"));
 		return;
 	}
 
@@ -791,52 +694,47 @@ function renderSearchInSurahResults(quran, query, surahId) {
         <div class="search-header">
             <h2>Hasil Pencarian: "${query}" dalam ${surah.name_latin}</h2>
             <div class="surah-meta">
-                <div class="meta-item">Ditemukan ${quran.total} hasil</div>
-                <div class="meta-item">Halaman ${quran.current_page} dari ${quran.last_page}</div>
+                <div>Ditemukan ${quran.total} hasil</div>
+                <div>Halaman ${quran.current_page} dari ${quran.last_page}</div>
             </div>
         </div>
         <div class="verses-container">
     `;
 
-	// Render hasil pencarian
 	quran.data.forEach(verse => {
-		const audioUrl = verse.audio?.["05"] || "";
-		const shareContent = `Q.S. ${surah.name_latin}:${verse.verse_number}\n\n${verse.arabic_text}\n\nTerjemahan: ${verse.translation}`;
-		const encodedContent = encodeURIComponent(shareContent);
-
-		// Highlight matches in text
-		const highlightedArabic = highlightMatches(verse.arabic_text, query);
-		const highlightedLatin = highlightMatches(verse.latin_text, query);
-		const highlightedTranslation = highlightMatches(verse.translation, query);
+		const audio = verse.audio?.["05"] || "";
+		const share = encodeURIComponent(
+			`Q.S. ${surah.name_latin}:${verse.verse_number}\n\n${verse.arabic_text}\n\nTerjemahan: ${verse.translation}`
+		);
 
 		html += `
             <div class="verse-item">
                 <div class="verse-header">
                     <div class="verse-number">${verse.verse_number}</div>
                     <div class="verse-controls">
-                        <div class="verse-audio">
-                            <button onclick="playAudio('${audioUrl}')">
-                                <i class="fas fa-play"></i>
-                            </button>
-                        </div>
-                        <div class="verse-share">
-                            <button class="share-btn" data-content="${encodedContent}">
-                                <i class="fas fa-share-alt"></i>
-                            </button>
-                        </div>
+                        <div><button onclick="playAudio('${audio}')"><i class="fas fa-play"></i></button></div>
+                        <div><button class="share-btn" data-content="${share}"><i class="fas fa-share-alt"></i></button></div>
                     </div>
                 </div>
-                <div class="arabic-text">${highlightedArabic}</div>
-                <div class="latin-text">${highlightedLatin}</div>
-                <div class="translation-text">${highlightedTranslation}</div>
+                <div class="arabic-text">${highlightMatches(
+									verse.arabic_text,
+									query
+								)}</div>
+                <div class="latin-text">${highlightMatches(
+									verse.latin_text,
+									query
+								)}</div>
+                <div class="translation-text">${highlightMatches(
+									verse.translation,
+									query
+								)}</div>
             </div>
         `;
 	});
 
 	html += `</div><div id="searchInSurahPaginationContainer"></div>`;
-	surahDetailContainer.innerHTML = html;
+	container.innerHTML = html;
 
-	// Render pagination
 	const paginationContainer = document.getElementById(
 		"searchInSurahPaginationContainer"
 	);
@@ -855,26 +753,15 @@ async function searchHadithsGlobal(query, page = 1) {
 		const url = `${API_CONFIG.search.url}?query=${encodeURIComponent(
 			query
 		)}&type=hadith&page=${page}`;
-		const response = await fetch(url);
+		const res = await fetch(url);
+		if (!res.ok) throw new Error("Pencarian global hadits gagal");
 
-		if (!response.ok) throw new Error("Pencarian global hadits gagal");
-
-		const data = await response.json();
-		renderSearchHadithResults(data.hadiths, query);
+		const data = await res.json();
+		renderSearchHadithResults(data, query);
 	} catch (error) {
 		console.error("Error searching global hadiths:", error);
-		const hadithsContainer = document.getElementById("hadithBooks");
-		if (hadithsContainer) {
-			hadithsContainer.innerHTML = `
-                        <div class="error-message">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <p>${
-															error.message ||
-															"Terjadi kesalahan saat melakukan pencarian"
-														}</p>
-                        </div>
-                    `;
-		}
+		const container = document.getElementById("hadithBooks");
+		if (container) container.innerHTML = errorMessage(error);
 	}
 }
 
@@ -883,7 +770,6 @@ function renderSearchHadithResults(hadithData, query) {
 	const headerContainer = document.getElementById("hadithHeaderContainer");
 	const paginationContainer = document.getElementById("hadithPagination");
 
-	// Pastikan elemen DOM ada
 	if (!hadithsContainer || !headerContainer || !paginationContainer) return;
 
 	hadithsContainer.innerHTML = "";
@@ -895,8 +781,8 @@ function renderSearchHadithResults(hadithData, query) {
         <div class="surah-header">
             <h2>Hasil Pencarian: "${query}"</h2>
             <div class="surah-meta">
-                <div class="meta-item">Ditemukan ${hadithData.total} hasil</div>
-                <div class="meta-item">Halaman ${hadithData.current_page} dari ${hadithData.last_page}</div>
+                <div>Ditemukan ${hadithData.total} hasil</div>
+                <div>Halaman ${hadithData.current_page} dari ${hadithData.last_page}</div>
             </div>
         </div>
     `;
@@ -905,12 +791,9 @@ function renderSearchHadithResults(hadithData, query) {
 	let html = "";
 
 	hadithData.data.forEach(hadith => {
-		// Highlight matches in hadith text
-		const highlightedArabic = highlightMatches(hadith.arabic, query);
-		const highlightedTranslation = highlightMatches(hadith.translation, query);
-
-		const shareContent = `${hadith.book_id} - Hadits No. ${hadith.number}\n\n${hadith.arabic}\n\nTerjemahan: ${hadith.translation}`;
-		const encodedContent = encodeURIComponent(shareContent);
+		const share = encodeURIComponent(
+			`${hadith.book_id} - Hadits No. ${hadith.number}\n\n${hadith.arabic}\n\nTerjemahan: ${hadith.translation}`
+		);
 
 		html += `
             <div class="verse-item">
@@ -921,15 +804,18 @@ function renderSearchHadithResults(hadithData, query) {
                     </div>
                     <div class="verse-controls">
                         <div class="verse-share">
-                            <button class="share-btn" data-content="${encodedContent}">
+                            <button class="share-btn" data-content="${share}">
                                 <i class="fas fa-share-alt"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-                <div class="arabic-text">${highlightedArabic}</div>
+                <div class="arabic-text">${highlightMatches(
+									hadith.arabic,
+									query
+								)}</div>
                 <div class="translation-text">
-                    <p>${highlightedTranslation}</p>
+                    <p>${highlightMatches(hadith.translation, query)}</p>
                 </div>
             </div>
         `;
@@ -937,7 +823,7 @@ function renderSearchHadithResults(hadithData, query) {
 
 	hadithsContainer.innerHTML = html;
 
-	// Render pagination jika ada lebih dari 1 halaman
+	// Render pagination
 	if (hadithData.last_page > 1 && paginationModule.render) {
 		paginationModule.render(paginationContainer, hadithData, url => {
 			const match = url.match(/page=(\d+)/);
@@ -953,26 +839,15 @@ async function searchHadithsInBook(bookId, query, page = 1) {
 		const url = `${API_CONFIG.search.url}?query=${encodeURIComponent(
 			query
 		)}&type=hadith&book_id=${bookId}&page=${page}`;
-		const response = await fetch(url);
+		const res = await fetch(url);
+		if (!res.ok) throw new Error("Pencarian dalam kitab hadits gagal");
 
-		if (!response.ok) throw new Error("Pencarian dalam kitab hadits gagal");
-
-		const data = await response.json();
-		renderHadithSearchResults(data.hadiths, query);
+		const data = await res.json();
+		renderHadithSearchResults(data, query);
 	} catch (error) {
 		console.error("Error searching hadiths in book:", error);
-		const hadithsContainer = document.getElementById("hadithBooks");
-		if (hadithsContainer) {
-			hadithsContainer.innerHTML = `
-                        <div class="error-message">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <p>${
-															error.message ||
-															"Terjadi kesalahan saat melakukan pencarian"
-														}</p>
-                        </div>
-                    `;
-		}
+		const container = document.getElementById("hadithBooks");
+		if (container) container.innerHTML = errorMessage(error);
 	}
 }
 
@@ -994,8 +869,8 @@ function renderHadithSearchResults(hadithData, query) {
         <div class="search-header">
             <h2>Hasil Pencarian: "${query}" dalam ${appState.currentCollection.name}</h2>
             <div class="surah-meta">
-                <div class="meta-item">Ditemukan ${hadithData.total} hasil</div>
-                <div class="meta-item">Halaman ${hadithData.current_page} dari ${hadithData.last_page}</div>
+                <div>Ditemukan ${hadithData.total} hasil</div>
+                <div>Halaman ${hadithData.current_page} dari ${hadithData.last_page}</div>
             </div>
         </div>
     `;
@@ -1004,12 +879,9 @@ function renderHadithSearchResults(hadithData, query) {
 
 	// Render hasil pencarian
 	hadithData.data.forEach(hadith => {
-		// Highlight matches in hadith text
-		const highlightedArabic = highlightMatches(hadith.arabic, query);
-		const highlightedTranslation = highlightMatches(hadith.translation, query);
-
-		const shareContent = `${appState.currentCollection.name} - Hadits No. ${hadith.number}\n\n${hadith.arabic}\n\nTerjemahan: ${hadith.translation}`;
-		const encodedContent = encodeURIComponent(shareContent);
+		const share = encodeURIComponent(
+			`${appState.currentCollection.name} - Hadits No. ${hadith.number}\n\n${hadith.arabic}\n\nTerjemahan: ${hadith.translation}`
+		);
 
 		html += `
             <div class="verse-item">
@@ -1017,16 +889,19 @@ function renderHadithSearchResults(hadithData, query) {
                     <div class="verse-number">${hadith.number}</div>
                     <div class="verse-controls">
                         <div class="verse-share">
-                            <button class="share-btn" data-content="${encodedContent}">
+                            <button class="share-btn" data-content="${share}">
                                 <i class="fas fa-share-alt"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-                <div class="arabic-text">${highlightedArabic}</div>
+                <div class="arabic-text">${highlightMatches(
+									hadith.arabic,
+									query
+								)}</div>
                 <div class="translation-text">
                     <strong>Terjemahan:</strong>
-                    <p>${highlightedTranslation}</p>
+                    <p>${highlightMatches(hadith.translation, query)}</p>
                 </div>
             </div>
         `;
@@ -1045,43 +920,25 @@ function renderHadithSearchResults(hadithData, query) {
 
 async function searchVersesGlobal(query, page = 1) {
 	try {
-		// Pastikan kita berada di view yang benar
 		showView("surahDetail", { isSearch: true });
-
 		const url = `${API_CONFIG.search.url}?query=${encodeURIComponent(
 			query
 		)}&type=quran&page=${page}`;
-		const response = await fetch(url);
+		const res = await fetch(url);
+		if (!res.ok) throw new Error("Pencarian di semua surah gagal");
 
-		if (!response.ok) {
-			throw new Error("Pencarian di semua surah gagal");
-		}
-
-		const data = await response.json();
-
-		// Validasi struktur data sebelum diproses
-		if (!data?.quran) {
-			throw new Error("Format respons pencarian tidak valid");
-		}
+		const data = await res.json();
+		if (!data?.quran) throw new Error("Data pencarian tidak valid");
 
 		renderSearchResults(data.quran, query);
 	} catch (error) {
 		console.error("Error searching:", error);
 		const container = document.getElementById("surahDetail");
-
 		if (container) {
-			container.innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>${
-											error.message ||
-											"Terjadi kesalahan saat melakukan pencarian"
-										}</p>
-                    <button class="nav-btn" onclick="searchVersesGlobal('${query}', ${page})">
-                        <i class="fas fa-redo"></i> Coba Lagi
-                    </button>
-                </div>
-            `;
+			container.innerHTML = errorMessage(
+				error,
+				`searchVersesGlobal('${query}', ${page})`
+			);
 		}
 	}
 }
@@ -1092,56 +949,55 @@ function renderSearchResults(quran, query) {
 	if (!container || !quran || !appState.quranData) return;
 
 	let html = `
-                <div class="search-header">
-                    <h2>Hasil Pencarian: "${query}"</h2>
-                    <div class="surah-meta">
-                        <div class="meta-item">Ditemukan ${quran.total} hasil</div>
-                        <div class="meta-item">Halaman ${quran.current_page} dari ${quran.last_page}</div>
-                    </div>
-                </div>
-                <div class="verses-container">
-            `;
+        <div class="search-header">
+            <h2>Hasil Pencarian: "${query}"</h2>
+            <div class="surah-meta">
+                <div>Ditemukan ${quran.total} hasil</div>
+                <div>Halaman ${quran.current_page} dari ${quran.last_page}</div>
+            </div>
+        </div>
+        <div class="verses-container">
+    `;
 
 	quran.data.forEach(verse => {
 		const surah = appState.quranData.find(s => s.number === verse.surah_number);
 		const surahName = surah ? surah.name_latin : `Surah ${verse.surah_number}`;
-		const audioUrl = verse.audio?.["05"] || "";
-		const shareContent = `Q.S. ${surahName}:${verse.verse_number}\n\n${verse.arabic_text}\n\nTerjemahan: ${verse.translation}`;
-		const encodedContent = encodeURIComponent(shareContent);
-
-		// Highlight matches
-		const highlightedArabic = highlightMatches(verse.arabic_text, query);
-		const highlightedLatin = highlightMatches(verse.latin_text, query);
-		const highlightedTranslation = highlightMatches(verse.translation, query);
+		const audio = verse.audio?.["05"] || "";
+		const share = encodeURIComponent(
+			`Q.S. ${surahName}:${verse.verse_number}\n\n${verse.arabic_text}\n\nTerjemahan: ${verse.translation}`
+		);
 
 		html += `
-                    <div class="verse-item search-result-item">
-                        <div class="surah-info">
-                            <div class="surah-name">${surahName}</div>
-                            <button class="nav-btn" onclick="goToSurah(${verse.surah_number})">
-                                <i class="fas fa-book-open"></i> Buka Surah
-                            </button>
-                        </div>
-                        <div class="verse-header">
-                            <div class="verse-number">${verse.verse_number}</div>
-                            <div class="verse-controls">
-                                <div class="verse-audio">
-                                    <button onclick="playAudio('${audioUrl}')">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                </div>
-                                <div class="verse-share">
-                                    <button class="share-btn" data-content="${encodedContent}">
-                                        <i class="fas fa-share-alt"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="arabic-text">${highlightedArabic}</div>
-                        <div class="latin-text">${highlightedLatin}</div>
-                        <div class="translation-text">${highlightedTranslation}</div>
+            <div class="verse-item search-result-item">
+                <div class="surah-info">
+                    <div class="surah-name">${surahName}</div>
+                    <button class="nav-btn" onclick="goToSurah(${
+											verse.surah_number
+										})">
+                        <i class="fas fa-book-open"></i> Buka Surah
+                    </button>
+                </div>
+                <div class="verse-header">
+                    <div class="verse-number">${verse.verse_number}</div>
+                    <div class="verse-controls">
+                        <div><button onclick="playAudio('${audio}')"><i class="fas fa-play"></i></button></div>
+                        <div><button class="share-btn" data-content="${share}"><i class="fas fa-share-alt"></i></button></div>
                     </div>
-                `;
+                </div>
+                <div class="arabic-text">${highlightMatches(
+									verse.arabic_text,
+									query
+								)}</div>
+                <div class="latin-text">${highlightMatches(
+									verse.latin_text,
+									query
+								)}</div>
+                <div class="translation-text">${highlightMatches(
+									verse.translation,
+									query
+								)}</div>
+            </div>
+        `;
 	});
 
 	html += `</div><div id="searchPaginationContainer" class="pagination"></div>`;
@@ -1163,40 +1019,38 @@ async function filterSurahs(query) {
 	showView("surahDetail", {
 		isSearch: true,
 		surah: { number: -1, name_latin: "Hasil pencarian" }
-	}); // Gunakan placeholder
+	});
 
 	const container = document.getElementById("surahDetail");
-	if (container) container.innerHTML = '<div class="Mencari ayat..."></div>';
+	if (container)
+		container.innerHTML = '<div class="loading">Mencari ayat...</div>';
 
 	try {
 		await searchVersesGlobal(query);
 	} catch (error) {
 		console.error("Error filtering surah:", error);
 		if (container) {
-			container.innerHTML = `<div error-message>
-			<i class="fas fa-exclamation-triangle"></i>
-			<p>${error.message || "Terjadi kesalahan saat melakukan pencarian"}</p>
-			</div>`;
+			container.innerHTML = errorMessage(error);
 		}
 	}
 }
 
 function goToSurah(surahNumber) {
-	const surah = appState.quranData.find(s => s.number === surahNumber);
-	if (surah) showView("surahDetail", { surah });
+	const surah = appState.quranData?.find(s => s.number === surahNumber);
+	surah && showView("surahDetail", { surah });
 }
 
+// Fungsi untuk Asmaul Husna
 async function fetchAsmaulHusna() {
 	const loadingEl = document.getElementById("asmaLoading");
 	const containerEl = document.getElementById("asmaGrid");
 
-	if (loadingEl) loadingEl.style.display = "flex";
-	if (containerEl) containerEl.innerHTML = "";
+	toggleElement("asmaLoading", true);
+	clearContainer("asmaGrid");
 
 	try {
 		const cacheKey = API_CONFIG.asmaulHusna.cacheKey;
 		const cached = await CacheManager.getItem(cacheKey);
-
 		if (cached) {
 			renderAsmaulHusna(cached);
 			return;
@@ -1209,52 +1063,42 @@ async function fetchAsmaulHusna() {
 		if (!data.success) throw new Error("Server error");
 
 		const asma = data.data;
-
 		await CacheManager.setItem(cacheKey, asma);
-
 		renderAsmaulHusna(asma);
 	} catch (error) {
 		console.error("Error fetching Asmaul Husna:", error);
 		if (containerEl) {
-			containerEl.innerHTML = `<div class="error-message">
-			  <i class="fas fa-exclamation-triangle"></i>
-			  <p>Gagal memuat data Asmaul Husna. Silakan coba lagi nanti.</p>
-			  <button class="nav-btn" onclick="fetchAsmaulHusna()">
-			    <i class="fas fa-redo"></i> Muat Ulang
-			  </button>
-			</div>`;
+			containerEl.innerHTML = errorMessage(error, "fetchAsmaulHusna()");
 		}
 	} finally {
-		if (loadingEl) loadingEl.style.display = "none";
+		toggleElement("asmaLoading", false);
 	}
 }
 
 function renderAsmaulHusna(data) {
 	const container = document.getElementById("asmaGrid");
-
 	if (!container) return;
 
 	container.innerHTML = data
 		.map(
 			asma => `
-      <div class="asma-card" data-id="${asma.id}">
-        <div class="asma-number">${asma.number}</div>
-        <div class="asma-arabic">${asma.arabic}</div>
-        <div class="asma-name">${asma.latine}</div>
-        <div class="asma-meaning">${asma.meaning.id}</div>
-      </div>
+        <div class="asma-card" data-id="${asma.id}">
+            <div class="asma-number">${asma.number}</div>
+            <div class="asma-arabic">${asma.arabic}</div>
+            <div class="asma-name">${asma.latine}</div>
+            <div class="asma-meaning">${asma.meaning.id}</div>
+        </div>
     `
 		)
 		.join("");
 
-	container.querySelectorAll(".asma-card").forEach(card =>
+	container.querySelectorAll(".asma-card").forEach(card => {
 		card.addEventListener("click", () => {
-			const asmaId = card.dataset.id;
-			showView("asmaDetail", { id: asmaId });
-		})
-	);
+			showView("asmaDetail", { id: card.dataset.id });
+		});
+	});
 
-	// Event listener untuk pencarian
+	// Pencarian Asmaul Husna
 	const searchInput = document.getElementById("searchAsmaInput");
 	if (searchInput) {
 		searchInput.addEventListener("input", function () {
@@ -1267,11 +1111,8 @@ function renderAsmaulHusna(data) {
 					.querySelector(".asma-meaning")
 					.textContent.toLowerCase();
 
-				if (name.includes(query) || meaning.includes(query)) {
-					card.style.display = "block";
-				} else {
-					card.style.display = "none";
-				}
+				card.style.display =
+					name.includes(query) || meaning.includes(query) ? "block" : "none";
 			});
 		});
 	}
@@ -1279,60 +1120,211 @@ function renderAsmaulHusna(data) {
 
 async function showAsmaDetail(id) {
 	const header = document.getElementById("asmaHeader");
-	const description = document.getElementById("asmaDescription");
-	const explanation = document.getElementById("asmaExplanation");
 	const versesContainer = document.getElementById("asmaVerses");
 
-	// Tampilkan loading
-	header.innerHTML = '<div class="loading">Memuat detail...</div>';
-	versesContainer.innerHTML = "";
+	if (header) header.innerHTML = '<div class="loading">Memuat detail...</div>';
+	clearContainer("asmaVerses");
 
 	try {
-		// Ambil data detail dari server
-		const response = await fetch(`${API_CONFIG.asmaulHusna.url}/${id}`);
-		if (!response.ok) throw new Error("Gagal mengambil detail Asmaul Husna");
+		const res = await fetch(`${API_CONFIG.asmaulHusna.url}/${id}`);
+		if (!res.ok) throw new Error("Gagal mengambil detail Asmaul Husna");
 
-		const data = await response.json();
-
-		// Render detail
+		const data = await res.json();
 		renderAsmaDetail(data.data);
 	} catch (error) {
 		console.error("Error fetching Asmaul Husna detail:", error);
-		header.innerHTML = `
-      <div class="error-message">
-        <i class="fas fa-exclamation-triangle"></i>
-        <p>Gagal memuat detail. Silakan coba lagi nanti.</p>
-        <button class="nav-btn" onclick="showAsmaDetail(${id})">
-          <i class="fas fa-redo"></i> Muat Ulang
-        </button>
-      </div>
-    `;
+		if (header) {
+			header.innerHTML = errorMessage(error, `showAsmaDetail(${id})`);
+		}
 	} finally {
-		header.innerHTML = "";
+		if (header) header.innerHTML = "";
 	}
 }
 
 function renderAsmaDetail(asma) {
-	// Render header
 	document.getElementById("asmaNameLatin").textContent = asma.latine;
 	document.getElementById("asmaArabic").textContent = asma.arabic;
 	document.getElementById("asmaNumber").textContent = `Nomor: ${asma.number}`;
 	document.getElementById("asmaMeaning").textContent = asma.meaning;
 
-	// Render description
 	document.getElementById("asmaDescription").innerHTML = `
-    <p><strong>Arti:</strong> ${asma.meaning}</p>
-    <p><strong>Ditemukan dalam:</strong> ${asma.found}</p>
-  `;
+        <p><strong>Arti:</strong> ${asma.meaning}</p>
+        <p><strong>Ditemukan dalam:</strong> ${asma.found}</p>
+    `;
 
-	// Render explanation
 	document.getElementById("asmaExplanation").textContent = asma.description;
 
-	// Render ayat referensi
 	const versesContainer = document.getElementById("asmaVerses");
 	versesContainer.innerHTML = "";
 
 	asma.verses.forEach(verse => {
 		versesContainer.innerHTML += renderVerseItem(verse, verse.surah);
 	});
+}
+
+// Fungsi untuk Kisah Nabi
+async function fetchProphetStories() {
+	const loadingEl = document.getElementById("prophetLoading");
+	const containerEl = document.getElementById("prophetGrid");
+
+	toggleElement("prophetLoading", true);
+	clearContainer("prophetGrid");
+
+	try {
+		const cacheKey = API_CONFIG.prophetStories.cacheKey;
+		const cached = await CacheManager.getItem(cacheKey);
+		if (cached) {
+			renderProphetStories(cached);
+			return;
+		}
+
+		const res = await fetch(API_CONFIG.prophetStories.url);
+		if (!res.ok) throw new Error("Gagal mengambil data kisah nabi");
+
+		const { data } = await res.json();
+		const prophets = data || [];
+		await CacheManager.setItem(cacheKey, prophets);
+		renderProphetStories(prophets);
+	} catch (error) {
+		console.error("Error fetching prophet stories:", error);
+		if (containerEl) {
+			containerEl.innerHTML = errorMessage(error, "fetchProphetStories()");
+		}
+	} finally {
+		toggleElement("prophetLoading", false);
+	}
+}
+
+function renderProphetStories(prophets) {
+	const container = document.getElementById("prophetGrid");
+	if (!container || !Array.isArray(prophets.data)) return;
+
+	container.innerHTML = prophets.data
+		.map(prophet => {
+			const { text, className } = formatProphetYear(
+				prophet.birth_year,
+				prophet.name
+			);
+			return `
+            <div class="prophet-card" data-id="${prophet.id}">
+                <div class="book-cover" style="background-image: url('${prophet.image_url}')">
+                    <div class="book-overlay"></div>
+                    <div class="book-title">
+                        <h3>${prophet.name}</h3>
+                        <div class="prophet-meta">
+                            <i class="fas fa-calendar"></i>
+                            <span class="${className}">${text}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+		})
+		.join("");
+
+	container.querySelectorAll(".prophet-card").forEach(card => {
+		card.addEventListener("click", () => {
+			showView("prophetDetail", { id: card.dataset.id });
+		});
+	});
+
+	// Pencarian Kisah Nabi
+	const searchInput = document.getElementById("searchProphetInput");
+	if (searchInput) {
+		searchInput.addEventListener("input", function () {
+			const query = this.value.toLowerCase().trim();
+			const cards = container.querySelectorAll(".prophet-card");
+
+			cards.forEach(card => {
+				const name = card.querySelector("h3").textContent.toLowerCase();
+				card.style.display = name.includes(query) ? "block" : "none";
+			});
+		});
+	}
+}
+
+async function showProphetDetail(id) {
+	showView("prophetDetail");
+
+	const header = document.getElementById("prophetDetailLoading");
+	if (header) header.innerHTML = '<div class="loading">Memuat detail...</div>';
+
+	try {
+		const res = await fetch(`${API_CONFIG.prophetStories.url}/${id}`);
+		if (!res.ok) throw new Error("Gagal mengambil detail kisah nabi");
+
+		const data = await res.json();
+		const prophet = data.data || data;
+		renderProphetDetail(prophet);
+	} catch (error) {
+		console.error("Error fetching prophet detail:", error);
+		if (header) {
+			header.innerHTML = errorMessage(error, `showProphetDetail(${id})`);
+		}
+	}
+}
+
+function renderProphetDetail(prophet) {
+	document.getElementById("prophetName").textContent = prophet.name;
+
+	const birthYearEl = document.getElementById("prophetBirthYear");
+	const { text, className } = formatProphetYear(
+		prophet.birth_year,
+		prophet.name
+	);
+
+	if (birthYearEl) {
+		birthYearEl.textContent = `Tahun Kelahiran: ${text}`;
+		birthYearEl.className = `meta-item ${className}`;
+	}
+
+	const imageContainer = document.querySelector(".prophet-image-container");
+	if (imageContainer) {
+		imageContainer.innerHTML = `
+            <img id="prophetImage" src="${prophet.image_url}" alt="${prophet.name}"
+                 class="prophet-image" onload="this.style.opacity=1" 
+                 style="opacity:0; transition: opacity 0.5s ease">
+            <div class="image-caption">${prophet.name}</div>
+        `;
+	}
+
+	const descriptionEl = document.getElementById("prophetDescription");
+	if (descriptionEl) descriptionEl.innerHTML = `<p>${prophet.description}</p>`;
+
+	const additionalInfo = document.getElementById("prophetAdditionalInfo");
+	if (additionalInfo) {
+		additionalInfo.innerHTML = `
+            <div class="additional-info">
+                <div class="info-item">
+                    <i class="fas fa-calendar-day"></i>
+                    <span class="${className}">Tahun Kelahiran: ${text}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-user-clock"></i>
+                    <span>Usia: ${prophet.age || "Tidak diketahui"}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Tempat: ${prophet.place || "Tidak diketahui"}</span>
+                </div>
+            </div>
+        `;
+	}
+}
+
+// Fungsi untuk memformat tahun kelahiran
+function formatProphetYear(year, prophetName) {
+	if (!year) return { text: "Tidak diketahui", className: "" };
+
+	const yearNum = typeof year === "string" ? parseInt(year) || 0 : year;
+
+	if (prophetName.includes("Isa")) {
+		return { text: "1 M (Kelahiran Nabi Isa AS)", className: "isa-year" };
+	}
+
+	if (["Muhammad"].some(name => prophetName.includes(name))) {
+		return { text: `${yearNum}`, className: "m-year" };
+	}
+
+	return { text: `${yearNum}`, className: "sm-year" };
 }

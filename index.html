@@ -55,6 +55,21 @@
 								<i class="fas fa-arrow-left"></i>
 								<span>Daftar Asmaul Husna</span>
 							</button>
+							<!-- Kembali dari daftar kisah nabi ke rak buku -->
+							<button
+								class="nav-btn"
+								id="backFromProphets"
+								style="display: none">
+								<i class="fas fa-arrow-left"></i> <span>Kembali ke Rak</span>
+							</button>
+
+							<!-- Kembali dari detail kisah nabi ke daftar -->
+							<button
+								class="nav-btn"
+								id="backToProphetsList"
+								style="display: none">
+								<i class="fas fa-arrow-left"></i> <span>Daftar Nabi</span>
+							</button>
 							<button class="nav-btn" id="backFromSearch" style="display: none">
 								<i class="fas fa-arrow-left"></i> <span>Kembali</span>
 							</button>
@@ -94,8 +109,8 @@
 									<div class="surah-number-badge">H</div>
 								</div>
 								<div class="book-title">
-									<h3>Sahih Al-Bukhari</h3>
-									<p>Daftar Kitab Hadiths</p>
+									<h3>Al-Hadiths</h3>
+									<p>Kitab Hadiths</p>
 								</div>
 							</div>
 
@@ -118,6 +133,17 @@
 								<div class="book-title">
 									<h3>Asmaul Husna</h3>
 									<p>99 Nama Allah</p>
+								</div>
+							</div>
+
+							<div class="book" id="prophetStoriesBook">
+								<div class="book-image">
+									<i class="fas fa-book-open"></i>
+									<div class="surah-number-badge">K</div>
+								</div>
+								<div class="book-title">
+									<h3>Kisah Nabi</h3>
+									<p>25 Nabi dan Rasul</p>
 								</div>
 							</div>
 						</div>
@@ -268,6 +294,48 @@
 					<h3>Ayat Referensi</h3>
 					<div class="verses-container" id="asmaVerses"></div>
 				</div>
+			</div>
+
+			<!-- Daftar Kisah Nabi -->
+			<div id="prophetStoriesList" style="display: none">
+				<h2 class="section-title">Kisah Nabi dan Rasul</h2>
+
+				<div class="search-container">
+					<input
+						type="text"
+						id="searchProphetInput"
+						class="search-box"
+						placeholder="Cari nabi..." />
+					<div class="search-icon">
+						<i class="fas fa-search"></i>
+					</div>
+				</div>
+
+				<div class="prophet-stories-container">
+					<div class="loading-container" id="prophetLoading">
+						<div class="loading-spinner"></div>
+					</div>
+					<div class="prophet-grid" id="prophetGrid"></div>
+				</div>
+			</div>
+
+			<!-- Detail Kisah Nabi -->
+			<div id="prophetDetail" style="display: none">
+				<div class="loading-container" id="prophetDetailLoading">
+					<div class="loading-spinner"></div>
+				</div>
+				<div class="surah-header" id="prophetHeader">
+					<h2 id="prophetName"></h2>
+					<div class="surah-meta">
+						<div class="meta-item" id="prophetBirthYear"></div>
+					</div>
+				</div>
+
+				<div class="prophet-image-container"></div>
+
+				<div class="surah-description" id="prophetDescription"></div>
+
+				<div id="prophetAdditionalInfo" class="additional-info-container"></div>
 			</div>
 
 			<!-- Tambahkan container untuk paginasi di berbagai bagian -->

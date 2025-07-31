@@ -947,6 +947,298 @@ header {
 }
 
 /* ============================================= */
+/* PROPHET STORIES STYLES - MOBILE FIRST */
+/* ============================================= */
+
+.prophet-stories-container {
+	width: 100%;
+	margin-top: 20px;
+}
+
+/* Grid container */
+.prophet-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr); /* 2 kolom untuk mobile */
+	gap: 15px;
+	margin-top: 15px;
+}
+
+/* Kartu nabi */
+.prophet-card {
+	position: relative;
+	width: 100%;
+	padding-top: 150%;
+	perspective: 1000px;
+	cursor: pointer;
+	transition: transform 0.4s ease;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.prophet-card:hover {
+	transform: translateY(-5px);
+}
+
+/* Cover buku */
+.book-cover {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	border-radius: 4px;
+	box-shadow:
+		0 4px 8px rgba(0, 0, 0, 0.15),
+		0 2px 4px rgba(0, 0, 0, 0.1) inset;
+	transform-style: preserve-3d;
+	transform: rotateY(0deg);
+	transition: transform 0.6s ease;
+}
+
+/* Overlay gelap untuk teks */
+.book-overlay {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 40%;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+}
+
+/* Judul dan informasi */
+.book-title {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	padding: 12px;
+	z-index: 2;
+}
+
+.book-title h3 {
+	font-size: 14px;
+	margin: 0 0 4px 0;
+	color: white;
+	line-height: 1.3;
+	font-weight: 600;
+}
+
+.prophet-meta {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	color: #f0f0f0;
+}
+
+.prophet-meta i {
+	color: var(--gold);
+	font-size: 10px;
+}
+
+.prophet-meta span {
+	position: relative;
+	padding-right: 18px;
+}
+
+.prophet-meta span::after {
+	content: "";
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 0.7em;
+	font-weight: bold;
+	color: var(--gold);
+}
+
+/* Untuk tahun SM */
+.prophet-meta .sm-year::after {
+	content: "SM";
+}
+
+/* Untuk tahun M */
+.prophet-meta .m-year::after {
+	content: "M";
+}
+
+/* Khusus tahun Nabi Isa */
+.prophet-meta .isa-year {
+	color: var(--gold);
+	font-weight: bold;
+	position: relative;
+	padding-right: 0;
+}
+
+#prophetBirthYear {
+	position: relative;
+	padding-right: 25px;
+	font-weight: 600;
+}
+
+#prophetBirthYear::after {
+	content: "";
+	position: absolute;
+	right: 5px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 0.9em;
+	font-weight: bold;
+	color: var(--gold);
+}
+
+#prophetBirthYear.sm-year::after {
+	content: "SM";
+}
+
+#prophetBirthYear.m-year::after {
+	content: "M";
+}
+
+#prophetBirthYear.isa-year::after {
+	content: none;
+}
+
+/* DETAIL PAGE STYLES */
+#prophetDetail {
+	display: none;
+}
+
+.prophet-image-container {
+	position: relative;
+	max-width: 100%;
+	margin: 25px auto;
+	padding: 15px;
+	background: linear-gradient(
+		to bottom right,
+		rgba(139, 69, 19, 0.2),
+		rgba(101, 67, 33, 0.4)
+	);
+	border-radius: 12px;
+	box-shadow:
+		0 10px 30px rgba(0, 0, 0, 0.25),
+		inset 0 0 20px rgba(255, 215, 0, 0.2);
+	overflow: visible;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+/*.prophet-image-container::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/old-paper.png");
+	opacity: 0.4;
+	z-index: -1;
+}*/
+
+.prophet-image {
+	max-width: 100%;
+	max-height: 65vh;
+	height: auto;
+	width: auto;
+	object-fit: contain;
+	border-radius: 8px;
+	border: 2px solid var(--gold);
+	box-shadow:
+		0 5px 15px rgba(0, 0, 0, 0.3),
+		0 0 0 4px rgba(210, 180, 140, 0.3);
+	transition: all 0.4s ease;
+	z-index: 2;
+	position: relative;
+	background-color: white;
+	padding: 5px;
+}
+
+.prophet-image:hover {
+	transform: scale(1.02);
+	box-shadow:
+		0 8px 25px rgba(0, 0, 0, 0.4),
+		0 0 0 4px rgba(210, 180, 140, 0.5);
+}
+
+.image-caption {
+	position: relative; /* Diubah dari absolute ke relative */
+	margin-top: 15px;
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	color: var(--gold-light);
+	padding: 10px 25px;
+	border-radius: 30px;
+	font-family: "Playfair Display", serif;
+	font-size: 1.4rem;
+	font-weight: 700;
+	text-align: center;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+	z-index: 3;
+	text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+	width: fit-content;
+}
+
+/* Header detail */
+#prophetHeader {
+	text-align: center;
+	padding: 20px;
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	color: white;
+	border-radius: 8px;
+	margin-bottom: 20px;
+}
+
+#prophetHeader h2 {
+	font-size: 1.8rem;
+	margin-bottom: 10px;
+	color: var(--gold);
+}
+
+/* ============================================= */
+/* ADDITIONAL INFO STYLES */
+/* ============================================= */
+.additional-info-container {
+	margin: 20px 0;
+	padding: 15px;
+	background: rgba(0, 0, 0, 0.05);
+	border-radius: 8px;
+	border-left: 4px solid var(--gold);
+}
+
+.additional-info {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 15px;
+}
+
+.info-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	background: rgba(139, 69, 19, 0.1);
+	border-radius: 6px;
+	font-size: 0.95rem;
+}
+
+.info-item i {
+	color: var(--gold);
+	font-size: 1.1rem;
+}
+
+/* ============================================= */
 /* SEARCH BOX */
 /* ============================================= */
 .search-container {
@@ -1471,6 +1763,31 @@ footer {
 		font-size: 0.9rem;
 	}
 
+	.prophet-grid {
+		grid-template-columns: repeat(3, 1fr); /* 3 kolom untuk tablet */
+		gap: 18px;
+	}
+
+	.prophet-image {
+		max-width: 85%; /* Lebih kecil pada layar kecil */
+	}
+
+	.book-title h3 {
+		font-size: 15px;
+	}
+
+	.prophet-meta {
+		font-size: 12px;
+	}
+
+	.additional-info {
+		gap: 20px;
+	}
+
+	.info-item {
+		font-size: 1rem;
+	}
+
 	.footer-content {
 		flex-direction: row;
 	}
@@ -1645,6 +1962,49 @@ footer {
 		min-width: 35px;
 		height: 35px;
 	}
+
+	.prophet-grid {
+		grid-template-columns: repeat(4, 1fr); /* 4 kolom untuk desktop kecil */
+		gap: 20px;
+	}
+
+	.prophet-card {
+		padding-top: 140%;
+	}
+
+	.prophet-image-container {
+		max-width: 85%;
+	}
+
+	.prophet-image {
+		max-width: 75%; /* Lebih besar pada layar desktop */
+		max-height: 500px;
+	}
+
+	.image-caption {
+		font-size: 1.8rem;
+		margin-top: 20px;
+	}
+
+	#prophetStory {
+		font-size: 1.1rem;
+	}
+
+	#prophetHeader h2 {
+		font-size: 2rem;
+	}
+
+	.prophet-meta span::after {
+		font-size: 0.8em;
+	}
+
+	#prophetBirthYear::after {
+		font-size: 1em;
+	}
+
+	.additional-info {
+		justify-content: center;
+	}
 }
 
 /* ============================================= */
@@ -1692,6 +2052,15 @@ footer {
 	.arabic-text {
 		font-size: 2.6rem;
 	}
+
+	.prophet-grid {
+		grid-template-columns: repeat(5, 1fr); /* 5 kolom untuk desktop */
+	}
+
+	.prophet-image {
+		max-width: 65%; /* Lebih kecil pada layar besar */
+		max-height: 600px;
+	}
 }
 
 /* ============================================= */
@@ -1734,5 +2103,9 @@ footer {
 
 	.arabic-text {
 		font-size: 2.8rem;
+	}
+
+	.prophet-grid {
+		grid-template-columns: repeat(6, 1fr); /* 6 kolom untuk desktop besar */
 	}
 }
