@@ -177,7 +177,7 @@ function showView(viewId, options = {}) {
 			break;
 
 		case "asmaDetail":
-			document.getElementById("backFromAsma").style.display = "flex";
+			document.getElementById("backToAsmaList").style.display = "flex";
 
 			if (options.id) {
 				showAsmaDetail(options.id);
@@ -647,6 +647,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	setupClickListener("quranBook", () => showView("surahList"));
 	setupClickListener("hadithBook", () => showView("hadithCollections"));
 	setupClickListener("asmaulHusnaBook", () => showView("asmaulHusnaList"));
+	setupClickListener("backFromAsma", () => showView("mainShelf"));
 	setupClickListener("backToAsmaList", () => showView("asmaulHusnaList"));
 	setupClickListener("backToShelf", () => showView("mainShelf"));
 	setupClickListener("backToSurah", () => showView("surahList"));
