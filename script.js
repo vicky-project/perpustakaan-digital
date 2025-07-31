@@ -37,7 +37,8 @@ const domElements = {
 		"hadithCollections",
 		"hadithList",
 		"hadithPagination",
-		"asmaulHusnaList"
+		"asmaulHusnaList",
+		"asmaDetail"
 	],
 	backButtons: [
 		"backToShelf",
@@ -45,7 +46,8 @@ const domElements = {
 		"backToHadithList",
 		"backToHadithBook",
 		"backFromSearch",
-		"backFromAsma"
+		"backFromAsma",
+		"backToAsmaList"
 	]
 };
 
@@ -176,6 +178,10 @@ function showView(viewId, options = {}) {
 
 		case "asmaDetail":
 			document.getElementById("backFromAsma").style.display = "flex";
+
+			if (options.id) {
+				showAsmaDetail(options.id);
+			}
 			break;
 	}
 
@@ -641,6 +647,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	setupClickListener("quranBook", () => showView("surahList"));
 	setupClickListener("hadithBook", () => showView("hadithCollections"));
 	setupClickListener("asmaulHusnaBook", () => showView("asmaulHusnaList"));
+	setupClickListener("backToAsmaList", () => showView("asmaulHusnaList"));
 	setupClickListener("backToShelf", () => showView("mainShelf"));
 	setupClickListener("backToSurah", () => showView("surahList"));
 	setupClickListener("backToHadithList", () => showView("hadithCollections"));
@@ -1242,7 +1249,7 @@ function renderAsmaulHusna(data) {
 	container.querySelectorAll(".asma-card").forEach(card =>
 		card.addEventListener("click", () => {
 			const asmaId = card.dataset.id;
-			showAsmaDetail(asmaId);
+			showView("asmaDetail", { id: asmaId });
 		})
 	);
 
@@ -1270,8 +1277,6 @@ function renderAsmaulHusna(data) {
 }
 
 async function showAsmaDetail(id) {
-	showView("asmaDetail");
-
 	const header = document.getElementById("asmaHeader");
 	const description = document.getElementById("asmaDescription");
 	const explanation = document.getElementById("asmaExplanation");
