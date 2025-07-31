@@ -435,6 +435,8 @@ async function renderHadithList(collectionId, page = 1) {
 		const data = await fetchHadithsByBook(collectionId, page);
 		if (!data?.hadiths?.data) throw new Error("Data hadits tidak valid");
 
+		appState.currentCollection = collectionId;
+
 		// Render header
 		if (headerContainer) {
 			headerContainer.innerHTML = `
@@ -462,7 +464,7 @@ async function renderHadithList(collectionId, page = 1) {
 					const query = e.target.value.trim();
 
 					if (query.length >= 3 && appState.currentCollection) {
-						searchHadithsInBook(appState.currentCollection.id, query);
+						searchHadithsInBook(appState.currentCollection, query);
 					}
 				}
 			});
