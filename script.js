@@ -88,7 +88,8 @@ const viewHandlers = {
 		showElement("backToHadithList");
 		showElement("searchHadithInput", true);
 		resetInput("searchHadithInput");
-		options.collection &&
+		!options.isSearch &&
+			options.collection &&
 			renderHadithList(options.collection.id, options.page || 1);
 	},
 	asmaulHusnaList: () => {
@@ -435,7 +436,7 @@ async function renderHadithList(collectionId, page = 1) {
 		const data = await fetchHadithsByBook(collectionId, page);
 		if (!data?.hadiths?.data) throw new Error("Data hadits tidak valid");
 
-		appState.currentCollection = collectionId;
+		appState.currentCollection = { id: collectionId, name: data.name };
 
 		// Render header
 		if (headerContainer) {
@@ -464,7 +465,7 @@ async function renderHadithList(collectionId, page = 1) {
 					const query = e.target.value.trim();
 
 					if (query.length >= 3 && appState.currentCollection) {
-						searchHadithsInBook(appState.currentCollection, query);
+						searchHadithsInBook(appState.currentCollection.id, query);
 					}
 				}
 			});
@@ -760,6 +761,18 @@ function renderSearchInSurahResults(quran, query, surahId) {
 
 // Fungsi untuk melakukan pencarian global hadits
 async function searchHadithsGlobal(query, page = 1) {
+	appState.currentCollection = null;
+
+	const hadithsContainer = document.getElementById("hadithBooks");
+	const headerContainer = document.getElementById("hadithHeaderContainer");
+	const paginationContainer = document.getElementById("hadithPagination");
+
+	// Tampilkan loading state
+	if (hadithsContainer)
+		hadithsContainer.innerHTML = '<div class="loading">Mencari hadits...</div>';
+	if (headerContainer) headerContainer.innerHTML = "";
+	if (paginationContainer) paginationContainer.innerHTML = "";
+
 	try {
 		showView("hadithList", { isSearch: true });
 		const url = `${API_CONFIG.search.url}?query=${encodeURIComponent(
