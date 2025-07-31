@@ -285,6 +285,7 @@ function renderSurahBooks() {
 // Render detail surah
 async function renderSurahDetail(surah, page = 1) {
 	const container = document.getElementById("surahDetail");
+
 	if (!container) return;
 
 	container.innerHTML = '<div class="loading">Memuat ayat...</div>';
@@ -313,6 +314,15 @@ async function renderSurahDetail(surah, page = 1) {
 							.join("")}</div>
             <div id="surahDetailPaginationContainer"></div>
         `;
+
+		const paginationContainer = document.getElementById(
+			"surahDetailPaginationContainer"
+		);
+		if (paginationContainer && paginationModule.render && data.last_page > 1) {
+			paginationModule.render(paginationContainer, data, url =>
+				renderSurahDetail(surah, url ? parseInt(url.match(/page=(\d+)/)[1]) : 1)
+			);
+		}
 
 		document
 			.getElementById("searchInSurahInput")
