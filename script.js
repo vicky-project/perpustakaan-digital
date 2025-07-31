@@ -8,6 +8,10 @@ const API_CONFIG = {
 		url: "https://vickyserver.my.id/server/api/books/hadith-book",
 		cacheKey: "hadith_data_cache___"
 	},
+	asmaulHusna: {
+		url: "https://vickyserver.my.id/server/api/books/asmaul-husna",
+		cacheKey: "asmaul_husna_cache___"
+	},
 	search: {
 		url: "https://vickyserver.my.id/server/api/search"
 	},
@@ -32,14 +36,16 @@ const domElements = {
 		"surahDetail",
 		"hadithCollections",
 		"hadithList",
-		"hadithPagination"
+		"hadithPagination",
+		"asmaulHusnaList"
 	],
 	backButtons: [
 		"backToShelf",
 		"backToSurah",
 		"backToHadithList",
 		"backToHadithBook",
-		"backFromSearch"
+		"backFromSearch",
+		"backFromAsma"
 	]
 };
 
@@ -150,6 +156,26 @@ function showView(viewId, options = {}) {
 				renderHadithList(options.collection.id, options.page || 1);
 			}
 
+			break;
+
+		case "asmaulHusnaList":
+			const backFromAsma = document.getElementById("backFromAsma");
+			if (backFromAsma) backFromAsma.style.display = "flex";
+
+			if (
+				document.getElementById("searchAsmaInput") &&
+				document.getElementById("searchAsmaInput").parentElement
+			) {
+				document.getElementById("searchAsmaInput").parentElement.style.display =
+					"block";
+				document.getElementById("searchAsmaInput").value = "";
+			}
+
+			fetchAsmaulHusna();
+			break;
+
+		case "asmaDetail":
+			document.getElementById("backFromAsma").style.display = "flex";
 			break;
 	}
 
@@ -614,6 +640,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 	setupClickListener("quranBook", () => showView("surahList"));
 	setupClickListener("hadithBook", () => showView("hadithCollections"));
+	setupClickListener("asmaulHusnaBook", () => showView("asmaulHusnaList"));
 	setupClickListener("backToShelf", () => showView("mainShelf"));
 	setupClickListener("backToSurah", () => showView("surahList"));
 	setupClickListener("backToHadithList", () => showView("hadithCollections"));
@@ -622,6 +649,7 @@ document.addEventListener("DOMContentLoaded", function () {
 			showView("hadithList", { collection: appState.currentCollection });
 		}
 	});
+	setupClickListener("backFromAsma", () => showView("mainShelf"));
 
 	// Pencarian
 	const initSearchInput = (id, handler) => {
@@ -1148,4 +1176,157 @@ async function filterSurahs(query) {
 function goToSurah(surahNumber) {
 	const surah = appState.quranData.find(s => s.number === surahNumber);
 	if (surah) showView("surahDetail", { surah });
+}
+
+async function fetchAsmaulHusna() {
+	const loadingEl = document.getElementById("asmaLoading");
+	const containerEl = document.getElementById("asmaGrid");
+
+	if (loadingEl) loadingEl.style.display = "flex";
+	if (containerEl) containerEl.innerHTML = "";
+
+	try {
+		const cacheKey = API_CONFIG.asmaulHusna.cacheKey;
+		const cached = await CacheManager.getItem(cacheKey);
+
+		if (cached) {
+			renderAsmaulHusna(cached);
+			return;
+		}
+
+		const res = await fetch(API_CONFIG.asmaulHusna.url);
+		if (!res.ok) throw new Error("Gagal mengambil data Asmaul Husna");
+
+		const data = await res.json();
+		if (!data.success) throw new Error("Server error");
+
+		const asma = data.data;
+
+		await CacheManager.setItem(cacheKey, asma);
+
+		renderAsmaulHusna(asma);
+	} catch (error) {
+		console.error("Error fetching Asmaul Husna:", error);
+		if (containerEl) {
+			containerEl.innerHTML = `<div class="error-message">
+			  <i class="fas fa-exclamation-triangle"></i>
+			  <p>Gagal memuat data Asmaul Husna. Silakan coba lagi nanti.</p>
+			  <button class="nav-btn" onclick="fetchAsmaulHusna()">
+			    <i class="fas fa-redo"></i> Muat Ulang
+			  </button>
+			</div>`;
+		}
+	} finally {
+		if (loadingEl) loadingEl.style.display = "none";
+	}
+}
+
+function renderAsmaulHusna(data) {
+	const container = document.getElementById("asmaGrid");
+
+	if (!container) return;
+
+	container.innerHTML = data
+		.map(
+			asma => `
+      <div class="asma-card" data-id="${asma.id}">
+        <div class="asma-number">${asma.number}</div>
+        <div class="asma-arabic">${asma.arabic}</div>
+        <div class="asma-name">${asma.latine}</div>
+        <div class="asma-meaning">${asma.meaning.id}</div>
+      </div>
+    `
+		)
+		.join("");
+
+	container.querySelectorAll(".asma-card").forEach(card =>
+		card.addEventListener("click", () => {
+			const asmaId = card.dataset.id;
+			showAsmaDetail(asmaId);
+		})
+	);
+
+	// Event listener untuk pencarian
+	const searchInput = document.getElementById("searchAsmaInput");
+	if (searchInput) {
+		searchInput.addEventListener("input", function () {
+			const query = this.value.toLowerCase().trim();
+			const cards = container.querySelectorAll(".asma-card");
+
+			cards.forEach(card => {
+				const name = card.querySelector(".asma-name").textContent.toLowerCase();
+				const meaning = card
+					.querySelector(".asma-meaning")
+					.textContent.toLowerCase();
+
+				if (name.includes(query) || meaning.includes(query)) {
+					card.style.display = "block";
+				} else {
+					card.style.display = "none";
+				}
+			});
+		});
+	}
+}
+
+async function showAsmaDetail(id) {
+	showView("asmaDetail");
+
+	const header = document.getElementById("asmaHeader");
+	const description = document.getElementById("asmaDescription");
+	const explanation = document.getElementById("asmaExplanation");
+	const versesContainer = document.getElementById("asmaVerses");
+
+	// Tampilkan loading
+	header.innerHTML = '<div class="loading">Memuat detail...</div>';
+	versesContainer.innerHTML = "";
+
+	try {
+		// Ambil data detail dari server
+		const response = await fetch(`${API_CONFIG.asmaulHusna.url}/${id}`);
+		if (!response.ok) throw new Error("Gagal mengambil detail Asmaul Husna");
+
+		const data = await response.json();
+
+		// Render detail
+		renderAsmaDetail(data.data);
+	} catch (error) {
+		console.error("Error fetching Asmaul Husna detail:", error);
+		header.innerHTML = `
+      <div class="error-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Gagal memuat detail. Silakan coba lagi nanti.</p>
+        <button class="nav-btn" onclick="showAsmaDetail(${id})">
+          <i class="fas fa-redo"></i> Muat Ulang
+        </button>
+      </div>
+    `;
+	} finally {
+		header.innerHTML = "";
+	}
+}
+
+function renderAsmaDetail(asma) {
+	// Render header
+	document.getElementById("asmaNameLatin").textContent = asma.latine;
+	document.getElementById("asmaArabic").textContent = asma.arabic;
+	document.getElementById("asmaNumber").textContent = `Nomor: ${asma.number}`;
+	document.getElementById("asmaMeaning").textContent = asma.meaning;
+
+	// Render description
+	document.getElementById("asmaDescription").innerHTML = `
+    <p><strong>Arti:</strong> ${asma.meaning}</p>
+    <p><strong>Ditemukan dalam:</strong> ${asma.found}</p>
+  `;
+
+	// Render explanation
+	document.getElementById("asmaExplanation").textContent = asma.description;
+
+	// Render ayat referensi
+	const versesContainer = document.getElementById("asmaVerses");
+	versesContainer.innerHTML = "";
+
+	asma.verses.forEach(verse => {
+		versesContainer.innerHTML += renderVerseItem(verse, verse.surah);
+	});
 }

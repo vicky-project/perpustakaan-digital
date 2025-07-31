@@ -813,6 +813,139 @@ header {
 	z-index: 2;
 }
 
+/* ASMAUL HUSNA STYLES */
+.asmaul-husna-container {
+	margin-top: 20px;
+}
+
+.asma-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 15px;
+	margin-top: 15px;
+}
+
+.asma-card {
+	background: linear-gradient(
+		to bottom,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	border-radius: 8px;
+	padding: 15px;
+	text-align: center;
+	color: white;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+	position: relative;
+	overflow: hidden;
+	border: 1px solid var(--wood-accent);
+	transition: transform 0.3s ease;
+}
+
+.asma-card:hover {
+	transform: translateY(-5px);
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.asma-card::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	opacity: 0.2;
+}
+
+.asma-number {
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	background: var(--gold);
+	color: var(--dark);
+	width: 25px;
+	height: 25px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 0.8rem;
+}
+
+.asma-arabic {
+	font-family: var(--arabic-font);
+	font-size: 2rem;
+	margin: 10px 0;
+	line-height: 1.4;
+}
+
+.asma-name {
+	font-weight: bold;
+	margin-bottom: 5px;
+	color: var(--gold);
+}
+
+.asma-meaning {
+	font-size: 0.85rem;
+	line-height: 1.4;
+}
+
+/* Icon for Asmaul Husna */
+.fa-signature:before {
+	content: "\f5b7";
+}
+
+/* Detail Asmaul Husna */
+#asmaHeader {
+	text-align: center;
+	padding: 25px 15px;
+}
+
+#asmaHeader h2 {
+	font-size: 2.2rem;
+	color: var(--gold);
+	margin-bottom: 5px;
+}
+
+#asmaHeader h3 {
+	font-size: 2.8rem;
+	font-family: var(--arabic-font);
+	margin-bottom: 15px;
+}
+
+.surah-section {
+	margin-top: 25px;
+}
+
+.surah-section h3 {
+	font-family: "Playfair Display", serif;
+	font-size: 1.5rem;
+	color: var(--primary);
+	margin-bottom: 15px;
+	position: relative;
+	padding-bottom: 8px;
+}
+
+.surah-section h3::after {
+	content: "";
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 60px;
+	height: 3px;
+	background: var(--gold);
+}
+
+.surah-section p {
+	line-height: 1.7;
+	font-size: 1.05rem;
+	padding: 10px;
+	background: rgba(0, 0, 0, 0.05);
+	border-radius: 8px;
+}
+
 /* ============================================= */
 /* SEARCH BOX */
 /* ============================================= */

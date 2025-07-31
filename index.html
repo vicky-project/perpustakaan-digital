@@ -46,6 +46,9 @@
 								style="display: none">
 								<i class="fas fa-arrow-left"></i> <span>Daftar Hadits</span>
 							</button>
+							<button class="nav-btn" id="backFromAsma" style="display: none">
+								<i class="fas fa-arrow-left"></i> <span>Kembali ke Rak</span>
+							</button>
 							<button class="nav-btn" id="backFromSearch" style="display: none">
 								<i class="fas fa-arrow-left"></i> <span>Kembali</span>
 							</button>
@@ -98,6 +101,17 @@
 								<div class="book-title">
 									<h3>Doa Harian</h3>
 									<p>10+ doa-doa</p>
+								</div>
+							</div>
+
+							<div class="book" id="asmaulHusnaBook">
+								<div class="book-image">
+									<i class="fas fa-signature"></i>
+									<div class="surah-number-badge">A</div>
+								</div>
+								<div class="book-title">
+									<h3>Asmaul Husna</h3>
+									<p>99 Nama Allah</p>
 								</div>
 							</div>
 						</div>
@@ -200,6 +214,54 @@
 					<div class="verse-container" id="hadithBooks"></div>
 				</div>
 				<div class="pagination-container" id="hadithPagination"></div>
+			</div>
+
+			<!-- Daftar Asmaul Husna -->
+			<div id="asmaulHusnaList" style="display: none">
+				<h2 class="section-title">Asmaul Husna</h2>
+
+				<div class="search-container">
+					<input
+						type="text"
+						id="searchAsmaInput"
+						class="search-box"
+						placeholder="Cari nama Allah..." />
+					<div class="search-icon">
+						<i class="fas fa-search"></i>
+					</div>
+				</div>
+
+				<div class="asmaul-husna-container">
+					<div class="loading-container" id="asmaLoading">
+						<div class="loading-spinner"></div>
+					</div>
+					<div class="asma-grid" id="asmaGrid"></div>
+				</div>
+			</div>
+
+			<!-- Detail Asmaul Husna -->
+			<div id="asmaDetail" style="display: none">
+				<div class="surah-header">
+					<h1 id="asmaHeader"></h1>
+					<h2 id="asmaNameLatin"></h2>
+					<h3 id="asmaArabic"></h3>
+					<div class="surah-meta">
+						<div class="meta-item" id="asmaNumber"></div>
+						<div class="meta-item" id="asmaMeaning"></div>
+					</div>
+				</div>
+
+				<div class="surah-description" id="asmaDescription"></div>
+
+				<div class="surah-section">
+					<h3>Penjelasan</h3>
+					<p id="asmaExplanation"></p>
+				</div>
+
+				<div class="surah-section">
+					<h3>Ayat Referensi</h3>
+					<div class="verses-container" id="asmaVerses"></div>
+				</div>
 			</div>
 
 			<!-- Tambahkan container untuk paginasi di berbagai bagian -->
