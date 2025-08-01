@@ -1191,10 +1191,9 @@ function renderAsmaDetail(asma) {
 async function fetchProphetStories() {
 	const containerEl = document.getElementById("prophetGrid");
 
-	toggleElement("prophetLoading", true);
-	clearContainer("prophetGrid");
-
 	try {
+		toggleElement("prophetLoading", true);
+		clearContainer("prophetGrid");
 		const cacheKey = API_CONFIG.prophetStories.cacheKey;
 		const cached = await CacheManager.getItem(cacheKey);
 		if (cached) {
