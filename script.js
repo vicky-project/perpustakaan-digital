@@ -1189,7 +1189,6 @@ function renderAsmaDetail(asma) {
 
 // Fungsi untuk Kisah Nabi
 async function fetchProphetStories() {
-	const loadingEl = document.getElementById("prophetLoading");
 	const containerEl = document.getElementById("prophetGrid");
 
 	toggleElement("prophetLoading", true);
@@ -1212,6 +1211,7 @@ async function fetchProphetStories() {
 		renderProphetStories(prophets);
 	} catch (error) {
 		console.error("Error fetching prophet stories:", error);
+		alert(error.message);
 		if (containerEl) {
 			containerEl.innerHTML = errorMessage(error, "fetchProphetStories()");
 		}
