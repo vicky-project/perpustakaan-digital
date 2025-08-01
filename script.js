@@ -1194,6 +1194,8 @@ async function fetchProphetStories() {
 	try {
 		toggleElement("prophetLoading", true);
 		clearContainer("prophetGrid");
+		containerEl.innerHTML =
+			'<div class="loading-container"><div class="loading-spinner"></div></div>';
 		const cacheKey = API_CONFIG.prophetStories.cacheKey;
 		const cached = await CacheManager.getItem(cacheKey);
 		if (cached) {
