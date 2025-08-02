@@ -14,9 +14,6 @@
 			href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap"
 			rel="stylesheet" />
 		<link rel="stylesheet" href="style.css" type="text/css" media="all" />
-		<link
-			rel="stylesheet"
-			href="https://unpkg.com/pagination-system/dist/pagination-system.min.css" />
 	</head>
 	<body>
 		<header>
@@ -27,53 +24,9 @@
 						<h1>Perpustakaan <span>Digital</span></h1>
 					</div>
 					<div class="header-right">
-						<div class="nav-controls">
-							<button class="nav-btn" id="backToShelf" style="display: none">
-								<i class="fas fa-arrow-left"></i> <span>Kembali ke Rak</span>
-							</button>
-							<button class="nav-btn" id="backToSurah" style="display: none">
-								<i class="fas fa-arrow-left"></i> <span>Daftar Surah</span>
-							</button>
-							<button
-								class="nav-btn"
-								id="backToHadithList"
-								style="display: none">
-								<i class="fas fa-arrow-left"></i> <span>Daftar Kitab</span>
-							</button>
-							<button
-								class="nav-btn"
-								id="backToHadithBook"
-								style="display: none">
-								<i class="fas fa-arrow-left"></i> <span>Daftar Hadits</span>
-							</button>
-							<!-- Di dalam header -->
-							<button class="nav-btn" id="backFromAsma" style="display: none">
-								<i class="fas fa-arrow-left"></i> <span>Kembali ke Rak</span>
-							</button>
-
-							<button class="nav-btn" id="backToAsmaList" style="display: none">
-								<i class="fas fa-arrow-left"></i>
-								<span>Daftar Asmaul Husna</span>
-							</button>
-							<!-- Kembali dari daftar kisah nabi ke rak buku -->
-							<button
-								class="nav-btn"
-								id="backFromProphets"
-								style="display: none">
-								<i class="fas fa-arrow-left"></i> <span>Kembali ke Rak</span>
-							</button>
-
-							<!-- Kembali dari detail kisah nabi ke daftar -->
-							<button
-								class="nav-btn"
-								id="backToProphetsList"
-								style="display: none">
-								<i class="fas fa-arrow-left"></i> <span>Daftar Nabi</span>
-							</button>
-							<button class="nav-btn" id="backFromSearch" style="display: none">
-								<i class="fas fa-arrow-left"></i> <span>Kembali</span>
-							</button>
-						</div>
+						<button class="nav-btn" id="backButton" style="display: none">
+							<i class="fas fa-arrow-left"></i> <span>Kembali</span>
+						</button>
 						<button id="themeToggle" class="theme-toggle">
 							<i class="fas fa-moon"></i>
 						</button>
@@ -83,67 +36,56 @@
 		</header>
 
 		<div class="container">
-			<div class="bookshelf-container" id="mainShelf">
-				<h2 class="section-title">Rak Buku</h2>
-
-				<div class="shelf-header">
-					<i class="fas fa-mosque"></i>
-					<h3>Islam</h3>
-				</div>
-				<div class="bookshelf">
-					<div class="books-container">
-						<div class="books">
-							<div class="book" id="quranBook">
-								<div class="book-image">
-									<i class="fas fa-book-quran"></i>
-									<div class="surah-number-badge">Q</div>
+			<!-- Container utama untuk semua tampilan -->
+			<div id="mainContent">
+				<!-- Rak buku utama -->
+				<div id="mainShelf">
+					<h2 class="section-title">Rak Buku</h2>
+					<div class="shelf-header">
+						<i class="fas fa-mosque"></i>
+						<h3>Islam</h3>
+					</div>
+					<div class="bookshelf">
+						<div class="books-container">
+							<div class="books">
+								<div class="book" id="quranBook">
+									<div class="book-image">
+										<i class="fas fa-book-quran"></i>
+										<div class="surah-number-badge">Q</div>
+									</div>
+									<div class="book-title">
+										<h3>Al-Quran Al-Karim</h3>
+									</div>
 								</div>
-								<div class="book-title">
-									<h3>Al-Quran Al-Karim</h3>
+								<div class="book" id="hadithBook">
+									<div class="book-image">
+										<i class="fas fa-book"></i>
+										<div class="surah-number-badge">H</div>
+									</div>
+									<div class="book-title">
+										<h3>Al-Hadiths</h3>
+										<p>Kitab Hadiths</p>
+									</div>
 								</div>
-							</div>
-
-							<div class="book" id="hadithBook">
-								<div class="book-image">
-									<i class="fas fa-book"></i>
-									<div class="surah-number-badge">H</div>
+								<div class="book" id="asmaulHusnaBook">
+									<div class="book-image">
+										<i class="fas fa-signature"></i>
+										<div class="surah-number-badge">A</div>
+									</div>
+									<div class="book-title">
+										<h3>Asmaul Husna</h3>
+										<p>99 Nama Allah</p>
+									</div>
 								</div>
-								<div class="book-title">
-									<h3>Al-Hadiths</h3>
-									<p>Kitab Hadiths</p>
-								</div>
-							</div>
-
-							<div class="book">
-								<div class="book-image">
-									<i class="fas fa-book-open"></i>
-									<div class="surah-number-badge">D</div>
-								</div>
-								<div class="book-title">
-									<h3>Doa Harian</h3>
-									<p>10+ doa-doa</p>
-								</div>
-							</div>
-
-							<div class="book" id="asmaulHusnaBook">
-								<div class="book-image">
-									<i class="fas fa-signature"></i>
-									<div class="surah-number-badge">A</div>
-								</div>
-								<div class="book-title">
-									<h3>Asmaul Husna</h3>
-									<p>99 Nama Allah</p>
-								</div>
-							</div>
-
-							<div class="book" id="prophetStoriesBook">
-								<div class="book-image">
-									<i class="fas fa-book-open"></i>
-									<div class="surah-number-badge">K</div>
-								</div>
-								<div class="book-title">
-									<h3>Kisah Nabi</h3>
-									<p>25 Nabi dan Rasul</p>
+								<div class="book" id="prophetStoriesBook">
+									<div class="book-image">
+										<i class="fas fa-book-open"></i>
+										<div class="surah-number-badge">K</div>
+									</div>
+									<div class="book-title">
+										<h3>Kisah Nabi</h3>
+										<p>25 Nabi dan Rasul</p>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -151,198 +93,38 @@
 				</div>
 			</div>
 
-			<div class="bookshelf-container" id="surahList" style="display: none">
-				<h2 class="section-title">Daftar Surah Al-Quran</h2>
-
+			<!-- Container reusable untuk daftar konten -->
+			<div id="listContainer" class="bookshelf-container" style="display: none">
+				<h2 class="section-title" id="listTitle"></h2>
 				<div class="search-container">
 					<input
 						type="text"
 						id="searchInput"
 						class="search-box"
-						placeholder="Cari surah berdasarkan nama atau nomor..." />
+						placeholder="Cari..." />
 					<div class="search-icon">
 						<i class="fas fa-search"></i>
 					</div>
 				</div>
-
 				<div class="shelf-header">
-					<i class="fas fa-book-quran"></i>
-					<h3>Pilih Surah</h3>
+					<i class="fas fa-book" id="listIcon"></i>
+					<h3 id="listSubtitle"></h3>
 				</div>
 				<div class="bookshelf">
 					<div class="books-container">
-						<div class="loading-container" id="surahLoading">
+						<div class="loading-container" id="listLoading">
 							<div class="loading-spinner"></div>
 						</div>
-						<div class="books" id="surahBooks">
-							<!-- Surah books will be loaded here -->
-						</div>
+						<div class="books" id="listContent"></div>
 					</div>
 				</div>
 			</div>
 
-			<div class="surah-detail-container" id="surahDetail">
-				<!-- Surah detail will be loaded here -->
-			</div>
-			<div
-				id="surahDetailPaginationContainer"
-				class="pagination-container"></div>
+			<!-- Container reusable untuk detail konten -->
+			<div id="detailContainer" style="display: none"></div>
 
-			<!-- Daftar Kitab Hadits -->
-			<div
-				class="bookshelf-container"
-				id="hadithCollections"
-				style="display: none">
-				<h2 class="section-title">Kitab Hadits Utama</h2>
-
-				<div class="search-container">
-					<input
-						type="text"
-						id="searchGlobalHadithInput"
-						class="search-box"
-						placeholder="Cari hadits dalam semua kitab..." />
-					<div class="search-icon">
-						<i class="fas fa-search"></i>
-					</div>
-				</div>
-
-				<div class="shelf-header">
-					<i class="fas fa-book"></i>
-					<h3>Pilih Kitab Hadits</h3>
-				</div>
-				<div class="bookshelf">
-					<div class="books-container">
-						<div class="loading-container" id="hadithCollectionsLoading">
-							<div class="loading-spinner"></div>
-						</div>
-						<div class="books" id="hadithCollectionsBooks">
-							<!-- Kitab hadits akan dimuat di sini -->
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Daftar Hadits dalam Satu Kitab -->
-			<div id="hadithList" style="display: none">
-				<h2 class="section-title">Daftar Hadits</h2>
-
-				<div class="search-container">
-					<input
-						type="text"
-						id="searchHadithInput"
-						class="search-box"
-						placeholder="Cari hadits berdasarkan dalam kitab..." />
-					<div class="search-icon">
-						<i class="fas fa-search"></i>
-					</div>
-				</div>
-
-				<div id="hadithHeaderContainer"></div>
-
-				<div class="hadith-content-container">
-					<div class="loading-container" id="hadithLoading">
-						<div class="loading-spinner"></div>
-					</div>
-					<div class="verse-container" id="hadithBooks"></div>
-				</div>
-				<div class="pagination-container" id="hadithPagination"></div>
-			</div>
-
-			<!-- Daftar Asmaul Husna -->
-			<div id="asmaulHusnaList" style="display: none">
-				<h2 class="section-title">Asmaul Husna</h2>
-
-				<div class="search-container">
-					<input
-						type="text"
-						id="searchAsmaInput"
-						class="search-box"
-						placeholder="Cari nama Allah..." />
-					<div class="search-icon">
-						<i class="fas fa-search"></i>
-					</div>
-				</div>
-
-				<div class="asmaul-husna-container">
-					<div class="loading-container" id="asmaLoading">
-						<div class="loading-spinner"></div>
-					</div>
-					<div class="asma-grid" id="asmaGrid"></div>
-				</div>
-			</div>
-
-			<!-- Detail Asmaul Husna -->
-			<div id="asmaDetail" style="display: none">
-				<div class="surah-header">
-					<h1 id="asmaHeader"></h1>
-					<h2 id="asmaNameLatin"></h2>
-					<h3 id="asmaArabic"></h3>
-					<div class="surah-meta">
-						<div class="meta-item" id="asmaNumber"></div>
-						<div class="meta-item" id="asmaMeaning"></div>
-					</div>
-				</div>
-
-				<div class="surah-description" id="asmaDescription"></div>
-
-				<div class="surah-section">
-					<h3>Penjelasan</h3>
-					<p id="asmaExplanation"></p>
-				</div>
-
-				<div class="surah-section">
-					<h3>Ayat Referensi</h3>
-					<div class="verses-container" id="asmaVerses"></div>
-				</div>
-			</div>
-
-			<!-- Daftar Kisah Nabi -->
-			<div id="prophetStoriesList" style="display: none">
-				<h2 class="section-title">Kisah Nabi dan Rasul</h2>
-
-				<div class="search-container">
-					<input
-						type="text"
-						id="searchProphetInput"
-						class="search-box"
-						placeholder="Cari nabi..." />
-					<div class="search-icon">
-						<i class="fas fa-search"></i>
-					</div>
-				</div>
-
-				<div class="prophet-stories-container">
-					<div class="loading-container" id="prophetLoading">
-						<div class="loading-spinner"></div>
-					</div>
-					<div class="prophet-grid" id="prophetGrid"></div>
-				</div>
-			</div>
-
-			<!-- Detail Kisah Nabi -->
-			<div id="prophetDetail" style="display: none">
-				<div class="loading-container" id="prophetDetailLoading">
-					<div class="loading-spinner"></div>
-				</div>
-				<div class="surah-header" id="prophetHeader">
-					<h2 id="prophetName"></h2>
-					<div class="surah-meta">
-						<div class="meta-item" id="prophetBirthYear"></div>
-					</div>
-				</div>
-
-				<div class="prophet-image-container"></div>
-
-				<div class="surah-description" id="prophetDescription"></div>
-
-				<div id="prophetAdditionalInfo" class="additional-info-container"></div>
-			</div>
-
-			<!-- Tambahkan container untuk paginasi di berbagai bagian -->
-			<div id="surahPaginationContainer" class="pagination-container"></div>
-			<div
-				id="hadithCollectionsPaginationContainer"
-				class="pagination-container"></div>
+			<!-- Container reusable untuk paginasi -->
+			<div id="paginationContainer" class="pagination-container"></div>
 		</div>
 
 		<footer>
@@ -355,8 +137,6 @@
 							dan bacaan keseharian. Akses ribuan buku dan referensi dalam
 							genggaman Anda.
 						</p>
-						<p><i class="fas fa-envelope"></i> info@perpustakaandigital.com</p>
-						<p><i class="fas fa-phone"></i> +62 21 1234 5678</p>
 					</div>
 
 					<div class="footer-section">
@@ -382,7 +162,7 @@
 				</div>
 			</div>
 		</footer>
-		<!-- Tombol Back to Top -->
+
 		<button id="backToTopBtn" title="Kembali ke atas">
 			<i class="fas fa-arrow-up"></i>
 		</button>

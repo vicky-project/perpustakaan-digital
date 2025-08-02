@@ -113,18 +113,12 @@ header {
 	gap: 8px;
 }
 
-.nav-controls {
-	display: flex;
-	gap: 4px;
-	margin-right: 8px;
-}
-
 .nav-btn {
 	background: var(--gold);
 	color: var(--dark);
 	border: none;
-	padding: 8px;
-	border-radius: 5px;
+	padding: 10px 15px;
+	border-radius: 30px;
 	cursor: pointer;
 	transition: all 0.3s ease;
 	display: flex;
@@ -132,11 +126,14 @@ header {
 	justify-content: center;
 	font-weight: 500;
 	height: 40px;
-	width: 40px;
+	gap: 8px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .nav-btn:hover {
 	background: #c19d2a;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .nav-btn i {
@@ -145,6 +142,7 @@ header {
 
 .nav-btn span {
 	display: none;
+	font-size: 0.9rem;
 }
 
 .theme-toggle {
@@ -172,492 +170,14 @@ header {
 }
 
 /* ============================================= */
-/* SURAH & HADITH DETAIL STYLES */
+/* REUSABLE COMPONENTS */
 /* ============================================= */
-.surah-detail-container {
-	display: none;
-	margin: 25px 0 40px;
-}
-
-.surah-header {
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	color: white;
-	padding: 15px;
-	border-radius: 8px;
-	margin-bottom: 15px;
-	position: relative;
-	overflow: hidden;
-	text-align: center;
-}
-
-.surah-header::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	opacity: 0.2;
-}
-
-.surah-header h2 {
-	font-size: 1.8rem;
-	font-family: "Playfair Display", serif;
-	margin-bottom: 8px;
-	position: relative;
-	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
-	color: var(--gold);
-}
-
-.surah-header h3 {
-	font-size: 1.4rem;
-	font-weight: 400;
-	margin-bottom: 15px;
-	position: relative;
-}
-
-.surah-meta {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-	gap: 8px;
-	margin-top: 10px;
-}
-
-.meta-item {
-	background: rgba(255, 255, 255, 0.2);
-	padding: 6px 12px;
-	border-radius: 25px;
-	font-size: 0.85rem;
-	backdrop-filter: blur(4px);
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	white-space: nowrap;
-	flex-shrink: 0;
-}
-
-.surah-description {
-	background: rgba(0, 0, 0, 0.2);
-	padding: 15px;
-	border-radius: 8px;
-	margin-top: 15px;
-	line-height: 1.6;
-	font-size: 1rem;
-	position: relative;
-	backdrop-filter: blur(2px);
-	border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.verses-container {
-	background: var(--card-dark);
-	border-radius: 8px;
-	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-	padding: 15px 10px;
-	margin-bottom: 25px;
-	border: 1px solid var(--border-dark);
-}
-
-.verse-item {
-	padding: 15px;
-	margin-bottom: 15px;
-	border-radius: 8px;
-	transition: all 0.3s ease;
-	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	position: relative;
-	overflow: hidden;
-	border: 1px solid var(--wood-accent);
-}
-
-.verse-item::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	opacity: 0.2;
-}
-
-.verse-item:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-}
-
-.verse-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 10px;
-	padding-bottom: 8px;
-	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
-	position: relative;
-	z-index: 2;
-}
-
-.verse-number {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 30px;
-	height: 30px;
-	background: var(--gold);
-	color: var(--dark);
-	border-radius: 50%;
-	font-weight: 600;
-	font-size: 0.9rem;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.verse-controls {
-	display: flex;
-	gap: 8px;
-}
-
-.verse-audio button {
-	background: var(--gold);
-	color: var(--dark);
-	border: none;
-	padding: 7px 12px;
-	border-radius: 50%;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: all 0.3s ease;
-	font-weight: 500;
-	width: 40px;
-	height: 40px;
-}
-
-.verse-audio button:hover {
-	background: var(--gold-light);
-	transform: scale(1.04);
-}
-
-.verse-audio button i {
-	font-size: 1.1rem;
-}
-
-.verse-share button {
-	background: var(--gold);
-	color: var(--dark);
-	border: none;
-	padding: 7px 12px;
-	border-radius: 50%;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: all 0.3s ease;
-	font-weight: 500;
-	width: 40px;
-	height: 40px;
-}
-
-.verse-share button:hover {
-	background: var(--gold-light);
-	transform: scale(1.04);
-}
-
-.arabic-text {
-	font-family: var(--arabic-font);
-	font-size: 1.8rem;
-	text-align: right;
-	line-height: 1.6;
-	margin-bottom: 15px;
-	color: #fff;
-	padding: 10px;
-	border-radius: 6px;
-	background: rgba(0, 0, 0, 0.3);
-	backdrop-filter: blur(2px);
-	position: relative;
-	z-index: 2;
-	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-	word-wrap: break-word;
-	overflow-wrap: break-word;
-	hyphens: auto;
-}
-
-.latin-text {
-	font-family: "Poppins", sans-serif;
-	font-size: 1.1rem;
-	line-height: 1.6;
-	color: #f0f0f0;
-	padding: 15px;
-	direction: ltr;
-	text-align: left;
-	background: rgba(0, 0, 0, 0.3);
-	border-radius: 6px;
-	margin-bottom: 15px;
-	backdrop-filter: blur(2px);
-	position: relative;
-	z-index: 2;
-	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.translation-text {
-	padding: 10px;
-	background: rgba(0, 0, 0, 0.3);
-	border-radius: 6px;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-	font-size: 0.95rem;
-	line-height: 1.6;
-	color: #f0f0f0;
-	border-top: 1px solid rgba(255, 255, 255, 0.1);
-	margin-top: 12px;
-	backdrop-filter: blur(2px);
-	position: relative;
-	z-index: 2;
-}
-
-/* ============================================= */
-/* HADITH STYLES */
-/* ============================================= */
-.hadith-content-container {
-	width: 100%;
-	margin-top: 15px;
-	position: relative;
-}
-
-#hadithList {
-	position: relative;
-}
-
-.hadith-item {
-	padding: 15px;
-	margin-bottom: 15px;
-	border-radius: 8px;
-	transition: all 0.3s ease;
-	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	position: relative;
-	overflow: hidden;
-	border: 1px solid var(--wood-accent);
-}
-
-.hadith-item::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	opacity: 0.2;
-}
-
-.hadith-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 10px;
-	padding-bottom: 8px;
-	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
-	position: relative;
-	z-index: 2;
-}
-
-.hadith-number {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 30px;
-	height: 30px;
-	background: var(--gold);
-	color: var(--dark);
-	border-radius: 50%;
-	font-weight: 600;
-	font-size: 0.9rem;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.hadith-controls {
-	display: flex;
-	gap: 8px;
-}
-
-.hadith-share button {
-	background: var(--gold);
-	color: var(--dark);
-	border: none;
-	padding: 7px 12px;
-	border-radius: 50%;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: all 0.3s ease;
-	font-weight: 500;
-	width: 40px;
-	height: 40px;
-}
-
-.hadith-share button:hover {
-	background: var(--gold-light);
-	transform: scale(1.04);
-}
-
-.hadith-arabic {
-	font-family: var(--arabic-font);
-	font-size: 1.8rem;
-	text-align: right;
-	line-height: 1.6;
-	margin-bottom: 15px;
-	color: #fff;
-	padding: 10px;
-	border-radius: 6px;
-	background: rgba(0, 0, 0, 0.3);
-	backdrop-filter: blur(2px);
-	position: relative;
-	z-index: 2;
-	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-	word-wrap: break-word;
-	overflow-wrap: break-word;
-	hyphens: auto;
-}
-
-.hadith-translation {
-	padding: 10px;
-	background: rgba(0, 0, 0, 0.3);
-	border-radius: 6px;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-	font-size: 0.95rem;
-	line-height: 1.6;
-	color: #f0f0f0;
-	border-top: 1px solid rgba(255, 255, 255, 0.1);
-	margin-top: 12px;
-	backdrop-filter: blur(2px);
-	position: relative;
-	z-index: 2;
-}
-
-/* ============================================= */
-/* BOOKSHELF STYLES */
-/* ============================================= */
+/* Container Styles */
 .bookshelf-container {
 	margin: 20px 0 40px;
 }
 
-.section-title {
-	font-family: "Playfair Display", serif;
-	font-size: 1.6rem;
-	text-align: center;
-	margin-bottom: 30px;
-	color: var(--primary);
-	position: relative;
-}
-
-.section-title::after {
-	content: "";
-	position: absolute;
-	bottom: -8px;
-	left: 50%;
-	transform: translateX(-50%);
-	width: 80px;
-	height: 2px;
-	background: var(--gold);
-}
-
-.shelf-header {
-	background: linear-gradient(
-		to bottom,
-		var(--wood-dark) 0%,
-		var(--primary) 100%
-	);
-	padding: 10px 15px;
-	border-radius: 6px 6px 0 0;
-	color: var(--light);
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	font-size: 1.1rem;
-	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-	position: relative;
-	z-index: 2;
-}
-
-.shelf-header i {
-	color: var(--gold);
-	font-size: 1rem;
-}
-
-.bookshelf {
-	background: linear-gradient(
-			to bottom,
-			var(--primary) 0%,
-			var(--wood-dark) 100%
-		),
-		url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	padding: 12px 12px 20px;
-	border-radius: 0 0 8px 8px;
-	box-shadow:
-		0 10px 20px rgba(0, 0, 0, 0.25),
-		0 8px 8px rgba(0, 0, 0, 0.15) inset;
-	margin-bottom: 40px;
-	position: relative;
-	border: 1px solid var(--wood-accent);
-	border-top: none;
-}
-
-.bookshelf::before {
-	content: "";
-	position: absolute;
-	top: -10px;
-	left: 0;
-	width: 100%;
-	height: 10px;
-	background: var(--wood-accent);
-	border-radius: 8px 8px 0 0;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) inset;
-}
-
-.books-container {
-	overflow-x: auto;
-	padding: 8px 4px 20px;
-	white-space: nowrap;
-	scrollbar-width: thin;
-	scrollbar-color: var(--wood-accent) var(--wood-dark);
-	-webkit-overflow-scrolling: touch;
-}
-
-.books-container::-webkit-scrollbar {
-	height: 6px;
-}
-
-.books-container::-webkit-scrollbar-track {
-	background: var(--wood-dark);
-	border-radius: 3px;
-}
-
-.books-container::-webkit-scrollbar-thumb {
-	background-color: var(--wood-accent);
-	border-radius: 3px;
-}
-
-.books {
-	display: inline-flex;
-	gap: 15px;
-	padding: 0 10px;
-	flex-wrap: nowrap;
-}
-
-/* ============================================= */
-/* BOOK STYLES */
-/* ============================================= */
+/* Book Styles */
 .book {
 	width: 140px;
 	height: 200px;
@@ -813,11 +333,366 @@ header {
 	z-index: 2;
 }
 
-/* ASMAUL HUSNA STYLES */
-.asmaul-husna-container {
-	margin-top: 20px;
+/* Detail Container Styles */
+.detail-header {
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	color: white;
+	padding: 15px;
+	border-radius: 8px;
+	margin: 25px auto;
+	position: relative;
+	overflow: hidden;
+	text-align: center;
 }
 
+.detail-header::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	opacity: 0.2;
+}
+
+.detail-header h2 {
+	font-size: 1.8rem;
+	font-family: "Playfair Display", serif;
+	margin-bottom: 8px;
+	position: relative;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+	color: var(--gold);
+}
+
+.detail-header h3 {
+	font-size: 1.4rem;
+	font-weight: 400;
+	margin-bottom: 15px;
+	position: relative;
+}
+
+.surah-meta {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px;
+	margin-top: 10px;
+}
+
+.meta-item {
+	background: rgba(255, 255, 255, 0.2);
+	padding: 6px 12px;
+	border-radius: 25px;
+	font-size: 0.85rem;
+	backdrop-filter: blur(4px);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.detail-content {
+	background: var(--card-dark);
+	border-radius: 8px;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+	padding: 15px 10px;
+	margin-bottom: 25px;
+	border: 1px solid var(--border-dark);
+}
+
+.verse-item {
+	padding: 15px;
+	margin-bottom: 15px;
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	position: relative;
+	overflow: hidden;
+	border: 1px solid var(--wood-accent);
+}
+
+.verse-item::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	opacity: 0.2;
+}
+
+.verse-item:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.verse-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+	padding-bottom: 8px;
+	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+	position: relative;
+	z-index: 2;
+}
+
+.verse-number {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	background: var(--gold);
+	color: var(--dark);
+	border-radius: 50%;
+	font-weight: 600;
+	font-size: 0.9rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.verse-controls {
+	display: flex;
+	gap: 10px;
+}
+
+.audio-btn,
+.share-btn {
+	background: var(--gold);
+	color: var(--dark);
+	border: none;
+	padding: 7px 12px;
+	border-radius: 50%;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.3s ease;
+	font-weight: 500;
+	width: 40px;
+	height: 40px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.verse-audio button:hover {
+	background: var(--gold-light);
+	transform: scale(1.04);
+}
+
+.verse-audio button i {
+	font-size: 1.1rem;
+}
+
+.verse-audio button,
+.verse-share button {
+	background: var(--gold);
+	color: var(--dark);
+	border: none;
+	padding: 7px 12px;
+	border-radius: 50%;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.3s ease;
+	font-weight: 500;
+	width: 40px;
+	height: 40px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.verse-share button:hover {
+	background: var(--gold-light);
+	transform: scale(1.04);
+}
+
+.arabic-text {
+	font-family: var(--arabic-font);
+	font-size: 1.8rem;
+	text-align: right;
+	line-height: 1.6;
+	margin-bottom: 15px;
+	color: #fff;
+	padding: 10px;
+	border-radius: 6px;
+	background: rgba(0, 0, 0, 0.3);
+	backdrop-filter: blur(2px);
+	position: relative;
+	z-index: 2;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	hyphens: auto;
+}
+
+.latin-text {
+	font-family: "Poppins", sans-serif;
+	font-size: 1.1rem;
+	line-height: 1.6;
+	color: #f0f0f0;
+	padding: 15px;
+	direction: ltr;
+	text-align: left;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 6px;
+	margin-bottom: 15px;
+	backdrop-filter: blur(2px);
+	position: relative;
+	z-index: 2;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.translation-text {
+	padding: 10px;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 6px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+	font-size: 0.95rem;
+	line-height: 1.6;
+	color: #f0f0f0;
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+	margin-top: 12px;
+	backdrop-filter: blur(2px);
+	position: relative;
+	z-index: 2;
+}
+
+/* ===== STYLE UNTUK NAMA SURAH ===== */
+.surah-name {
+	background: rgba(139, 69, 19, 0.1);
+	border-radius: 8px;
+	padding: 8px 12px;
+	margin-bottom: 10px;
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: white;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border-left: 3px solid var(--gold);
+}
+
+.surah-name i {
+	color: var(--gold);
+}
+
+/* ============================================= */
+/* BOOKSHELF STYLES */
+/* ============================================= */
+.section-title {
+	font-family: "Playfair Display", serif;
+	font-size: 1.6rem;
+	text-align: center;
+	margin: 30px auto;
+	color: var(--primary);
+	position: relative;
+}
+
+.section-title::after {
+	content: "";
+	position: absolute;
+	bottom: -8px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 80px;
+	height: 2px;
+	background: var(--gold);
+}
+
+.shelf-header {
+	background: linear-gradient(
+		to bottom,
+		var(--wood-dark) 0%,
+		var(--primary) 100%
+	);
+	padding: 10px 15px;
+	border-radius: 6px 6px 0 0;
+	color: var(--light);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 1.1rem;
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+	position: relative;
+	z-index: 2;
+}
+
+.shelf-header i {
+	color: var(--gold);
+	font-size: 1rem;
+}
+
+.bookshelf {
+	background: linear-gradient(
+			to bottom,
+			var(--primary) 0%,
+			var(--wood-dark) 100%
+		),
+		url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	padding: 12px 12px 20px;
+	border-radius: 0 0 8px 8px;
+	box-shadow:
+		0 10px 20px rgba(0, 0, 0, 0.25),
+		0 8px 8px rgba(0, 0, 0, 0.15) inset;
+	margin-bottom: 40px;
+	position: relative;
+	border: 1px solid var(--wood-accent);
+	border-top: none;
+}
+
+.bookshelf::before {
+	content: "";
+	position: absolute;
+	top: -10px;
+	left: 0;
+	width: 100%;
+	height: 10px;
+	background: var(--wood-accent);
+	border-radius: 8px 8px 0 0;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) inset;
+}
+
+.books-container {
+	overflow-x: auto;
+	padding: 8px 4px 20px;
+	white-space: nowrap;
+	scrollbar-width: thin;
+	scrollbar-color: var(--wood-accent) var(--wood-dark);
+	-webkit-overflow-scrolling: touch;
+}
+
+.books-container::-webkit-scrollbar {
+	height: 6px;
+}
+
+.books-container::-webkit-scrollbar-track {
+	background: var(--wood-dark);
+	border-radius: 3px;
+}
+
+.books-container::-webkit-scrollbar-thumb {
+	background-color: var(--wood-accent);
+	border-radius: 3px;
+}
+
+.books {
+	display: inline-flex;
+	gap: 15px;
+	padding: 0 10px;
+	flex-wrap: nowrap;
+}
+
+/* ===== ASMAUL HUSNA STYLES ===== */
 .asma-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -837,9 +712,10 @@ header {
 	color: white;
 	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 	position: relative;
-	overflow: hidden;
+	overflow: auto;
 	border: 1px solid var(--wood-accent);
 	transition: transform 0.3s ease;
+	width: 100%;
 }
 
 .asma-card:hover {
@@ -876,9 +752,10 @@ header {
 
 .asma-arabic {
 	font-family: var(--arabic-font);
-	font-size: 2rem;
+	font-size: 3rem;
 	margin: 10px 0;
 	line-height: 1.4;
+	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .asma-name {
@@ -892,350 +769,111 @@ header {
 	line-height: 1.4;
 }
 
-/* Icon for Asmaul Husna */
-.fa-signature:before {
-	content: "\f5b7";
-}
-
-/* Detail Asmaul Husna */
-#asmaHeader {
-	text-align: center;
-	padding: 25px 15px;
-}
-
-#asmaHeader h2 {
-	font-size: 2.2rem;
-	color: var(--gold);
-	margin-bottom: 5px;
-}
-
-#asmaHeader h3 {
-	font-size: 2.8rem;
-	font-family: var(--arabic-font);
-	margin-bottom: 15px;
-}
-
-.surah-section {
-	margin-top: 25px;
-}
-
-.surah-section h3 {
-	font-family: "Playfair Display", serif;
-	font-size: 1.5rem;
-	color: var(--primary);
-	margin-bottom: 15px;
-	position: relative;
-	padding-bottom: 8px;
-}
-
-.surah-section h3::after {
-	content: "";
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	width: 60px;
-	height: 3px;
-	background: var(--gold);
-}
-
-.surah-section p {
-	line-height: 1.7;
-	font-size: 1.05rem;
-	padding: 10px;
-	background: rgba(0, 0, 0, 0.05);
-	border-radius: 8px;
-}
-
-/* ============================================= */
-/* PROPHET STORIES STYLES - MOBILE FIRST */
-/* ============================================= */
-
-.prophet-stories-container {
-	width: 100%;
-	margin-top: 20px;
-}
-
-/* Grid container */
+/* ===== PROPHET STORIES STYLES ===== */
 .prophet-grid {
 	display: grid;
-	grid-template-columns: repeat(2, 1fr); /* 2 kolom untuk mobile */
+	grid-template-columns: repeat(2, 1fr);
 	gap: 15px;
-	margin-top: 15px;
+	padding: 10px;
 }
 
-/* Kartu nabi */
 .prophet-card {
 	position: relative;
-	width: 100%;
-	padding-top: 150%;
-	perspective: 1000px;
-	cursor: pointer;
-	transition: transform 0.4s ease;
-	border-radius: 4px;
+	display: flex;
+	flex-direction: column;
+	border-radius: 12px;
 	overflow: hidden;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+	transition: all 0.4s ease;
+	height: 100%;
+	background: var(--card-dark);
+	border: 1px solid var(--border-dark);
 }
 
 .prophet-card:hover {
 	transform: translateY(-5px);
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
 }
 
-/* Cover buku */
-.book-cover {
-	position: absolute;
-	top: 0;
-	left: 0;
+.prophet-image-container {
+	position: relative;
+	width: 100%;
+	height: 150px;
+	overflow: hidden;
+}
+
+.prophet-image {
 	width: 100%;
 	height: 100%;
-	background-size: cover;
-	background-position: center;
-	background-repeat: no-repeat;
-	border-radius: 4px;
-	box-shadow:
-		0 4px 8px rgba(0, 0, 0, 0.15),
-		0 2px 4px rgba(0, 0, 0, 0.1) inset;
-	transform-style: preserve-3d;
-	transform: rotateY(0deg);
-	transition: transform 0.6s ease;
+	object-fit: cover;
+	transition: transform 0.5s ease;
 }
 
-/* Overlay gelap untuk teks */
-.book-overlay {
+.prophet-card:hover .prophet-image {
+	transform: scale(1.05);
+}
+
+.prophet-overlay {
 	position: absolute;
 	bottom: 0;
 	left: 0;
-	width: 100%;
-	height: 40%;
-	background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+	right: 0;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+	padding: 10px;
 }
 
-/* Judul dan informasi */
-.book-title {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	width: 100%;
-	padding: 12px;
-	z-index: 2;
-}
-
-.book-title h3 {
-	font-size: 14px;
-	margin: 0 0 4px 0;
-	color: white;
+.prophet-name {
+	font-family: "Playfair Display", serif;
+	font-size: 1.1rem;
+	color: var(--gold);
+	margin: 0;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+	word-wrap: break-word;
+	white-space: normal;
 	line-height: 1.3;
-	font-weight: 600;
+	min-height: 2.6em;
 }
 
 .prophet-meta {
 	display: flex;
 	align-items: center;
-	gap: 4px;
-	font-size: 11px;
-	color: #f0f0f0;
+	gap: 5px;
+	margin-top: 3px;
 }
 
 .prophet-meta i {
-	color: var(--gold);
-	font-size: 10px;
+	color: var(--gold-light);
+	font-size: 0.8rem;
 }
 
-.prophet-meta span {
-	position: relative;
-	padding-right: 18px;
+.prophet-year {
+	font-size: 0.9rem;
+	color: var(--light);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
-.prophet-meta span::after {
-	content: "";
-	position: absolute;
-	right: 0;
-	top: 50%;
-	transform: translateY(-50%);
-	font-size: 0.7em;
-	font-weight: bold;
-	color: var(--gold);
-}
-
-/* Untuk tahun SM */
-.prophet-meta .sm-year::after {
-	content: "SM";
-}
-
-/* Untuk tahun M */
-.prophet-meta .m-year::after {
-	content: "M";
-}
-
-/* Khusus tahun Nabi Isa */
-.prophet-meta .isa-year {
-	color: var(--gold);
-	font-weight: bold;
-	position: relative;
-	padding-right: 0;
-}
-
-#prophetBirthYear {
-	position: relative;
-	padding-right: 25px;
-	font-weight: 600;
-}
-
-#prophetBirthYear::after {
-	content: "";
-	position: absolute;
-	right: 5px;
-	top: 50%;
-	transform: translateY(-50%);
-	font-size: 0.9em;
-	font-weight: bold;
-	color: var(--gold);
-}
-
-#prophetBirthYear.sm-year::after {
-	content: "SM";
-}
-
-#prophetBirthYear.m-year::after {
-	content: "M";
-}
-
-#prophetBirthYear.isa-year::after {
-	content: none;
-}
-
-/* DETAIL PAGE STYLES */
-#prophetDetail {
-	display: none;
-}
-
-.prophet-image-container {
-	position: relative;
-	max-width: 100%;
-	margin: 25px auto;
-	padding: 15px;
-	background: linear-gradient(
-		to bottom right,
-		rgba(139, 69, 19, 0.2),
-		rgba(101, 67, 33, 0.4)
-	);
-	border-radius: 12px;
-	box-shadow:
-		0 10px 30px rgba(0, 0, 0, 0.25),
-		inset 0 0 20px rgba(255, 215, 0, 0.2);
-	overflow: visible;
-	z-index: 1;
+.prophet-info {
+	padding: 12px;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
+	gap: 8px;
 }
 
-/*.prophet-image-container::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
+.prophet-detail-image-container {
+	position: relative;
+	width: 100%;
+	height: 300px; /* Tinggi default untuk mobile */
+	border-radius: 12px;
+	overflow: hidden;
+	margin-bottom: 25px;
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.prophet-detail-image {
 	width: 100%;
 	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/old-paper.png");
-	opacity: 0.4;
-	z-index: -1;
-}*/
-
-.prophet-image {
-	max-width: 100%;
-	max-height: 65vh;
-	height: auto;
-	width: auto;
-	object-fit: contain;
-	border-radius: 8px;
-	border: 2px solid var(--gold);
-	box-shadow:
-		0 5px 15px rgba(0, 0, 0, 0.3),
-		0 0 0 4px rgba(210, 180, 140, 0.3);
-	transition: all 0.4s ease;
-	z-index: 2;
-	position: relative;
-	background-color: white;
-	padding: 5px;
-}
-
-.prophet-image:hover {
-	transform: scale(1.02);
-	box-shadow:
-		0 8px 25px rgba(0, 0, 0, 0.4),
-		0 0 0 4px rgba(210, 180, 140, 0.5);
-}
-
-.image-caption {
-	position: relative; /* Diubah dari absolute ke relative */
-	margin-top: 15px;
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	color: var(--gold-light);
-	padding: 10px 25px;
-	border-radius: 30px;
-	font-family: "Playfair Display", serif;
-	font-size: 1.4rem;
-	font-weight: 700;
-	text-align: center;
-	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-	z-index: 3;
-	text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-	width: fit-content;
-}
-
-/* Header detail */
-#prophetHeader {
-	text-align: center;
-	padding: 20px;
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	color: white;
-	border-radius: 8px;
-	margin-bottom: 20px;
-}
-
-#prophetHeader h2 {
-	font-size: 1.8rem;
-	margin-bottom: 10px;
-	color: var(--gold);
-}
-
-/* ============================================= */
-/* ADDITIONAL INFO STYLES */
-/* ============================================= */
-.additional-info-container {
-	margin: 20px 0;
-	padding: 15px;
-	background: rgba(0, 0, 0, 0.05);
-	border-radius: 8px;
-	border-left: 4px solid var(--gold);
-}
-
-.additional-info {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 15px;
-}
-
-.info-item {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding: 8px 12px;
-	background: rgba(139, 69, 19, 0.1);
-	border-radius: 6px;
-	font-size: 0.95rem;
-}
-
-.info-item i {
-	color: var(--gold);
-	font-size: 1.1rem;
+	object-fit: cover;
+	transition: transform 0.5s ease;
 }
 
 /* ============================================= */
@@ -1273,110 +911,6 @@ header {
 	transform: translateY(-50%);
 	color: var(--primary);
 	font-size: 1.1rem;
-}
-
-/* Style untuk header hasil pencarian */
-.search-header {
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	color: white;
-	padding: 15px;
-	border-radius: 8px;
-	margin-bottom: 15px;
-	text-align: center;
-}
-
-.search-result-item {
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	color: white;
-	padding: 15px;
-	border-radius: 8px;
-	margin-bottom: 15px;
-	border: 1px solid rgba(0, 0, 0, 0.2);
-}
-
-.surah-info {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 10px;
-	padding-bottom: 8px;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.surah-name {
-	font-weight: 600;
-	color: var(--gold);
-}
-
-.go-to-surah-btn {
-	background: rgba(79, 172, 254, 0.2);
-	border: none;
-	border-radius: 5px;
-	padding: 5px 10px;
-	color: #4facfe;
-	cursor: pointer;
-	transition: all 0.3s ease;
-	display: flex;
-	align-items: center;
-	gap: 5px;
-}
-
-.go-to-surah-btn:hover {
-	background: rgba(79, 172, 254, 0.3);
-}
-
-#surahDetail .surah-header {
-	text-align: center;
-}
-
-/* Style untuk item hadits dalam hasil pencarian */
-.search-hadith-item {
-	padding: 15px;
-	margin-bottom: 15px;
-	border-radius: 8px;
-	transition: all 0.3s ease;
-	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	position: relative;
-	overflow: hidden;
-	border: 1px solid var(--wood-accent);
-}
-
-.search-hadith-item::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	opacity: 0.2;
-}
-
-.search-hadith-item:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-}
-
-/* Highlight untuk teks yang cocok dengan pencarian */
-.search-highlight {
-	background-color: var(--gold-light);
-	color: var(--dark);
-	font-weight: bold;
-	padding: 0 2px;
-	border-radius: 3px;
 }
 
 /* ============================================= */
@@ -1458,11 +992,16 @@ footer {
 	font-size: 0.85rem;
 }
 
+/* ============================================= */
+/* LOADING STYLES */
+/* ============================================= */
 .loading-container {
-	display: none;
+	margin-top: 80px;
+	text-align: center;
+	display: flex;
 	justify-content: center;
 	align-items: center;
-	padding: 30px 0;
+	padding: 30px;
 	min-height: 200px;
 }
 
@@ -1475,8 +1014,14 @@ footer {
 	animation: spin 1s ease-in-out infinite;
 }
 
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
 /* ============================================= */
-/* PAGINATION STYLES - MOBILE FIRST */
+/* PAGINATION STYLES */
 /* ============================================= */
 .pagination-container {
 	width: 100%;
@@ -1565,6 +1110,9 @@ footer {
 	padding: 0 5px;
 }
 
+/* ============================================= */
+/* BACK TO TOP BUTTON */
+/* ============================================= */
 #backToTopBtn {
 	display: none;
 	position: fixed;
@@ -1598,12 +1146,6 @@ footer {
 	}
 	100% {
 		opacity: 1;
-	}
-}
-
-@keyframes spin {
-	to {
-		transform: rotate(360deg);
 	}
 }
 
@@ -1666,7 +1208,6 @@ footer {
 		padding: 14px 14px 22px;
 		border-radius: 0 0 10px 10px;
 		margin-bottom: 45px;
-		border: 2px solid var(--wood-accent);
 	}
 
 	.bookshelf::before {
@@ -1708,15 +1249,15 @@ footer {
 		font-size: 1rem;
 	}
 
-	.surah-header {
+	.detail-header {
 		padding: 18px;
 	}
 
-	.surah-header h2 {
+	.detail-header h2 {
 		font-size: 2rem;
 	}
 
-	.surah-header h3 {
+	.detail-header h3 {
 		font-size: 1.6rem;
 	}
 
@@ -1736,8 +1277,17 @@ footer {
 		font-size: 2rem;
 	}
 
-	.hadith-content-container {
-		margin-top: 20px;
+	.prophet-grid {
+		/*grid-template-columns: repeat(2, 1fr);*/
+		gap: 20px;
+	}
+
+	.prophet-image-container {
+		height: 160px;
+	}
+
+	.prophet-name {
+		font-size: 1.2rem;
 	}
 
 	.pagination-container {
@@ -1761,39 +1311,6 @@ footer {
 		min-width: 32px;
 		height: 32px;
 		font-size: 0.9rem;
-	}
-
-	.prophet-grid {
-		grid-template-columns: repeat(3, 1fr); /* 3 kolom untuk tablet */
-		gap: 18px;
-	}
-
-	.prophet-image {
-		max-width: 85%; /* Lebih kecil pada layar kecil */
-	}
-
-	.book-title h3 {
-		font-size: 15px;
-	}
-
-	.prophet-meta {
-		font-size: 12px;
-	}
-
-	.additional-info {
-		gap: 20px;
-	}
-
-	.info-item {
-		font-size: 1rem;
-	}
-
-	.footer-content {
-		flex-direction: row;
-	}
-
-	.footer-section {
-		min-width: auto;
 	}
 }
 
@@ -1876,15 +1393,15 @@ footer {
 		width: 180px;
 		height: 260px;
 		margin-bottom: 20px;
-		flex: 0 0 calc(25%-20px);
-		max-width: calc(25%-20px);
+		flex: 0 0 calc(25% - 20px);
+		max-width: calc(25% - 20px);
 	}
 
 	.book.small {
 		width: 160px;
 		height: 240px;
-		flex: 0 0 calc(20%-20px);
-		max-width: calc(20%-20px);
+		flex: 0 0 calc(20% - 20px);
+		max-width: calc(20% - 20px);
 	}
 
 	.book-image {
@@ -1911,15 +1428,15 @@ footer {
 		font-size: 1.05rem;
 	}
 
-	.surah-header {
+	.detail-header {
 		padding: 20px;
 	}
 
-	.surah-header h2 {
+	.detail-header h2 {
 		font-size: 2.4rem;
 	}
 
-	.surah-header h3 {
+	.detail-header h3 {
 		font-size: 1.8rem;
 	}
 
@@ -1927,8 +1444,21 @@ footer {
 		font-size: 2.4rem;
 	}
 
-	.hadith-arabic {
-		font-size: 2.4rem;
+	.prophet-grid {
+		grid-template-columns: repeat(3, 1fr);
+		gap: 25px;
+	}
+
+	.prophet-image-container {
+		height: 180px;
+	}
+
+	.prophet-name {
+		font-size: 1.3rem;
+	}
+
+	.prophet-detail-image-container {
+		height: 400px;
 	}
 
 	.footer-content {
@@ -1962,49 +1492,6 @@ footer {
 		min-width: 35px;
 		height: 35px;
 	}
-
-	.prophet-grid {
-		grid-template-columns: repeat(4, 1fr); /* 4 kolom untuk desktop kecil */
-		gap: 20px;
-	}
-
-	.prophet-card {
-		padding-top: 140%;
-	}
-
-	.prophet-image-container {
-		max-width: 85%;
-	}
-
-	.prophet-image {
-		max-width: 75%; /* Lebih besar pada layar desktop */
-		max-height: 500px;
-	}
-
-	.image-caption {
-		font-size: 1.8rem;
-		margin-top: 20px;
-	}
-
-	#prophetStory {
-		font-size: 1.1rem;
-	}
-
-	#prophetHeader h2 {
-		font-size: 2rem;
-	}
-
-	.prophet-meta span::after {
-		font-size: 0.8em;
-	}
-
-	#prophetBirthYear::after {
-		font-size: 1em;
-	}
-
-	.additional-info {
-		justify-content: center;
-	}
 }
 
 /* ============================================= */
@@ -2018,15 +1505,15 @@ footer {
 	.book {
 		width: 200px;
 		height: 280px;
-		flex: 0 0 calc(20%-20px);
-		max-width: calc(20%-20px);
+		flex: 0 0 calc(20% - 20px);
+		max-width: calc(20% - 20px);
 	}
 
 	.book.small {
 		width: 180px;
 		height: 260px;
-		flex: 0 0 calc(16.666%-20px);
-		max-width: calc(16.666%-20px);
+		flex: 0 0 calc(16.666% - 20px);
+		max-width: calc(16.666% - 20px);
 	}
 
 	.book-image {
@@ -2045,7 +1532,7 @@ footer {
 		font-size: 4rem;
 	}
 
-	.surah-header h2 {
+	.detail-header h2 {
 		font-size: 2.6rem;
 	}
 
@@ -2054,12 +1541,20 @@ footer {
 	}
 
 	.prophet-grid {
-		grid-template-columns: repeat(5, 1fr); /* 5 kolom untuk desktop */
+		grid-template-columns: repeat(4, 1fr);
+		gap: 30px;
 	}
 
-	.prophet-image {
-		max-width: 65%; /* Lebih kecil pada layar besar */
-		max-height: 600px;
+	.prophet-image-container {
+		height: 200px;
+	}
+
+	.prophet-name {
+		font-size: 1.4rem;
+	}
+
+	.prophet-detail-image-container {
+		height: 500px;
 	}
 }
 
@@ -2070,15 +1565,15 @@ footer {
 	.book {
 		width: 220px;
 		height: 300px;
-		flex: 0 0 calc(16.666%-20px);
-		max-width: calc(16.666%-20px);
+		flex: 0 0 calc(16.666% - 20px);
+		max-width: calc(16.666% - 20px);
 	}
 
 	.book.small {
 		width: 200px;
 		height: 280px;
-		flex: 0 0 calc(12.5%-20px);
-		max-width: calc(12.5%-20px);
+		flex: 0 0 calc(12.5% - 20px);
+		max-width: calc(12.5% - 20px);
 	}
 
 	.book-image {
@@ -2097,7 +1592,7 @@ footer {
 		font-size: 4.5rem;
 	}
 
-	.surah-header h2 {
+	.detail-header h2 {
 		font-size: 2.8rem;
 	}
 
@@ -2106,6 +1601,11 @@ footer {
 	}
 
 	.prophet-grid {
-		grid-template-columns: repeat(6, 1fr); /* 6 kolom untuk desktop besar */
+		grid-template-columns: repeat(5, 1fr);
+		gap: 35px;
+	}
+
+	.prophet-image-container {
+		height: 220px;
 	}
 }
