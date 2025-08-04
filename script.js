@@ -378,7 +378,7 @@ const Utils = {
 									DataManager.renderVerseItem(
 										item,
 										item.surah,
-										currentData ? false : true,
+										context === "global_quran" ? true : false,
 										query
 									)
 								)
