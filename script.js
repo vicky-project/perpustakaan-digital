@@ -360,6 +360,7 @@ const Utils = {
 			switch (context) {
 				case "global_quran":
 				case "surah_quran":
+					console.log(currentData);
 					DataManager.renderDetailWithPagination({
 						container: DOM.detailContainer,
 						loadingMessage: "Memuat ayat...",
@@ -377,7 +378,7 @@ const Utils = {
 									DataManager.renderVerseItem(
 										item,
 										item.surah,
-										currentData ? true : false,
+										currentData ? false : true,
 										query
 									)
 								)
