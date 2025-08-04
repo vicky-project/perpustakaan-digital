@@ -117,45 +117,13 @@
 		<button id="backToTopBtn" title="Kembali ke atas">
 			<i class="fas fa-arrow-up"></i>
 		</button>
-		<script src="helper.js" type="text/javascript" charset="utf-8"></script>
-		<script src="script.js" type="text/javascript" charset="utf-8"></script>
-		<script>
-			// ====================== FUNGSI UNTUK MENAMBAHKAN KATEGORI/BUKU ======================
-			function addNewShelf(shelfData) {
-				LibraryManager.addShelf(shelfData);
-				refreshMainShelf();
-			}
-
-			function addBookToShelf(shelfId, bookData) {
-				const success = LibraryManager.addBook(shelfId, bookData);
-				if (success) refreshMainShelf();
-				return success;
-			}
-
-			function refreshMainShelf() {
-				if (appState.currentView === "mainShelf") {
-					ViewManager.renderMainShelf();
-				}
-			}
-
-			// Contoh penggunaan:
-			// Tambahkan rak buku sejarah
-			addNewShelf({
-				id: "history",
-				title: "Sejarah",
-				icon: "fas fa-landmark",
-				books: []
-			});
-
-			// Tambahkan buku fisika ke rak sains
-			addBookToShelf("science", {
-				id: "physics",
-				title: "Fisika Dasar",
-				subtitle: "Prinsip Mekanika",
-				icon: "fas fa-atom",
-				badge: "F",
-				viewName: "physicsList"
-			});
-		</script>
+		<script
+			src="https://vickyserver.my.id/perpus/helper.js"
+			type="text/javascript"
+			charset="utf-8"></script>
+		<script
+			src="https://vickyserver.my.id/perpus/script.js"
+			type="text/javascript"
+			charset="utf-8"></script>
 	</body>
 </html>
