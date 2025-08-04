@@ -19,6 +19,12 @@
 	--book-highlight: #7e5c4a;
 	--book-text: #f5f5f5;
 
+	--prayer-primary: #5c4033;
+	--prayer-secondary: #6d4c41;
+	--prayer-tertiary: #8d6e63;
+	--prayer-spine: #4e342e;
+	--prayer-highlight: #7e5c4a;
+
 	/* Dark mode variables */
 	--bg-dark: #1e1e1e;
 	--text-dark: #e0e0e0;
@@ -33,7 +39,9 @@
 	--border-dark: #ddd;
 }
 
-* {
+*,
+*::before,
+*::after {
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
@@ -57,9 +65,9 @@ body {
 	padding: 0 15px;
 }
 
-/* ============================================= */
+/* ================================ */
 /* HEADER STYLES - MOBILE FIRST */
-/* ============================================= */
+/* ================================ */
 header {
 	background: linear-gradient(
 		to right,
@@ -90,9 +98,13 @@ header {
 	flex-shrink: 0;
 }
 
+.logo i,
+.theme-toggle i {
+	color: var(--gold);
+}
+
 .logo i {
 	font-size: 1.8rem;
-	color: var(--gold);
 }
 
 .logo h1 {
@@ -113,21 +125,27 @@ header {
 	gap: 8px;
 }
 
-.nav-btn {
+.nav-btn,
+.audio-btn,
+.share-btn {
 	background: var(--gold);
 	color: var(--dark);
 	border: none;
-	padding: 10px 15px;
-	border-radius: 30px;
+	border-radius: 50%;
 	cursor: pointer;
-	transition: all 0.3s ease;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	transition: all 0.3s ease;
 	font-weight: 500;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.nav-btn {
+	padding: 10px 15px;
+	border-radius: 30px;
 	height: 40px;
 	gap: 8px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .nav-btn:hover {
@@ -166,21 +184,17 @@ header {
 
 .theme-toggle i {
 	font-size: 1.3rem;
-	color: var(--gold);
 }
 
-/* ============================================= */
+/* ================================ */
 /* REUSABLE COMPONENTS */
-/* ============================================= */
-/* Container Styles */
+/* ================================ */
 .bookshelf-container {
 	margin: 20px 0 40px;
 }
 
-/* Book Styles */
-.book {
-	width: 140px;
-	height: 200px;
+.book,
+.book.small {
 	background: var(--book-primary);
 	border-radius: 4px;
 	overflow: hidden;
@@ -198,12 +212,18 @@ header {
 	flex-shrink: 0;
 }
 
+.book {
+	width: 140px;
+	height: 200px;
+}
+
 .book.small {
 	width: 120px;
 	height: 190px;
 }
 
-.book:hover {
+.book:hover,
+.book.small:hover {
 	transform: translateY(-10px) rotateX(5deg) rotateY(-5deg) scale(1.05);
 	box-shadow:
 		0 20px 30px rgba(0, 0, 0, 0.4),
@@ -212,7 +232,8 @@ header {
 	z-index: 10;
 }
 
-.book::before {
+.book::before,
+.book.small::before {
 	content: "";
 	position: absolute;
 	top: 0;
@@ -229,18 +250,18 @@ header {
 	transition: transform 0.6s ease;
 }
 
-.book:hover::before {
+.book:hover::before,
+.book.small:hover::before {
 	transform: translateX(100%);
 }
 
-.book-image {
-	height: 140px;
+.book-image,
+.book.small .book-image {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	position: relative;
-	padding: 15px;
 	background: linear-gradient(
 		145deg,
 		var(--book-primary),
@@ -248,17 +269,26 @@ header {
 	);
 }
 
+.book-image {
+	height: 140px;
+	padding: 15px;
+}
+
 .book.small .book-image {
 	height: 130px;
 	padding: 12px;
 }
 
-.book-image i {
-	font-size: 3rem;
+.book-image i,
+.book.small .book-image i {
 	color: rgba(212, 175, 55, 0.7);
 	margin-bottom: 15px;
 	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 	transition: all 0.3s ease;
+}
+
+.book-image i {
+	font-size: 3rem;
 }
 
 .book.small .book-image i {
@@ -266,13 +296,15 @@ header {
 	margin-bottom: 10px;
 }
 
-.book:hover .book-image i {
+.book:hover .book-image i,
+.book.small:hover .book-image i {
 	color: var(--gold-light);
 	transform: scale(1.08);
 	text-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
 }
 
-.book-title {
+.book-title,
+.book.small .book-title {
 	padding: 12px 8px;
 	text-align: center;
 	font-weight: 500;
@@ -293,12 +325,16 @@ header {
 	padding: 8px;
 }
 
-.book-title h3 {
-	font-size: 0.95rem;
+.book-title h3,
+.book.small .book-title h3 {
 	color: var(--book-text);
 	line-height: 1.3;
 	margin-bottom: 3px;
 	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.book-title h3 {
+	font-size: 0.95rem;
 }
 
 .book.small .book-title h3 {
@@ -306,7 +342,8 @@ header {
 	font-weight: 700;
 }
 
-.book-title p {
+.book-title p,
+.book.small .book-title p {
 	font-size: 0.8rem;
 	color: #ddd;
 }
@@ -334,22 +371,18 @@ header {
 }
 
 /* Detail Container Styles */
-.detail-header {
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	color: white;
-	padding: 15px;
-	border-radius: 8px;
-	margin: 25px auto;
+.detail-header,
+.verse-item,
+.asma-card,
+.search-result-item {
 	position: relative;
 	overflow: hidden;
-	text-align: center;
 }
 
-.detail-header::before {
+.detail-header::before,
+.verse-item::before,
+.asma-card::before,
+.search-result-item::before {
 	content: "";
 	position: absolute;
 	top: 0;
@@ -358,6 +391,18 @@ header {
 	height: 100%;
 	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
 	opacity: 0.2;
+}
+
+.detail-header {
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	padding: 15px;
+	border-radius: 8px;
+	margin: 25px auto;
+	text-align: center;
 }
 
 .detail-header h2 {
@@ -415,20 +460,7 @@ header {
 		var(--primary) 0%,
 		var(--wood-dark) 100%
 	);
-	position: relative;
-	overflow: hidden;
 	border: 1px solid var(--wood-accent);
-}
-
-.verse-item::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	opacity: 0.2;
 }
 
 .verse-item:hover {
@@ -468,59 +500,22 @@ header {
 
 .audio-btn,
 .share-btn {
-	background: var(--gold);
-	color: var(--dark);
-	border: none;
 	padding: 7px 12px;
-	border-radius: 50%;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: all 0.3s ease;
-	font-weight: 500;
 	width: 40px;
 	height: 40px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.verse-audio button:hover {
-	background: var(--gold-light);
-	transform: scale(1.04);
-}
-
-.verse-audio button i {
-	font-size: 1.1rem;
-}
-
-.verse-audio button,
-.verse-share button {
-	background: var(--gold);
-	color: var(--dark);
-	border: none;
-	padding: 7px 12px;
-	border-radius: 50%;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: all 0.3s ease;
-	font-weight: 500;
-	width: 40px;
-	height: 40px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.verse-share button:hover {
+.audio-btn:hover,
+.share-btn:hover {
 	background: var(--gold-light);
 	transform: scale(1.04);
 }
 
 .arabic-text {
 	font-family: var(--arabic-font);
-	font-size: 1.8rem;
+	font-size: 3rem;
 	text-align: right;
-	line-height: 1.6;
+	line-height: 1.8;
 	margin-bottom: 15px;
 	color: #fff;
 	padding: 10px;
@@ -535,39 +530,33 @@ header {
 	hyphens: auto;
 }
 
-.latin-text {
-	font-family: "Poppins", sans-serif;
-	font-size: 1.1rem;
+.latin-text,
+.translation-text {
+	font-size: 0.95rem;
 	line-height: 1.6;
 	color: #f0f0f0;
-	padding: 15px;
-	direction: ltr;
-	text-align: left;
 	background: rgba(0, 0, 0, 0.3);
 	border-radius: 6px;
-	margin-bottom: 15px;
 	backdrop-filter: blur(2px);
 	position: relative;
 	z-index: 2;
 	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.translation-text {
-	padding: 10px;
-	background: rgba(0, 0, 0, 0.3);
-	border-radius: 6px;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-	font-size: 0.95rem;
-	line-height: 1.6;
-	color: #f0f0f0;
-	border-top: 1px solid rgba(255, 255, 255, 0.1);
-	margin-top: 12px;
-	backdrop-filter: blur(2px);
-	position: relative;
-	z-index: 2;
+.latin-text {
+	font-family: "Poppins", sans-serif;
+	padding: 15px;
+	direction: ltr;
+	text-align: left;
+	margin-bottom: 15px;
 }
 
-/* ===== STYLE UNTUK NAMA SURAH ===== */
+.translation-text {
+	padding: 10px;
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+	margin-top: 12px;
+}
+
 .surah-name {
 	background: rgba(139, 69, 19, 0.1);
 	border-radius: 8px;
@@ -586,9 +575,9 @@ header {
 	color: var(--gold);
 }
 
-/* ============================================= */
+/* ================================= */
 /* BOOKSHELF STYLES */
-/* ============================================= */
+/* ================================= */
 .section-title {
 	font-family: "Playfair Display", serif;
 	font-size: 1.6rem;
@@ -711,8 +700,6 @@ header {
 	text-align: center;
 	color: white;
 	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-	position: relative;
-	overflow: auto;
 	border: 1px solid var(--wood-accent);
 	transition: transform 0.3s ease;
 	width: 100%;
@@ -721,17 +708,6 @@ header {
 .asma-card:hover {
 	transform: translateY(-5px);
 	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-}
-
-.asma-card::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	opacity: 0.2;
 }
 
 .asma-number {
@@ -777,14 +753,18 @@ header {
 	padding: 10px;
 }
 
-.prophet-card {
+.prophet-card,
+.prophet-detail-image-container {
 	position: relative;
-	display: flex;
-	flex-direction: column;
 	border-radius: 12px;
 	overflow: hidden;
 	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 	transition: all 0.4s ease;
+}
+
+.prophet-card {
+	display: flex;
+	flex-direction: column;
 	height: 100%;
 	background: var(--card-dark);
 	border: 1px solid var(--border-dark);
@@ -802,7 +782,8 @@ header {
 	overflow: hidden;
 }
 
-.prophet-image {
+.prophet-image,
+.prophet-detail-image {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
@@ -860,25 +841,111 @@ header {
 }
 
 .prophet-detail-image-container {
-	position: relative;
-	width: 100%;
 	height: 300px; /* Tinggi default untuk mobile */
-	border-radius: 12px;
-	overflow: hidden;
 	margin-bottom: 25px;
 	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-.prophet-detail-image {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	transition: transform 0.5s ease;
+/* ===== PRAYER ITEM STYLES (MOBILE FIRST) ===== */
+.prayer-item {
+	background: linear-gradient(
+		to bottom,
+		var(--prayer-primary) 0%,
+		var(--prayer-secondary) 100%
+	);
+	border-radius: 6px;
+	padding: 12px;
+	margin-bottom: 15px;
+	box-shadow:
+		0 6px 12px rgba(0, 0, 0, 0.25),
+		0 3px 6px rgba(0, 0, 0, 0.15) inset,
+		-4px 0 6px -2px rgba(0, 0, 0, 0.3);
+	border-left: 10px solid var(--prayer-spine);
+	position: relative;
+	overflow: hidden;
+	transition: all 0.3s ease;
 }
 
-/* ============================================= */
+.prayer-item::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	opacity: 0.2;
+}
+
+.prayer-header {
+	display: flex;
+	align-items: center;
+	margin-bottom: 10px;
+	padding-bottom: 8px;
+	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+	position: relative;
+	z-index: 2;
+	flex-wrap: wrap;
+}
+
+.prayer-number {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	background: var(--gold);
+	color: var(--dark);
+	border-radius: 50%;
+	font-weight: 700;
+	font-size: 0.9rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+	flex-shrink: 0;
+}
+
+.prayer-title-container {
+	flex: 1;
+	padding: 0 10px;
+	min-width: calc(
+		100% - 80px
+	); /* Untuk memastikan judul tidak menumpuk dengan tombol */
+}
+
+.prayer-title {
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: var(--gold-light);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+	line-height: 1.3;
+}
+
+.prayer-controls {
+	flex-shrink: 0;
+}
+
+.prayer-share-btn {
+	background: var(--gold);
+	color: var(--dark);
+	border: none;
+	border-radius: 50%;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.prayer-share-btn:hover {
+	background: var(--gold-light);
+	transform: scale(1.05);
+}
+
+/* ================================ */
 /* SEARCH BOX */
-/* ============================================= */
+/* ================================ */
 .search-container {
 	max-width: 100%;
 	margin: 0 auto 25px;
@@ -913,9 +980,168 @@ header {
 	font-size: 1.1rem;
 }
 
-/* ============================================= */
+.search-clear-btn {
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	background: none;
+	border: none;
+	color: #999;
+	cursor: pointer;
+	display: none;
+}
+
+/* ================================= */
+/* SEARCH RESULTS STYLES */
+/* ================================= */
+.search-results-section {
+	margin: 40px 0;
+	padding: 0 15px;
+}
+
+.search-results-header {
+	text-align: center;
+	margin: 25px auto;
+	padding: 15px;
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	border-radius: 8px;
+	position: relative;
+	overflow: hidden;
+}
+
+.search-results-header::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	opacity: 0.2;
+}
+
+.search-results-header h3 {
+	font-family: "Playfair Display", serif;
+	font-size: 1.6rem;
+	color: var(--gold);
+	margin-bottom: 10px;
+	position: relative;
+	z-index: 2;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.search-results-header p {
+	font-size: 1.1rem;
+	color: var(--light);
+	position: relative;
+	z-index: 2;
+}
+
+.search-results-container {
+	display: grid;
+	gap: 20px;
+}
+
+.search-result-item {
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--wood-dark) 100%
+	);
+	border-radius: 8px;
+	padding: 18px;
+	box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+	border: 1px solid var(--wood-accent);
+	transition: all 0.3s ease;
+	position: relative;
+	overflow: hidden;
+}
+
+.search-result-item:hover {
+	transform: translateY(-5px);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.result-meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 15px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+	position: relative;
+	z-index: 2;
+}
+
+.surah-badge {
+	background: var(--gold);
+	color: var(--dark);
+	padding: 6px 12px;
+	border-radius: 20px;
+	font-weight: 600;
+	font-size: 0.9rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.result-surah-name {
+	background: rgba(255, 255, 255, 0.15);
+	padding: 6px 15px;
+	border-radius: 30px;
+	font-size: 1rem;
+	font-weight: 500;
+	color: var(--gold-light);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.result-actions {
+	display: flex;
+	gap: 12px;
+	margin-top: 20px;
+	flex-wrap: wrap;
+	position: relative;
+	z-index: 2;
+}
+
+.result-actions .audio-btn,
+.result-actions .share-btn {
+	padding: 10px 18px;
+	border-radius: 30px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 500;
+	font-size: 0.95rem;
+	transition: all 0.3s ease;
+	box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.result-actions .audio-btn i,
+.result-actions .share-btn i {
+	font-size: 1.1rem;
+}
+
+.result-actions .audio-btn:hover,
+.result-actions .share-btn:hover {
+	background: var(--gold-light);
+	transform: translateY(-2px);
+	box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35);
+}
+
+mark {
+	background-color: #ffeb3b;
+	color: #000;
+	padding: 0 2px;
+	border-radius: 3px;
+}
+
+/* =============================== */
 /* FOOTER STYLES */
-/* ============================================= */
+/* =============================== */
 footer {
 	background: var(--wood-dark);
 	color: var(--light);
@@ -992,9 +1218,9 @@ footer {
 	font-size: 0.85rem;
 }
 
-/* ============================================= */
+/* =============================== */
 /* LOADING STYLES */
-/* ============================================= */
+/* =============================== */
 .loading-container {
 	margin-top: 80px;
 	text-align: center;
@@ -1020,9 +1246,9 @@ footer {
 	}
 }
 
-/* ============================================= */
+/* =============================== */
 /* PAGINATION STYLES */
-/* ============================================= */
+/* =============================== */
 .pagination-container {
 	width: 100%;
 	margin-top: 20px;
@@ -1110,9 +1336,9 @@ footer {
 	padding: 0 5px;
 }
 
-/* ============================================= */
+/* ================================ */
 /* BACK TO TOP BUTTON */
-/* ============================================= */
+/* ================================ */
 #backToTopBtn {
 	display: none;
 	position: fixed;
@@ -1149,9 +1375,9 @@ footer {
 	}
 }
 
-/* ============================================= */
+/* ================================ */
 /* TABLET STYLES (min-width: 576px) */
-/* ============================================= */
+/* ================================ */
 @media (min-width: 576px) {
 	body {
 		padding-top: 70px;
@@ -1162,7 +1388,8 @@ footer {
 		border-bottom: 4px solid var(--wood-accent);
 	}
 
-	.logo i {
+	.logo i,
+	.detail-header h2 {
 		font-size: 2rem;
 	}
 
@@ -1176,7 +1403,8 @@ footer {
 		width: auto;
 	}
 
-	.nav-btn i {
+	.nav-btn i,
+	.shelf-header i {
 		font-size: 1.1rem;
 	}
 
@@ -1198,10 +1426,6 @@ footer {
 	.shelf-header {
 		padding: 11px 18px;
 		font-size: 1.2rem;
-	}
-
-	.shelf-header i {
-		font-size: 1.1rem;
 	}
 
 	.bookshelf {
@@ -1241,20 +1465,13 @@ footer {
 		font-size: 3rem;
 	}
 
-	.book-title h3 {
-		font-size: 1rem;
-	}
-
+	.book-title h3,
 	.book.small .book-title h3 {
 		font-size: 1rem;
 	}
 
 	.detail-header {
 		padding: 18px;
-	}
-
-	.detail-header h2 {
-		font-size: 2rem;
 	}
 
 	.detail-header h3 {
@@ -1273,12 +1490,7 @@ footer {
 		padding: 8px 15px;
 	}
 
-	.arabic-text {
-		font-size: 2rem;
-	}
-
 	.prophet-grid {
-		/*grid-template-columns: repeat(2, 1fr);*/
 		gap: 20px;
 	}
 
@@ -1286,7 +1498,32 @@ footer {
 		height: 160px;
 	}
 
-	.prophet-name {
+	.prophet-name,
+	.search-results-header p {
+		font-size: 1.2rem;
+	}
+
+	.prayer-item {
+		padding: 15px;
+		border-left: 12px solid var(--prayer-spine);
+	}
+
+	.prayer-header {
+		margin-bottom: 12px;
+		padding-bottom: 10px;
+	}
+
+	.prayer-number {
+		width: 35px;
+		height: 35px;
+		font-size: 1rem;
+	}
+
+	.prayer-title-container {
+		padding: 0 15px;
+	}
+
+	.prayer-title {
 		font-size: 1.2rem;
 	}
 
@@ -1312,11 +1549,27 @@ footer {
 		height: 32px;
 		font-size: 0.9rem;
 	}
+
+	.search-results-header h3 {
+		font-size: 1.8rem;
+	}
+
+	.arabic-text {
+		font-size: 3.2rem;
+	}
+
+	.result-meta {
+		flex-direction: row;
+	}
+
+	.result-actions {
+		justify-content: flex-end;
+	}
 }
 
-/* ============================================= */
+/* ================================= */
 /* DESKTOP STYLES (min-width: 768px) */
-/* ============================================= */
+/* ================================= */
 @media (min-width: 768px) {
 	body {
 		padding-top: 80px;
@@ -1340,7 +1593,8 @@ footer {
 		font-size: 1rem;
 	}
 
-	.nav-btn i {
+	.nav-btn i,
+	.shelf-header i {
 		font-size: 1.2rem;
 	}
 
@@ -1358,10 +1612,6 @@ footer {
 	.shelf-header {
 		padding: 12px 20px;
 		font-size: 1.3rem;
-	}
-
-	.shelf-header i {
-		font-size: 1.2rem;
 	}
 
 	.bookshelf {
@@ -1420,10 +1670,7 @@ footer {
 		font-size: 3.5rem;
 	}
 
-	.book-title h3 {
-		font-size: 1.05rem;
-	}
-
+	.book-title h3,
 	.book.small .book-title h3 {
 		font-size: 1.05rem;
 	}
@@ -1432,16 +1679,12 @@ footer {
 		padding: 20px;
 	}
 
-	.detail-header h2 {
-		font-size: 2.4rem;
+	.arabic-text {
+		font-size: 3.4rem;
 	}
 
 	.detail-header h3 {
 		font-size: 1.8rem;
-	}
-
-	.arabic-text {
-		font-size: 2.4rem;
 	}
 
 	.prophet-grid {
@@ -1459,6 +1702,44 @@ footer {
 
 	.prophet-detail-image-container {
 		height: 400px;
+	}
+
+	.prayer-item {
+		padding: 18px;
+		margin-bottom: 20px;
+	}
+
+	.prayer-header {
+		margin-bottom: 15px;
+		padding-bottom: 12px;
+	}
+
+	.prayer-title {
+		font-size: 1.3rem;
+	}
+
+	.search-results-header {
+		padding: 20px;
+	}
+
+	.search-results-header h3 {
+		font-size: 2rem;
+	}
+
+	.search-results-container {
+		grid-template-columns: 1fr;
+	}
+
+	.search-result-item {
+		padding: 22px;
+	}
+
+	.detail-header h2 {
+		font-size: 2.6rem;
+	}
+
+	.translation-text {
+		font-size: 1.05rem;
 	}
 
 	.footer-content {
@@ -1494,9 +1775,9 @@ footer {
 	}
 }
 
-/* ============================================= */
+/* ================================== */
 /* LARGE DESKTOP STYLES (min-width: 992px) */
-/* ============================================= */
+/* ================================== */
 @media (min-width: 992px) {
 	.container {
 		padding: 0 20px;
@@ -1532,12 +1813,8 @@ footer {
 		font-size: 4rem;
 	}
 
-	.detail-header h2 {
-		font-size: 2.6rem;
-	}
-
 	.arabic-text {
-		font-size: 2.6rem;
+		font-size: 3.6rem;
 	}
 
 	.prophet-grid {
@@ -1556,11 +1833,19 @@ footer {
 	.prophet-detail-image-container {
 		height: 500px;
 	}
+
+	.search-results-section {
+		margin: 50px 0;
+	}
+
+	.detail-header h2 {
+		font-size: 2.8rem;
+	}
 }
 
-/* ============================================= */
+/* ================================= */
 /* EXTRA LARGE DESKTOP STYLES (min-width: 1200px) */
-/* ============================================= */
+/* ================================= */
 @media (min-width: 1200px) {
 	.book {
 		width: 220px;
@@ -1592,12 +1877,8 @@ footer {
 		font-size: 4.5rem;
 	}
 
-	.detail-header h2 {
-		font-size: 2.8rem;
-	}
-
 	.arabic-text {
-		font-size: 2.8rem;
+		font-size: 3.8rem;
 	}
 
 	.prophet-grid {
@@ -1607,5 +1888,9 @@ footer {
 
 	.prophet-image-container {
 		height: 220px;
+	}
+
+	.detail-header h2 {
+		font-size: 2.8rem;
 	}
 }

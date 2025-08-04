@@ -40,56 +40,7 @@
 			<div id="mainContent">
 				<!-- Rak buku utama -->
 				<div id="mainShelf">
-					<h2 class="section-title">Rak Buku</h2>
-					<div class="shelf-header">
-						<i class="fas fa-mosque"></i>
-						<h3>Islam</h3>
-					</div>
-					<div class="bookshelf">
-						<div class="books-container">
-							<div class="books">
-								<div class="book" id="quranBook">
-									<div class="book-image">
-										<i class="fas fa-book-quran"></i>
-										<div class="surah-number-badge">Q</div>
-									</div>
-									<div class="book-title">
-										<h3>Al-Quran Al-Karim</h3>
-									</div>
-								</div>
-								<div class="book" id="hadithBook">
-									<div class="book-image">
-										<i class="fas fa-book"></i>
-										<div class="surah-number-badge">H</div>
-									</div>
-									<div class="book-title">
-										<h3>Al-Hadiths</h3>
-										<p>Kitab Hadiths</p>
-									</div>
-								</div>
-								<div class="book" id="asmaulHusnaBook">
-									<div class="book-image">
-										<i class="fas fa-signature"></i>
-										<div class="surah-number-badge">A</div>
-									</div>
-									<div class="book-title">
-										<h3>Asmaul Husna</h3>
-										<p>99 Nama Allah</p>
-									</div>
-								</div>
-								<div class="book" id="prophetStoriesBook">
-									<div class="book-image">
-										<i class="fas fa-book-open"></i>
-										<div class="surah-number-badge">K</div>
-									</div>
-									<div class="book-title">
-										<h3>Kisah Nabi</h3>
-										<p>25 Nabi dan Rasul</p>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
+					<!-- Rak buku akan di-render secara dinamis di sini -->
 				</div>
 			</div>
 
@@ -99,12 +50,12 @@
 				<div class="search-container">
 					<input
 						type="text"
-						id="searchInput"
 						class="search-box"
+						id="searchInput"
 						placeholder="Cari..." />
-					<div class="search-icon">
-						<i class="fas fa-search"></i>
-					</div>
+					<button id="searchClearBtn" class="search-clear-btn">
+						<i class="fas fa-times"></i>
+					</button>
 				</div>
 				<div class="shelf-header">
 					<i class="fas fa-book" id="listIcon"></i>
@@ -166,11 +117,45 @@
 		<button id="backToTopBtn" title="Kembali ke atas">
 			<i class="fas fa-arrow-up"></i>
 		</button>
-
-		<script
-			src="module-helper.js"
-			type="text/javascript"
-			charset="utf-8"></script>
+		<script src="helper.js" type="text/javascript" charset="utf-8"></script>
 		<script src="script.js" type="text/javascript" charset="utf-8"></script>
+		<script>
+			// ====================== FUNGSI UNTUK MENAMBAHKAN KATEGORI/BUKU ======================
+			function addNewShelf(shelfData) {
+				LibraryManager.addShelf(shelfData);
+				refreshMainShelf();
+			}
+
+			function addBookToShelf(shelfId, bookData) {
+				const success = LibraryManager.addBook(shelfId, bookData);
+				if (success) refreshMainShelf();
+				return success;
+			}
+
+			function refreshMainShelf() {
+				if (appState.currentView === "mainShelf") {
+					ViewManager.renderMainShelf();
+				}
+			}
+
+			// Contoh penggunaan:
+			// Tambahkan rak buku sejarah
+			addNewShelf({
+				id: "history",
+				title: "Sejarah",
+				icon: "fas fa-landmark",
+				books: []
+			});
+
+			// Tambahkan buku fisika ke rak sains
+			addBookToShelf("science", {
+				id: "physics",
+				title: "Fisika Dasar",
+				subtitle: "Prinsip Mekanika",
+				icon: "fas fa-atom",
+				badge: "F",
+				viewName: "physicsList"
+			});
+		</script>
 	</body>
 </html>
