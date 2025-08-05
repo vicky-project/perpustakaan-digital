@@ -120,7 +120,7 @@ const appState = {
 	quranData: null,
 	hadithData: null,
 	dailyPrayerSources: [],
-	searchContext: null, // 'global_quran', 'surah_quran', 'global_hadith', 'book_hadith'
+	searchContext: null, // 'global_quran', 'surah_quran', 'global_hadith', 'book_hadith', 'doa'
 	currentSurah: null,
 	currentHadithBook: null,
 	scrollToVerse: null,
@@ -226,10 +226,13 @@ const Utils = {
 
 					try {
 						// Render hasil
+						const dataToPass =
+							appState.searchContext === "doa" ? null : appState.currentData;
+
 						Utils.renderSearchResults(
 							query,
 							appState.searchContext,
-							appState.currentData
+							dataToPass
 						);
 					} catch (error) {
 						console.error("Search error:", error);
@@ -354,6 +357,8 @@ const Utils = {
 			url += "&type=hadith";
 		} else if (context === "book_hadith" && currentData) {
 			url += `&type=hadith&book_id=${currentData.id}`;
+		} else if (context === "doa") {
+			url += "&type=doa";
 		}
 
 		try {
@@ -377,7 +382,7 @@ const Utils = {
 									DataManager.renderVerseItem(
 										item,
 										item.surah,
-										context === "global_quran" ? true : false,
+										currentData ? true : false,
 										query
 									)
 								)
@@ -421,10 +426,10 @@ const Utils = {
 											currentData ? currentData.name : ""
 										}</h3>
                     Mencari: <em>"${query}"</em>
-                    <p>Ditemukan ${data.total} hasil</p>
+                    <p>Ditemukan ${data.hadith.total} hasil</p>
                 </div>`,
 						renderContent: data =>
-							`<div class="search-results-container">${data.data
+							`<div class="search-results-container">${data.hadith.data
 								.map(hadith =>
 									DataManager.renderHadithItem(
 										hadith,
@@ -441,13 +446,47 @@ const Utils = {
 								newPageUrl
 							);
 						},
-						dataObject: data => data
+						dataObject: data => data.hadith
+					});
+					break;
+				case "doa":
+					DataManager.renderDetailWithPagination({
+						container: DOM.detailContainer,
+						loadingMessage: "Memuat hasil doa...",
+						fetchUrl: url,
+						renderHeader: data => `<div class="search-results-header">
+						  <h3>Pencarian Doa</h3>
+						  <p>Mencari: <em>"${query}"</em></p>
+						  <p>Ditemukan ${data.doa.total} hasil</p>
+						</div>`,
+						renderContent: data => {
+							const prayers = data.doa.data || [];
+							const startNumber = data.doa.from || 1;
+
+							return `<div class="search-results-container">${prayers
+								.map((prayer, index) =>
+									DataManager.renderPrayerItem(
+										prayer,
+										startNumber + index,
+										query
+									)
+								)
+								.join("")}</div>`;
+						},
+						onPageChange: newPageUrl => {
+							Utils.renderSearchResults(
+								query,
+								context,
+								currentData,
+								newPageUrl
+							);
+						},
+						dataObject: data => data.doa
 					});
 					break;
 			}
 		} catch (error) {
 			console.error(error);
-			alert(error);
 		}
 	}
 };
@@ -469,7 +508,9 @@ const ViewManager = {
 			surahList: "global_quran",
 			surahDetail: "surah_quran",
 			hadithList: "global_hadith",
-			hadithDetail: "book_hadith"
+			hadithDetail: "book_hadith",
+			dailyPrayerList: "doa",
+			dailyPrayerDetail: "doa"
 		};
 
 		appState.searchContext = searchContextMap[viewName] || null;
@@ -919,17 +960,19 @@ const DataManager = {
 		});
 	},
 
-	renderPrayerItem: (prayer, number) => {
+	renderPrayerItem: (prayer, number, query = null) => {
 		const shareContent = `${prayer.judul}\n\n${prayer.arab || ""}\n\n${
 			prayer.latin || ""
 		}\n\nTerjemahan: ${prayer.terjemahan || ""}`;
+
+		const highlight = text => (query ? Utils.highlightText(text, query) : text);
 
 		return `
             <div class="prayer-item">
                 <div class="prayer-header">
                     <div class="prayer-number">${number}</div>
                     <div class="prayer-title-container">
-                        <h3 class="prayer-title">${prayer.judul}</h3>
+                        <h3 class="prayer-title">${highlight(prayer.judul)}</h3>
                     </div>
                     <div class="prayer-controls">${Utils.renderShareButton(
 											shareContent
@@ -938,17 +981,19 @@ const DataManager = {
                 </div>
                 ${
 									prayer.arab
-										? `<div class="arabic-text">${prayer.arab}</div>`
+										? `<div class="arabic-text">${highlight(prayer.arab)}</div>`
 										: ""
 								}
                 ${
 									prayer.latin
-										? `<div class="latin-text">${prayer.latin}</div>`
+										? `<div class="latin-text">${highlight(prayer.latin)}</div>`
 										: ""
 								}
                 ${
 									prayer.terjemahan
-										? `<div class="translation-text">${prayer.terjemahan}</div>`
+										? `<div class="translation-text">${highlight(
+												prayer.terjemahan
+										  )}</div>`
 										: ""
 								}
             </div>
@@ -1160,7 +1205,6 @@ const DataManager = {
 		}`;
 
 		const highlight = text => (query ? Utils.highlightText(text, query) : text);
-		console.log(collection);
 
 		return `
             <div class="verse-item" data-hadith-number="${hadith.number}">
