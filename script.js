@@ -382,7 +382,7 @@ const Utils = {
 									DataManager.renderVerseItem(
 										item,
 										item.surah,
-										currentData ? true : false,
+										currentData ? false : true,
 										query
 									)
 								)
