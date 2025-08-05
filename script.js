@@ -1,14 +1,3 @@
-// ====================== KONFIGURASI ======================
-const API_CONFIG = {
-	quran: "https://vickyserver.my.id/server/api/books/quran",
-	hadith: "https://vickyserver.my.id/server/api/books/hadith-book",
-	asmaulHusna: "https://vickyserver.my.id/server/api/books/asmaul-husna",
-	prophetStories: "https://vickyserver.my.id/server/api/books/prophet-stories",
-	dailyPrayers: "https://vickyserver.my.id/server/api/books/doa",
-	search: "https://vickyserver.my.id/server/api/search",
-	cacheExpiry: 604800000 // 7 hari dalam milidetik,
-};
-
 // ====================== LIBRARY CONFIGURATION ======================
 const LibraryConfig = {
 	shelves: [
@@ -348,7 +337,7 @@ const Utils = {
 
 	renderSearchResults: (query, context, currentData, pageUrl = null) => {
 		let url =
-			pageUrl || `${API_CONFIG.search}?query=${encodeURIComponent(query)}`;
+			pageUrl || `${API_CONFIG.urls.search}?query=${encodeURIComponent(query)}`;
 
 		const contextParams = {
 			global_quran: "&type=quran",
@@ -721,7 +710,10 @@ const DataManager = {
 		Utils.clearContainer(DOM.listContent);
 
 		try {
-			const data = await Utils.fetchWithCache(API_CONFIG.quran, "quran_data");
+			const data = await Utils.fetchWithCache(
+				API_CONFIG.urls.quran,
+				"quran_data"
+			);
 			appState.quranData = data;
 			DataManager.renderSurahList(data);
 		} catch (error) {
@@ -764,7 +756,10 @@ const DataManager = {
 		Utils.clearContainer(DOM.listContent);
 
 		try {
-			const data = await Utils.fetchWithCache(API_CONFIG.hadith, "hadith_data");
+			const data = await Utils.fetchWithCache(
+				API_CONFIG.urls.hadith,
+				"hadith_data"
+			);
 			appState.hadithData = data;
 			DataManager.renderHadithList(data);
 		} catch (error) {
@@ -810,7 +805,7 @@ const DataManager = {
 
 		try {
 			const data = await Utils.fetchWithCache(
-				API_CONFIG.asmaulHusna,
+				API_CONFIG.urls.asmaulHusna,
 				"asmaul_husna"
 			);
 			DataManager.renderAsmaulHusnaList(data);
@@ -854,7 +849,7 @@ const DataManager = {
 
 		try {
 			const data = await Utils.fetchWithCache(
-				`${API_CONFIG.dailyPrayers}/sumber`,
+				`${API_CONFIG.urls.dailyPrayers}/sumber`,
 				"prayer_data"
 			);
 
@@ -900,7 +895,7 @@ const DataManager = {
 
 		const url = pageUrl
 			? pageUrl
-			: `${API_CONFIG.dailyPrayers}/sumber/${sumberId}`;
+			: `${API_CONFIG.urls.dailyPrayers}/sumber/${sumberId}`;
 
 		DataManager.renderDetailWithPagination({
 			container: DOM.detailContainer,
@@ -980,7 +975,7 @@ const DataManager = {
 
 		try {
 			const data = await Utils.fetchWithCache(
-				API_CONFIG.prophetStories,
+				API_CONFIG.urls.prophetStories,
 				"prophet_stories"
 			);
 			DataManager.renderProphetStoriesList(data);
@@ -1030,7 +1025,7 @@ const DataManager = {
 	},
 
 	renderSurahDetail: (surah, pageUrl = null) => {
-		const url = pageUrl || `${API_CONFIG.quran}/${surah.number}/verses`;
+		const url = pageUrl || `${API_CONFIG.urls.quran}/${surah.number}/verses`;
 
 		DataManager.renderDetailWithPagination({
 			container: DOM.detailContainer,
@@ -1118,7 +1113,7 @@ const DataManager = {
 	},
 
 	renderHadithDetail: (collection, pageUrl = null) => {
-		const url = pageUrl || `${API_CONFIG.hadith}/${collection.id}/hadiths`;
+		const url = pageUrl || `${API_CONFIG.urls.hadith}/${collection.id}/hadiths`;
 
 		DataManager.renderDetailWithPagination({
 			container: DOM.detailContainer,
@@ -1211,7 +1206,7 @@ const DataManager = {
 			'<div class="loading">Memuat detail Asmaul Husna...</div>';
 
 		// Fetch data detail
-		fetch(`${API_CONFIG.asmaulHusna}/${id}`)
+		fetch(`${API_CONFIG.urls.asmaulHusna}/${id}`)
 			.then(response => response.json())
 			.then(data => {
 				const asma = data.data;
@@ -1257,7 +1252,7 @@ const DataManager = {
 			'<div class="loading">Memuat detail kisah nabi...</div>';
 
 		// Fetch data detail
-		fetch(`${API_CONFIG.prophetStories}/${id}`)
+		fetch(`${API_CONFIG.urls.prophetStories}/${id}`)
 			.then(response => response.json())
 			.then(data => {
 				const prophet = data.data;

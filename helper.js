@@ -3,7 +3,17 @@
 // ============================
 // GLOBAL CONFIGURATION
 // ============================
-const CONFIG = {
+const API_CONFIG = {
+	urls: {
+		quran: "https://vickyserver.my.id/server/api/books/quran",
+		hadith: "https://vickyserver.my.id/server/api/books/hadith-book",
+		asmaulHusna: "https://vickyserver.my.id/server/api/books/asmaul-husna",
+		prophetStories:
+			"https://vickyserver.my.id/server/api/books/prophet-stories",
+		dailyPrayers: "https://vickyserver.my.id/server/api/books/doa",
+		search: "https://vickyserver.my.id/server/api/search"
+	},
+	cacheExpiry: 604800000, // 7 hari dalam milidetik,
 	libraries: {
 		LZString: {
 			urls: [
@@ -95,7 +105,7 @@ const ScriptLoader = (() => {
 		if (libraryPromises[libName]) return libraryPromises[libName];
 
 		libraryPromises[libName] = new Promise(async resolve => {
-			const config = CONFIG.libraries[libName];
+			const config = API_CONFIG.libraries[libName];
 			if (!config) {
 				console.error(`Library config not found: ${libName}`);
 				resolve(false);
@@ -133,10 +143,10 @@ const ScriptLoader = (() => {
 
 	// Preload libraries on idle
 	const preloadLibraries = () => {
-		if (!CONFIG.libraries) return;
+		if (!API_CONFIG.libraries) return;
 
 		const load = () => {
-			Object.keys(CONFIG.libraries).forEach(lib => {
+			Object.keys(API_CONFIG.libraries).forEach(lib => {
 				ensureLibrary(lib).catch(e => console.warn("Preload failed:", e));
 			});
 		};
@@ -553,5 +563,6 @@ const paginationModule = (function () {
 	return { render };
 })();
 
+window.API_CONFIG = API_CONFIG;
 window.CacheManager = CacheManager;
 window.paginationModule = paginationModule;
