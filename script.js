@@ -349,144 +349,118 @@ const Utils = {
 	renderSearchResults: (query, context, currentData, pageUrl = null) => {
 		let url =
 			pageUrl || `${API_CONFIG.search}?query=${encodeURIComponent(query)}`;
-		if (context === "global_quran") {
-			url += "&type=quran";
-		} else if (context === "surah_quran" && currentData) {
-			url += `&type=quran&surah_id=${currentData.number}`;
-		} else if (context === "global_hadith") {
-			url += "&type=hadith";
-		} else if (context === "book_hadith" && currentData) {
-			url += `&type=hadith&book_id=${currentData.id}`;
-		} else if (context === "doa") {
-			url += "&type=doa";
-		}
+
+		const contextParams = {
+			global_quran: "&type=quran",
+			surah_quran: `&type=quran&surah_id=${currentData?.number || ""}`,
+			global_hadith: "&type=hadith",
+			book_hadith: `&type=hadith&book_id=${currentData?.id || ""}`,
+			doa: "&type=doa"
+		};
+
+		url += contextParams[context] || "";
 
 		try {
-			switch (context) {
-				case "global_quran":
-				case "surah_quran":
-					DataManager.renderDetailWithPagination({
-						container: DOM.detailContainer,
-						loadingMessage: "Memuat ayat...",
-						fetchUrl: url,
-						renderHeader: data => `<div class="search-results-header">
-                    <h3>Hasil Pencarian Quran: ${
-											currentData ? currentData.name_latin : ""
-										}</h3>
-                    Mencari: <em>"${query}"</em>
-                    <p>Ditemukan ${data.quran.total} hasil</p>
-                </div>`,
-						renderContent: data =>
-							`<div class="search-results-container">${data.quran.data
-								.map(item =>
-									DataManager.renderVerseItem(
-										item,
-										item.surah,
-										currentData ? false : true,
-										query
-									)
+			const searchConfigs = {
+				quran: {
+					loadingMessage: "Memuat ayat...",
+					header: (data, currentData) =>
+						`<div class="search-results-header"><h3>Hasil Pencarian Quran: ${
+							currentData?.name_latin || ""
+						}</h3>Mencari: <em>"${query}"</em><p>Ditemukan ${
+							data.quran.total
+						} hasil</p></div>`,
+					content: (data, currentData) =>
+						`<div class="search-results-container">${data.quran.data
+							.map(item =>
+								DataManager.renderVerseItem(
+									item,
+									item.surah,
+									!currentData, // showSurahName jika tidak ada currentData (global)
+									query
 								)
-								.join("")}</div>`,
-						onPageChange: newPageUrl =>
-							Utils.renderSearchResults(
-								query,
-								context,
-								currentData,
-								newPageUrl
-							),
-						dataObject: data => data.quran,
-						onRenderComplete: () => {
-							DOM.detailContainer
-								.querySelectorAll(".audio-btn")
-								.forEach(btn => {
-									btn.addEventListener("click", () => {
-										Utils.playAudio(btn.dataset.audio);
-									});
-								});
-
-							DOM.detailContainer
-								.querySelectorAll(".share-btn")
-								.forEach(btn => {
-									btn.addEventListener("click", () => {
-										Utils.shareContent(btn.dataset.content);
-									});
-								});
-						}
-					});
-
-					break;
-				case "global_hadith":
-				case "book_hadith":
-					DataManager.renderDetailWithPagination({
-						container: DOM.detailContainer,
-						loadingMessage: "Memuat hadits...",
-						fetchUrl: url,
-						renderHeader: data => `<div class="search-results-header">
-                    <h3>Hasil Pencarian Hadits: ${
-											currentData ? currentData.name : ""
-										}</h3>
-                    Mencari: <em>"${query}"</em>
-                    <p>Ditemukan ${data.hadith.total} hasil</p>
-                </div>`,
-						renderContent: data =>
-							`<div class="search-results-container">${data.hadith.data
-								.map(hadith =>
-									DataManager.renderHadithItem(
-										hadith,
-										currentData ? null : hadith.book_id,
-										query
-									)
+							)
+							.join("")}</div>`,
+					dataKey: "quran"
+				},
+				hadith: {
+					loadingMessage: "Memuat hadits...",
+					header: (data, currentData) =>
+						`<div class="search-results-header"><h3>Hasil Pencarian Hadits: ${
+							currentData?.name || ""
+						}</h3>Mencari: <em>"${query}"</em><p>Ditemukan ${
+							data.hadith.total
+						} hasil</p></div>`,
+					content: (data, currentData) =>
+						`<div class="search-results-container">${data.hadith.data
+							.map(hadith =>
+								DataManager.renderHadithItem(
+									hadith,
+									currentData ? null : hadith.book_id,
+									query
 								)
-								.join("")}</div>`,
-						onPageChange: newPageUrl => {
-							Utils.renderSearchResults(
-								query,
-								context,
-								currentData,
-								newPageUrl
-							);
-						},
-						dataObject: data => data.hadith
-					});
-					break;
-				case "doa":
-					DataManager.renderDetailWithPagination({
-						container: DOM.detailContainer,
-						loadingMessage: "Memuat hasil doa...",
-						fetchUrl: url,
-						renderHeader: data => `<div class="search-results-header">
-						  <h3>Pencarian Doa</h3>
-						  <p>Mencari: <em>"${query}"</em></p>
-						  <p>Ditemukan ${data.doa.total} hasil</p>
-						</div>`,
-						renderContent: data => {
-							const prayers = data.doa.data || [];
-							const startNumber = data.doa.from || 1;
+							)
+							.join("")}</div>`,
+					dataKey: "hadith"
+				},
+				doa: {
+					loadingMessage: "Memuat hasil doa...",
+					header: data =>
+						`<div class="search-results-header"><h3>Pencarian Doa</h3><p>Mencari: <em>"${query}"</em></p><p>Ditemukan ${data.doa.total} hasil</p></div>`,
+					content: data => {
+						const prayers = data.doa.data || [];
+						const startNumber = data.doa.from || 1;
 
-							return `<div class="search-results-container">${prayers
-								.map((prayer, index) =>
-									DataManager.renderPrayerItem(
-										prayer,
-										startNumber + index,
-										query
-									)
-								)
-								.join("")}</div>`;
-						},
-						onPageChange: newPageUrl => {
-							Utils.renderSearchResults(
-								query,
-								context,
-								currentData,
-								newPageUrl
-							);
-						},
-						dataObject: data => data.doa
-					});
-					break;
-			}
+						return `<div class="search-results-container">${prayers
+							.map((prayer, index) =>
+								DataManager.renderPrayerItem(prayer, startNumber + index, query)
+							)
+							.join("")}</div>`;
+					},
+					dataKey: "doa"
+				}
+			};
+
+			let searchType;
+			if (context.includes("quran")) searchType = "quran";
+			else if (context.includes("hadith")) searchType = "hadith";
+			else if (context === "doa") searchType = "doa";
+
+			if (!searchType) return;
+
+			const config = searchConfigs[searchType];
+
+			const addEventListeners = () => {
+				DOM.detailContainer.querySelectorAll(".audio-btn").forEach(btn => {
+					btn.addEventListener("click", () =>
+						Utils.playAudio(btn.dataset.audio)
+					);
+				});
+
+				DOM.detailContainer.querySelectorAll(".share-btn").forEach(btn => {
+					btn.addEventListener("click", () =>
+						Utils.shareContent(btn.dataset.content)
+					);
+				});
+			};
+
+			DataManager.renderDetailWithPagination({
+				container: DOM.detailContainer,
+				loadingMessage: config.loadingMessage,
+				fetchUrl: url,
+				renderHeader: data => config.header(data, currentData),
+				renderContent: data => config.content(data, currentData),
+				onPageChange: newPageUrl =>
+					Utils.renderSearchResults(query, context, currentData, newPageUrl),
+				dataObject: data => data[config.dataKey],
+				onRenderComplete: addEventListeners
+			});
 		} catch (error) {
 			console.error(error);
+			Utils.showError(
+				"Terjadi kesalahan saat memuat hasil pencarian",
+				DOM.detailContainer
+			);
 		}
 	}
 };
