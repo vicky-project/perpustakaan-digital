@@ -701,7 +701,7 @@ const DataManager = {
 			if (onRenderComplete) onRenderComplete();
 		} catch (error) {
 			console.error("Error:", error);
-			Utils.showError(error.message, container);
+			Utils.showError(error.message + JSON.stringify(error), container);
 		}
 	},
 
