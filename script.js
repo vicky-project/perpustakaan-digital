@@ -439,8 +439,10 @@ const Utils = {
 				fetchUrl: url,
 				renderHeader: data => config.header(data, currentData),
 				renderContent: data => config.content(data, currentData),
-				onPageChange: newPageUrl =>
-					Utils.renderSearchResults(query, context, currentData, newPageUrl),
+				onPageChange: newPageUrl => {
+					const newUrl = createNextPageUrl(newPageUrl, url);
+					Utils.renderSearchResults(query, context, currentData, newUrl);
+				},
 				dataObject: data => data[config.dataKey],
 				onRenderComplete: addEventListeners
 			});
@@ -450,6 +452,35 @@ const Utils = {
 				"Terjadi kesalahan saat memuat hasil pencarian",
 				DOM.detailContainer
 			);
+		}
+	},
+
+	// Karna paginasi mengembalikan links http bukan https yang menyebabkan error saat pindah halaman
+	createNextPageUrl: (fullUrlWithQueryString, selfUrl) => {
+		try {
+			// 1. Parsing URL asli
+			const urlObj = new URL(fullUrlWithQueryString);
+
+			// 2. Ambil semua parameter dan konversi ke object
+			const params = Object.fromEntries(urlObj.searchParams.entries());
+
+			// 3. Tambahkan 1 ke nilai 'page' jika ada
+			if (params.page) {
+				params.page = (parseInt(params.page) + 1).toString();
+			}
+
+			// 4. Buat URL baru dengan base yang berbeda
+			const newUrl = new URL(selfUrl);
+
+			// 5. Tambahkan semua parameter ke URL baru
+			for (const [key, value] of Object.entries(params)) {
+				newUrl.searchParams.append(key, value);
+			}
+
+			return newUrl.toString();
+		} catch (error) {
+			console.error("Error membuat URL baru:", error);
+			return null;
 		}
 	}
 };
@@ -1051,8 +1082,8 @@ const DataManager = {
                 </div>
             `,
 			onPageChange: newPageUrl => {
-				alert(newPageUrl);
-				DataManager.renderSurahDetail(surah, newPageUrl);
+				const newUrl = createNextPageUrl(newPageUrl, API_CONFIG.urls.quran);
+				DataManager.renderSurahDetail(surah, newUrl);
 			},
 			dataObject: data => data,
 			onRenderComplete: () => {
@@ -1139,7 +1170,8 @@ const DataManager = {
                 </div>
             `,
 			onPageChange: newPageUrl => {
-				DataManager.renderHadithDetail(collection, newPageUrl);
+				const newUrl = createNextPageUrl(newPageUrl, API_CONFIG.urls.hadith);
+				DataManager.renderHadithDetail(collection, newUrl);
 			},
 			dataObject: data => data.hadiths,
 			onRenderComplete: () => {
