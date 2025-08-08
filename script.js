@@ -696,7 +696,6 @@ const DataManager = {
 			const response = await fetch(fetchUrl);
 			if (!response.ok) throw new Error("Gagal mengambil data");
 			const data = await response.json();
-			console.log("fetch data:", data);
 
 			// Render konten
 			container.innerHTML = renderHeader(data) + renderContent(data);
