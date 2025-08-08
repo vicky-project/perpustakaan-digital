@@ -1051,6 +1051,7 @@ const DataManager = {
                 </div>
             `,
 			onPageChange: newPageUrl => {
+				alert(newPageUrl);
 				DataManager.renderSurahDetail(surah, newPageUrl);
 			},
 			dataObject: data => data,
