@@ -440,7 +440,7 @@ const Utils = {
 				renderHeader: data => config.header(data, currentData),
 				renderContent: data => config.content(data, currentData),
 				onPageChange: newPageUrl => {
-					const newUrl = createNextPageUrl(newPageUrl, url);
+					const newUrl = Utils.convertToHttps(newPageUrl);
 					Utils.renderSearchResults(query, context, currentData, newUrl);
 				},
 				dataObject: data => data[config.dataKey],
@@ -456,31 +456,16 @@ const Utils = {
 	},
 
 	// Karna paginasi mengembalikan links http bukan https yang menyebabkan error saat pindah halaman
-	createNextPageUrl: (fullUrlWithQueryString, selfUrl) => {
+	convertToHttps: url => {
 		try {
-			// 1. Parsing URL asli
-			const urlObj = new URL(fullUrlWithQueryString);
-
-			// 2. Ambil semua parameter dan konversi ke object
-			const params = Object.fromEntries(urlObj.searchParams.entries());
-
-			// 3. Tambahkan 1 ke nilai 'page' jika ada
-			if (params.page) {
-				params.page = (parseInt(params.page) + 1).toString();
+			const urlObj = new URL(url);
+			if (urlObj.protocol === "http:") {
+				urlObj.protocol = "https:";
+				if (urlObj.port === "80") urlObj.port = "";
 			}
-
-			// 4. Buat URL baru dengan base yang berbeda
-			const newUrl = new URL(selfUrl);
-
-			// 5. Tambahkan semua parameter ke URL baru
-			for (const [key, value] of Object.entries(params)) {
-				newUrl.searchParams.append(key, value);
-			}
-
-			return newUrl.toString();
-		} catch (error) {
-			console.error("Error membuat URL baru:", error);
-			return null;
+			return urlObj.toString();
+		} catch {
+			return url.startsWith("//") ? `https:${url}` : url;
 		}
 	}
 };
@@ -711,6 +696,7 @@ const DataManager = {
 			const response = await fetch(fetchUrl);
 			if (!response.ok) throw new Error("Gagal mengambil data");
 			const data = await response.json();
+			console.log("fetch data:", data);
 
 			// Render konten
 			container.innerHTML = renderHeader(data) + renderContent(data);
@@ -1056,7 +1042,9 @@ const DataManager = {
 	},
 
 	renderSurahDetail: (surah, pageUrl = null) => {
-		const url = pageUrl || `${API_CONFIG.urls.quran}/${surah.number}/verses`;
+		let url = pageUrl || `${API_CONFIG.urls.quran}/${surah.number}/verses`;
+
+		url = Utils.convertToHttps(url);
 
 		DataManager.renderDetailWithPagination({
 			container: DOM.detailContainer,
@@ -1082,7 +1070,7 @@ const DataManager = {
                 </div>
             `,
 			onPageChange: newPageUrl => {
-				const newUrl = createNextPageUrl(newPageUrl, API_CONFIG.urls.quran);
+				const newUrl = Utils.convertToHttps(newPageUrl);
 				DataManager.renderSurahDetail(surah, newUrl);
 			},
 			dataObject: data => data,
@@ -1145,7 +1133,8 @@ const DataManager = {
 	},
 
 	renderHadithDetail: (collection, pageUrl = null) => {
-		const url = pageUrl || `${API_CONFIG.urls.hadith}/${collection.id}/hadiths`;
+		let url = pageUrl || `${API_CONFIG.urls.hadith}/${collection.id}/hadiths`;
+		url = Utils.convertToHttps(url);
 
 		DataManager.renderDetailWithPagination({
 			container: DOM.detailContainer,
@@ -1170,7 +1159,7 @@ const DataManager = {
                 </div>
             `,
 			onPageChange: newPageUrl => {
-				const newUrl = createNextPageUrl(newPageUrl, API_CONFIG.urls.hadith);
+				const newUrl = Utils.convertToHttps(newPageUrl);
 				DataManager.renderHadithDetail(collection, newUrl);
 			},
 			dataObject: data => data.hadiths,
