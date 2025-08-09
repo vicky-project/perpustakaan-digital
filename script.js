@@ -551,6 +551,7 @@ const ViewManager = {
 		Object.values(hiddenEl).forEach(el => {
 			if (el instanceof HTMLElement) Utils.showElement(el, false);
 		});
+		Utils.clearContainer(DOM.detailContainer);
 
 		Utils.showElement(DOM.backButton, appState.currentView !== "mainShelf");
 
