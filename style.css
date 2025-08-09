@@ -186,6 +186,48 @@ header {
 	font-size: 1.3rem;
 }
 
+/* ================================= */
+/* BOOKSHELF STYLES - UTAMA (HALAMAN UTAMA) */
+/* ================================= */
+/* Hanya berlaku untuk .books-container di dalam #mainShelf */
+#mainShelf .books-container {
+	overflow-x: auto;
+	white-space: nowrap;
+	padding: 8px 4px 20px;
+	scrollbar-width: thin;
+	scrollbar-color: var(--wood-accent) var(--wood-dark);
+	-webkit-overflow-scrolling: touch;
+}
+
+#mainShelf .books {
+	display: inline-flex;
+	gap: 15px;
+	padding: 0 10px;
+	flex-wrap: nowrap;
+}
+
+/* ================================= */
+/* BOOKSHELF STYLES - LIST VIEW (HALAMAN DAFTAR) */
+/* ================================= */
+/* Hanya berlaku untuk #listContent */
+#listContent {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 15px;
+	padding: 10px;
+}
+
+#listContent .book {
+	flex: 1 0 140px; /* Fleksibel, min-width 140px */
+	max-width: 180px; /* Maksimum lebar */
+}
+
+#listContent .book.small {
+	flex: 1 0 120px; /* Fleksibel, min-width 120px */
+	max-width: 160px; /* Maksimum lebar */
+}
+
 /* ================================ */
 /* REUSABLE COMPONENTS */
 /* ================================ */
@@ -943,6 +985,154 @@ header {
 	transform: scale(1.05);
 }
 
+/* ================================= */
+/* OJK STYLES - MOBILE FIRST */
+/* ================================= */
+.ojk-section,
+.ojk-app,
+.ojk-illegal,
+.ojk-product {
+	padding: 15px;
+	margin-bottom: 15px;
+	border-radius: 8px;
+	position: relative;
+	overflow: hidden;
+	transition: all 0.3s ease;
+	box-shadow:
+		0 3px 8px rgba(0, 0, 0, 0.2),
+		0 2px 4px rgba(0, 0, 0, 0.1) inset;
+	border-left: 8px solid var(--book-spine);
+	background: linear-gradient(
+		to bottom,
+		rgba(139, 69, 19, 0.7) 0%,
+		rgba(93, 64, 55, 0.8) 100%
+	);
+}
+
+.ojk-section::before,
+.ojk-app::before,
+.ojk-illegal::before,
+.ojk-product::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+	opacity: 0.3;
+	z-index: -1;
+}
+
+.ojk-section h3,
+.ojk-app h3,
+.ojk-illegal h3,
+.ojk-product h3 {
+	color: var(--gold-light);
+	margin-top: 2rem;
+	margin-bottom: 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+	font-family: "Playfair Display", serif;
+	font-size: 1.2rem;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.detail-row {
+	margin-bottom: 10px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	display: flex;
+	flex-wrap: wrap;
+	word-break: break-word;
+}
+
+.detail-row:last-child {
+	border-bottom: none;
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+
+.detail-row strong {
+	color: var(--gold);
+	min-width: 100px;
+	display: block;
+	margin-bottom: 4px;
+}
+
+.detail-row span,
+.detail-row a {
+	flex: 1;
+	min-width: calc(100% - 100px);
+	word-break: break-word;
+	overflow-wrap: break-word;
+}
+
+.ojk-app {
+	border-left-color: var(--islam);
+}
+
+.ojk-illegal {
+	border-left-color: var(--science);
+}
+
+.ojk-product {
+	border-left-color: var(--gold);
+}
+
+.ojk-app a {
+	color: var(--science);
+	text-decoration: none;
+	word-break: break-all;
+	display: inline-block;
+	max-width: 100%;
+}
+
+.ojk-app a:hover {
+	color: var(--gold);
+	text-decoration: underline;
+}
+
+.ojk-number {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	background: var(--gold);
+	color: var(--dark);
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 0.85rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+	z-index: 2;
+}
+
+.ojk-illegal .detail-row span {
+	display: block;
+	margin-top: 5px;
+}
+
+/* Garis pemisah lebih jelas */
+.ojk-app,
+.ojk-illegal,
+.ojk-product {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+	padding-bottom: 15px;
+}
+
+/* Spasi tambahan untuk elemen terakhir */
+.ojk-app:last-child,
+.ojk-illegal:last-child,
+.ojk-product:last-child {
+	border-bottom: none;
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+
 /* ================================ */
 /* SEARCH BOX */
 /* ================================ */
@@ -1375,6 +1565,19 @@ footer {
 	}
 }
 
+/* Responsive untuk list view */
+@media (max-width: 575px) {
+	#listContent .book {
+		flex-basis: calc(50% - 10px); /* 2 buku per baris */
+		max-width: calc(50% - 10px);
+	}
+
+	#listContent .book.small {
+		flex-basis: calc(50% - 10px); /* 2 buku per baris */
+		max-width: calc(50% - 10px);
+	}
+}
+
 /* ================================ */
 /* TABLET STYLES (min-width: 576px) */
 /* ================================ */
@@ -1437,6 +1640,16 @@ footer {
 	.bookshelf::before {
 		top: -12px;
 		height: 12px;
+	}
+
+	#listContent .book {
+		flex-basis: calc(33.333% - 15px); /* 3 buku per baris */
+		max-width: calc(33.333% - 15px);
+	}
+
+	#listContent .book.small {
+		flex-basis: calc(25% - 15px); /* 4 buku per baris */
+		max-width: calc(25% - 15px);
 	}
 
 	.book {
@@ -1525,6 +1738,41 @@ footer {
 
 	.prayer-title {
 		font-size: 1.2rem;
+	}
+
+	.ojk-section,
+	.ojk-app,
+	.ojk-illegal,
+	.ojk-product {
+		padding: 18px;
+		margin-bottom: 18px;
+		border-left-width: 10px;
+	}
+
+	.ojk-section h3,
+	.ojk-app h3,
+	.ojk-illegal h3,
+	.ojk-product h3 {
+		font-size: 1.3rem;
+	}
+
+	.detail-row {
+		flex-direction: row;
+		align-items: flex-start;
+	}
+
+	.detail-row strong {
+		min-width: 120px;
+		margin-bottom: 0;
+	}
+
+	.detail-row span,
+	.detail-row a {
+		min-width: calc(100% - 120px);
+	}
+
+	.ojk-app a {
+		word-break: normal;
 	}
 
 	.pagination-container {
@@ -1626,6 +1874,16 @@ footer {
 		height: 15px;
 	}
 
+	#listContent .book {
+		flex-basis: calc(25% - 20px); /* 4 buku per baris */
+		max-width: calc(25% - 20px);
+	}
+
+	#listContent .book.small {
+		flex-basis: calc(20% - 20px); /* 5 buku per baris */
+		max-width: calc(20% - 20px);
+	}
+
 	.books-container {
 		overflow: visible;
 		padding: 15px 20px 30px;
@@ -1718,6 +1976,39 @@ footer {
 		font-size: 1.3rem;
 	}
 
+	.ojk-section,
+	.ojk-app,
+	.ojk-illegal,
+	.ojk-product {
+		padding: 20px;
+		margin-bottom: 20px;
+	}
+
+	.ojk-section h3,
+	.ojk-app h3,
+	.ojk-illegal h3,
+	.ojk-product h3 {
+		font-size: 1.4rem;
+	}
+
+	.detail-row {
+		margin-bottom: 12px;
+	}
+
+	.detail-row strong {
+		min-width: 140px;
+	}
+
+	.detail-row span,
+	.detail-row a {
+		min-width: calc(100% - 140px);
+	}
+
+	/* Grid layout untuk hasil pencarian */
+	.search-results-container {
+		grid-template-columns: 1fr;
+	}
+
 	.search-results-header {
 		padding: 20px;
 	}
@@ -1783,6 +2074,16 @@ footer {
 		padding: 0 20px;
 	}
 
+	#listContent .book {
+		flex-basis: calc(20% - 20px); /* 5 buku per baris */
+		max-width: calc(20% - 20px);
+	}
+
+	#listContent .book.small {
+		flex-basis: calc(16.666% - 20px); /* 6 buku per baris */
+		max-width: calc(16.666% - 20px);
+	}
+
 	.book {
 		width: 200px;
 		height: 280px;
@@ -1834,6 +2135,17 @@ footer {
 		height: 500px;
 	}
 
+	.ojk-section,
+	.ojk-app,
+	.ojk-illegal,
+	.ojk-product {
+		padding: 22px;
+	}
+
+	.search-results-container {
+		grid-template-columns: 1fr;
+	}
+
 	.search-results-section {
 		margin: 50px 0;
 	}
@@ -1847,6 +2159,16 @@ footer {
 /* EXTRA LARGE DESKTOP STYLES (min-width: 1200px) */
 /* ================================= */
 @media (min-width: 1200px) {
+	#listContent .book {
+		flex-basis: calc(16.666% - 20px); /* 6 buku per baris */
+		max-width: calc(16.666% - 20px);
+	}
+
+	#listContent .book.small {
+		flex-basis: calc(12.5% - 20px); /* 8 buku per baris */
+		max-width: calc(12.5% - 20px);
+	}
+
 	.book {
 		width: 220px;
 		height: 300px;
