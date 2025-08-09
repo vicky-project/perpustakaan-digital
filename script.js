@@ -49,6 +49,21 @@ const LibraryConfig = {
 			]
 		},
 		{
+			id: "rohani",
+			title: "Rohani",
+			icon: "fas fa-cross",
+			books: [
+				{
+					id: "alkitab",
+					title: "Kitab",
+					subtitle: "Al-Kitab",
+					icon: "fas fa-bible",
+					badge: "A",
+					viewName: "alkitabList"
+				}
+			]
+		},
+		{
 			id: "science",
 			title: "Sains",
 			icon: "fas fa-flask",
@@ -113,7 +128,11 @@ const appState = {
 	currentSurah: null,
 	currentHadithBook: null,
 	scrollToVerse: null,
-	scrollToHadith: null
+	scrollToHadith: null,
+	bibleTranslations: null,
+	currentBible: null,
+	currentBibleBook: null,
+	currentBibleChapter: null
 };
 
 // =========== DOM ELEMENTS =========
@@ -523,36 +542,42 @@ const ViewManager = {
 
 	renderCurrentView: () => {
 		// Sembunyikan semua tampilan
-		Utils.showElement(DOM.mainShelf, false);
-		Utils.showElement(DOM.listContainer, false);
-		Utils.showElement(DOM.detailContainer, false);
-		Utils.showElement(DOM.paginationContainer, false);
+		const hiddenEl = [
+			DOM.mainShelf,
+			DOM.listContainer,
+			detailContainer,
+			DOM.paginationContainer
+		];
+		Object.values(hiddenEl).forEach(el => {
+			if (el instanceof HTMLElement) Utils.showElement(el, false);
+		});
 
-		// Tampilkan tombol kembali jika tidak di tampilan utama
 		Utils.showElement(DOM.backButton, appState.currentView !== "mainShelf");
 
-		// Render view yang sesuai
-		switch (appState.currentView) {
-			case "mainShelf":
-				ViewManager.renderMainShelf();
-				break;
+		const viewHandlers = {
+			mainShelf: () => ViewManager.renderMainShelf(),
+			surahList: () => ViewManager.renderListView(),
+			hadithList: () => ViewManager.renderListView(),
+			asmaulHusnaList: () => ViewManager.renderListView(),
+			prophetStoriesList: () => ViewManager.renderListView(),
+			dailyPrayerList: () => ViewManager.renderListView(),
+			alkitabList: () => ViewManager.renderListView(),
+			alkitabBookList: () => ViewManager.renderListView(),
+			alkitabChapterList: () => ViewManager.renderListView(),
+			surahDetail: () => DataManager.renderSurahDetail(appState.currentData),
+			hadithDetail: () => DataManager.renderHadithDetail(appState.currentData),
+			asmaDetail: () => DataManager.renderAsmaDetail(appState.currentData),
+			prophetDetail: () =>
+				DataManager.renderProphetDetail(appState.currentData),
+			dailyPrayerDetail: () =>
+				DataManager.renderDailyPrayerDetail(appState.currentData),
+			alkitabVerseDetail: () =>
+				DataManager.renderBibleVerses(appState.currentBibleChapter)
+		};
 
-			case "surahList":
-			case "hadithList":
-			case "asmaulHusnaList":
-			case "prophetStoriesList":
-			case "dailyPrayerList":
-				ViewManager.renderListView();
-				break;
+		Utils.showElement(DOM.detailContainer, true);
 
-			case "surahDetail":
-			case "hadithDetail":
-			case "asmaDetail":
-			case "prophetDetail":
-			case "dailyPrayerDetail":
-				ViewManager.renderDetailView();
-				break;
-		}
+		viewHandlers[appState.currentView]?.();
 	},
 
 	renderMainShelf: () => {
@@ -590,7 +615,8 @@ const ViewManager = {
 
 	renderListView: () => {
 		// Konfigurasi berdasarkan jenis tampilan
-		const viewConfigs = {
+
+		const configs = {
 			surahList: {
 				title: "Daftar Surah Al-Quran",
 				subtitle: "Pilih Surah",
@@ -625,50 +651,46 @@ const ViewManager = {
 				icon: "fas fa-hands-praying",
 				placeholder: "Cari doa...",
 				fetchFunction: DataManager.fetchPrayerData
+			},
+			alkitabList: {
+				title: "Daftar Terjemahan AlKitab",
+				subtitle: "Pilih Terjemahan Al-Kitab",
+				icon: "fas fa-book-bible",
+				placeholder: "Cari di di semua terjemhan...",
+				fetchFunction: DataManager.fetchBibleTranslations
+			},
+			alkitabBookList: {
+				title: "Daftar Buku Al-Kitab",
+				subtitle: "Pilih buku AlKitab",
+				icon: "fas fa-book-bible",
+				placeholder: "Cari dalam di semua buku...",
+				fetchFunction: DataManager.fetchBibleBooks
+			},
+			alkitabChapterList: {
+				title: "Pasal Al-Kitab",
+				subtitle: "Pilih Pasal",
+				icon: "fas fa-book-bible",
+				placeholder: "Cari di dalam pasal...",
+				fetchFunction: DataManager.fetchBibleChapters
 			}
 		};
 
-		const config = viewConfigs[appState.currentView];
+		const config = configs[appState.currentView];
 		if (!config) return;
 
 		// Atur tampilan
-		DOM.listTitle.textContent = config.title;
-		DOM.listSubtitle.textContent = config.subtitle;
-		DOM.listIcon.className = config.icon;
-		DOM.searchInput.placeholder = config.placeholder;
-		DOM.searchInput.value = "";
-		appState.searchQuery = "";
+		[DOM.listTitle.textContent, DOM.listSubtitle.textContent] = [
+			config.title,
+			config.subtitle
+		];
+		[DOM.listIcon.className, DOM.searchInput.placeholder] = [
+			config.icon,
+			config.placeholder
+		];
+		[DOM.searchInput.value, appState.searchQuery] = ["", ""];
 
-		// Tampilkan container
 		Utils.showElement(DOM.listContainer, true);
-
-		// Load data
 		config.fetchFunction();
-	},
-
-	renderDetailView: () => {
-		Utils.clearContainer(DOM.detailContainer);
-		Utils.showElement(DOM.detailContainer, true);
-
-		switch (appState.currentView) {
-			case "surahDetail":
-				DataManager.renderSurahDetail(appState.currentData);
-				break;
-
-			case "hadithDetail":
-				DataManager.renderHadithDetail(appState.currentData);
-				break;
-
-			case "asmaDetail":
-				DataManager.renderAsmaDetail(appState.currentData);
-				break;
-
-			case "prophetDetail":
-				DataManager.renderProphetDetail(appState.currentData);
-				break;
-			case "dailyPrayerDetail":
-				DataManager.renderDailyPrayerDetail(appState.currentData);
-		}
 	}
 };
 
@@ -713,8 +735,8 @@ const DataManager = {
 				Utils.showElement(DOM.paginationContainer, true);
 			}
 
+			onRenderComplete?.();
 			// Panggil callback jika ada
-			if (onRenderComplete) onRenderComplete();
 		} catch (error) {
 			console.error("Error:", error);
 			Utils.showError(error.message + JSON.stringify(error), container);
@@ -1312,6 +1334,221 @@ const DataManager = {
 				console.error("Error fetching prophet detail:", error);
 				Utils.showError(error.message, DOM.detailContainer);
 			});
+	},
+
+	// Di DataManager
+	fetchBibleTranslations: async () => {
+		Utils.renderLoading(DOM.listLoading, true);
+		Utils.clearContainer(DOM.listContent);
+
+		try {
+			const response = await fetch(API_CONFIG.urls.alkitab);
+			const data = await response.json();
+
+			if (data.success) {
+				//appState.bibleTranslations = data.data;
+				DataManager.renderBibleTranslationList(data.data);
+			} else {
+				throw new Error("Gagal mengambil data terjemahan Al-Kitab");
+			}
+		} catch (error) {
+			console.error("Error fetching Bible translations:", error);
+			Utils.showError(error.message, DOM.listContent);
+		} finally {
+			Utils.renderLoading(DOM.listLoading, false);
+		}
+	},
+
+	renderBibleTranslationList: translations => {
+		DOM.listContent.innerHTML = translations
+			.map(
+				trans => `
+        <div class="book small" data-id="${trans.id}">
+          <div class="book-image">
+            <i class="fas fa-bible"></i>
+          </div>
+          <div class="book-title">
+            <h3>${trans.name}</h3>
+            <p>${trans.language} (${trans.abbreviation})</p>
+          </div>
+        </div>
+      `
+			)
+			.join("");
+
+		// Event listener
+		DOM.listContent.querySelectorAll(".book").forEach(book => {
+			book.addEventListener("click", () => {
+				const translation = translations.find(
+					t => t.id === parseInt(book.dataset.id)
+				);
+				appState.bibleTranslations = translation;
+				ViewManager.navigateTo("alkitabBookList", translation);
+			});
+		});
+	},
+
+	fetchBibleBooks: async () => {
+		Utils.renderLoading(DOM.listLoading, true);
+		Utils.clearContainer(DOM.listContent);
+
+		try {
+			const translationId = appState.bibleTranslations.id;
+
+			const response = await fetch(
+				`${API_CONFIG.urls.alkitab}/${translationId}/books`
+			);
+			const data = await response.json();
+
+			if (data.success) {
+				DataManager.renderBibleBookList(data.data.data);
+			} else {
+				throw new Error("Gagal mengambil data buku Al-Kitab");
+			}
+		} catch (error) {
+			console.error("Error fetching Bible books:", error);
+			Utils.showError(error.message, DOM.listContent);
+		} finally {
+			Utils.renderLoading(DOM.listLoading, false);
+		}
+	},
+
+	renderBibleBookList: books => {
+		DOM.listContent.innerHTML = books
+			.map(
+				book => `
+        <div class="book small" data-id="${book.book_id}">
+          <div class="book-image">
+            <i class="fas fa-book-bible"></i>
+          </div>
+          <div class="book-title">
+            <h3>${book.name}</h3>
+            <p>${book.chapters_count} pasal</p>
+          </div>
+        </div>
+      `
+			)
+			.join("");
+
+		// Event listener
+		DOM.listContent.querySelectorAll(".book").forEach(book => {
+			book.addEventListener("click", () => {
+				const bibleBook = books.find(b => b.book_id === book.dataset.id);
+				appState.currentBibleBook = bibleBook || null;
+				ViewManager.navigateTo("alkitabChapterList", bibleBook);
+			});
+		});
+	},
+
+	fetchBibleChapters: async () => {
+		Utils.renderLoading(DOM.listLoading, true);
+		Utils.clearContainer(DOM.listContent);
+
+		try {
+			const bookId = appState.currentBibleBook.book_id;
+			const trans_id = appState.currentBibleBook.translation_id;
+			const response = await fetch(
+				`${API_CONFIG.urls.alkitab}/${trans_id}/books/${bookId}/chapters`
+			);
+			const data = await response.json();
+
+			if (data.success) {
+				DataManager.renderBibleChapterList(data.data);
+			} else {
+				throw new Error("Gagal mengambil data pasal Al-Kitab");
+			}
+		} catch (error) {
+			console.error("Error fetching Bible chapters:", error);
+			Utils.showError(error.message, DOM.listContent);
+		} finally {
+			Utils.renderLoading(DOM.listLoading, false);
+		}
+	},
+
+	renderBibleChapterList: chapters => {
+		DOM.listContent.innerHTML = chapters
+			.map(
+				chapter => `
+        <div class="book small" data-id="${chapter.id}">
+          <div class="book-image">
+            <i class="fas fa-list-ol"></i>
+          </div>
+          <div class="book-title">
+            <h3>Pasal ${chapter.number}</h3>
+            <p>${chapter.verses_count} ayat</p>
+          </div>
+        </div>
+      `
+			)
+			.join("");
+
+		// Event listener
+		DOM.listContent.querySelectorAll(".book").forEach(book => {
+			book.addEventListener("click", () => {
+				const chapter = chapters.find(c => c.id === parseInt(book.dataset.id));
+				appState.currentBibleChapter = chapter;
+				ViewManager.navigateTo("alkitabVerseDetail");
+			});
+		});
+	},
+
+	renderBibleVerses: (chapter, pageUrl = null) => {
+		let url = pageUrl || `${API_CONFIG.urls.alkitab}/${chapter.id}/verses`;
+		url = Utils.convertToHttps(url);
+
+		DataManager.renderDetailWithPagination({
+			container: DOM.detailContainer,
+			loadingMessage: "Memuat alkitab...",
+			fetchUrl: url,
+			renderHeader: data => `<div class="detail-header">
+                    <h2>${data.chapter.book_name}</h2>
+                    <div class="surah-meta">
+                        <div>Total Ayat: ${data.chapter.verses_count}</div>
+                    </div>
+                    ${Utils.renderSearchInput()}
+                </div>
+            `,
+			renderContent: data => `<div class="detail-content">
+                    ${data.data.data
+											.map(verse => DataManager.renderBibleVerseItem(verse))
+											.join("")}
+                </div>`,
+			onPageChange: newPageUrl => {
+				const newUrl = Utils.convertToHttps(newPageUrl);
+				DataManager.renderBibleVerses(chapter, newUrl);
+			},
+			dataObject: data => data.data
+		});
+	},
+
+	renderBibleVerseItem: (verse, chapter = null, query = null) => {
+		const shareContent = `${
+			chapter ? chapter.book_name : "Al-Kitab"
+		} - Ayat No. ${verse.number}\n\n${verse.text}`;
+
+		const highlight = text => (query ? Utils.highlightText(text, query) : text);
+
+		return `
+            <div class="verse-item" data-hadith-number="${verse.number}">
+                <div class="verse-header">
+                    <div class="verse-number">${verse.number}</div>
+                    ${
+											chapter
+												? `<div class="surah-name">${
+														chapter?.book_name || chapter
+												  }</div>`
+												: ""
+										}
+                    <div class="verse-controls">${Utils.renderShareButton(
+											shareContent
+										)}
+                    </div>
+                </div>
+                <div class="translation-text">
+                    <p>${highlight(verse.text)}</p>
+                </div>
+            </div>
+        `;
 	},
 
 	filterList: () => {

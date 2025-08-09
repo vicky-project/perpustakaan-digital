@@ -11,6 +11,7 @@ const API_CONFIG = {
 		prophetStories:
 			"https://vickyserver.my.id/server/api/books/prophet-stories",
 		dailyPrayers: "https://vickyserver.my.id/server/api/books/doa",
+		alkitab: "https://vickyserver.my.id/server/api/books/bibles",
 		search: "https://vickyserver.my.id/server/api/search"
 	},
 	cacheExpiry: 604800000, // 7 hari dalam milidetik,
