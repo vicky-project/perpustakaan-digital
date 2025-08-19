@@ -1,5 +1,6 @@
-/* VARIABLES & BASE STYLES */
+/* Variabel CSS untuk tema */
 :root {
+	/* Warna kayu yang diberikan */
 	--primary: #8b4513;
 	--wood-light: #a0522d;
 	--wood-accent: #cd853f;
@@ -8,10 +9,9 @@
 	--dark: #3d2b1f;
 	--gold: #d4af37;
 	--gold-light: #ffd700;
-	--islam: #2e7d32;
-	--science: #1565c0;
 	--arabic-font: "Scheherazade New", serif;
 
+	/* Warna buku */
 	--book-primary: #5c4033;
 	--book-secondary: #6d4c41;
 	--book-tertiary: #8d6e63;
@@ -19,546 +19,535 @@
 	--book-highlight: #7e5c4a;
 	--book-text: #f5f5f5;
 
-	--prayer-primary: #5c4033;
-	--prayer-secondary: #6d4c41;
-	--prayer-tertiary: #8d6e63;
-	--prayer-spine: #4e342e;
-	--prayer-highlight: #7e5c4a;
-
 	/* Dark mode variables */
 	--bg-dark: #1e1e1e;
 	--text-dark: #e0e0e0;
 	--card-dark: #2d2d2d;
 	--border-dark: #444;
+
+	/* Tekstur kayu */
+	--wood-texture: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+
+	/* Warna untuk aplikasi */
+	--bg-color: var(--bg-dark);
+	--text-color: var(--text-dark);
+	--header-bg: rgba(30, 30, 30, 0.95);
+	--card-bg: var(--card-dark);
+	--search-bg: #3d3d3d;
+	--shadow: rgba(0, 0, 0, 0.4);
+	--accent-color: var(--wood-accent);
 }
 
-[data-theme="light"] {
-	--bg-dark: #f5f0e5;
-	--text-dark: #333;
-	--card-dark: #fff;
-	--border-dark: #ddd;
+.light-mode {
+	--bg-color: #f0e6d2;
+	--text-color: #3d2b1f;
+	--header-bg: rgba(240, 230, 210, 0.95);
+	--card-bg: #e8dcc3;
+	--search-bg: #d9cdb4;
+	--shadow: rgba(0, 0, 0, 0.1);
+	--accent-color: #8b4513;
 }
 
-*,
-*::before,
-*::after {
+/* Reset dan gaya dasar */
+* {
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
+	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+	transition:
+		background-color 0.3s,
+		color 0.3s,
+		transform 0.2s,
+		box-shadow 0.2s;
 }
 
 body {
-	font-family: "Poppins", sans-serif;
-	background: var(--bg-dark);
-	color: var(--text-dark);
+	background-color: var(--bg-color);
+	color: var(--text-color);
 	min-height: 100vh;
-	background-attachment: fixed;
-	padding-top: 60px;
-	transition:
-		background-color 0.3s,
-		color 0.3s;
+	background-image: var(--wood-texture);
+	background-size: 300px;
+	padding-bottom: 2rem;
+	overflow-x: hidden;
 }
 
-.container {
-	max-width: 1400px;
-	margin: 0 auto;
-	padding: 0 15px;
-}
-
-/* ================================ */
-/* HEADER STYLES - MOBILE FIRST */
-/* ================================ */
+/* Header dan navigasi */
 header {
-	background: linear-gradient(
-		to right,
-		var(--wood-dark) 0%,
-		var(--primary) 100%
-	);
-	padding: 0.8rem 0;
-	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-	position: fixed;
+	position: sticky;
 	top: 0;
-	width: 100%;
-	z-index: 100;
-	border-bottom: 3px solid var(--wood-accent);
-}
-
-.header-content {
+	background-color: var(--header-bg);
+	backdrop-filter: blur(10px);
+	padding: 1rem;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	position: relative;
-	flex-wrap: wrap;
+	z-index: 100;
+	box-shadow: 0 2px 10px var(--shadow);
+	border-bottom: 2px solid var(--wood-accent);
 }
 
-.logo {
+.nav-left,
+.nav-right {
 	display: flex;
 	align-items: center;
-	gap: 10px;
-	flex-shrink: 0;
+	gap: 1rem;
 }
 
-.logo i,
-.theme-toggle i {
-	color: var(--gold);
-}
-
-.logo i {
-	font-size: 1.8rem;
-}
-
-.logo h1 {
-	font-family: "Playfair Display", serif;
-	font-weight: 700;
-	color: var(--light);
-	font-size: 1.2rem;
-	letter-spacing: 0.5px;
-}
-
-.logo span {
-	color: var(--gold);
-}
-
-.header-right {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.nav-btn,
-.audio-btn,
-.share-btn {
-	background: var(--gold);
-	color: var(--dark);
+.btn-nav {
+	background: none;
 	border: none;
-	border-radius: 50%;
+	color: var(--text-color);
 	cursor: pointer;
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	transition: all 0.3s ease;
-	font-weight: 500;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.nav-btn {
-	padding: 10px 15px;
-	border-radius: 30px;
-	height: 40px;
-	gap: 8px;
-}
-
-.nav-btn:hover {
-	background: #c19d2a;
-	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-}
-
-.nav-btn i {
+	gap: 0.5rem;
 	font-size: 1rem;
-}
-
-.nav-btn span {
-	display: none;
-	font-size: 0.9rem;
-}
-
-.theme-toggle {
-	background: transparent;
-	border: none;
-	cursor: pointer;
-	width: 40px;
-	height: 40px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: 50%;
-	transition: all 0.3s ease;
-	z-index: 101;
-	flex-shrink: 0;
-}
-
-.theme-toggle:hover {
-	background: rgba(255, 255, 255, 0.1);
-}
-
-.theme-toggle i {
-	font-size: 1.3rem;
-}
-
-/* ================================= */
-/* BOOKSHELF STYLES - UTAMA (HALAMAN UTAMA) */
-/* ================================= */
-/* Hanya berlaku untuk .books-container di dalam #mainShelf */
-#mainShelf .books-container {
-	overflow-x: auto;
-	white-space: nowrap;
-	padding: 8px 4px 20px;
-	scrollbar-width: thin;
-	scrollbar-color: var(--wood-accent) var(--wood-dark);
-	-webkit-overflow-scrolling: touch;
-}
-
-#mainShelf .books {
-	display: inline-flex;
-	gap: 15px;
-	padding: 0 10px;
-	flex-wrap: nowrap;
-}
-
-/* ================================= */
-/* BOOKSHELF STYLES - LIST VIEW (HALAMAN DAFTAR) */
-/* ================================= */
-/* Hanya berlaku untuk #listContent */
-#listContent {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-	gap: 15px;
-	padding: 10px;
-}
-
-#listContent .book {
-	flex: 1 0 140px; /* Fleksibel, min-width 140px */
-	max-width: 180px; /* Maksimum lebar */
-}
-
-#listContent .book.small {
-	flex: 1 0 120px; /* Fleksibel, min-width 120px */
-	max-width: 160px; /* Maksimum lebar */
-}
-
-/* ================================ */
-/* REUSABLE COMPONENTS */
-/* ================================ */
-.bookshelf-container {
-	margin: 20px 0 40px;
-}
-
-.book,
-.book.small {
-	background: var(--book-primary);
+	padding: 0.5rem;
 	border-radius: 4px;
+}
+
+.btn-nav:hover {
+	background-color: var(--wood-accent);
+	transform: translateY(-2px);
+}
+
+.btn-nav i {
+	font-size: 1.2rem;
+}
+
+.btn-nav .text {
+	display: none;
+}
+
+.page-title {
+	font-size: 1.2rem;
+	font-weight: 600;
+	margin-left: 0.5rem;
+	color: var(--wood-accent);
+	font-family: var(--arabic-font);
+	white-space: nowrap;
 	overflow: hidden;
-	box-shadow:
-		0 10px 20px rgba(0, 0, 0, 0.35),
-		0 4px 8px rgba(0, 0, 0, 0.15) inset,
-		-6px 0 8px -4px rgba(0, 0, 0, 0.4);
-	transition: all 0.4s ease;
-	cursor: pointer;
+	text-overflow: ellipsis;
+	max-width: 50vw;
+}
+
+/* Tampilan utama - Mainshelf */
+.mainshelf {
+	padding: 1rem;
+	max-width: 1400px;
+	margin: 0 auto;
+}
+
+.shelf-title {
+	margin: 1.5rem 0 0.5rem;
+	font-size: 1.5rem;
+	font-weight: bold;
+	color: var(--gold-light);
+	padding: 0.5rem 1rem;
+	background-color: rgba(93, 64, 55, 0.7);
+	border-radius: 4px;
+	display: inline-block;
+	box-shadow: 0 3px 6px var(--shadow);
+	font-family: var(--arabic-font);
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.bookshelf-container {
+	background: linear-gradient(to bottom, var(--wood-medium), var(--wood-dark));
+	border-radius: 8px;
+	padding: 1.5rem 1rem 1rem;
+	margin-bottom: 2rem;
+	box-shadow: 0 8px 16px var(--shadow);
 	position: relative;
-	transform-origin: center;
-	perspective: 1000px;
-	transform-style: preserve-3d;
-	border-left: 12px solid var(--book-spine);
-	flex-shrink: 0;
+	overflow: hidden;
+	background-image: var(--wood-texture);
+	background-blend-mode: multiply;
+}
+
+.bookshelf-container::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 15px;
+	background: linear-gradient(to bottom, var(--wood-light), var(--wood-dark));
+	border-bottom: 2px solid var(--dark);
+	border-radius: 8px 8px 0 0;
+}
+
+.bookshelf {
+	display: flex;
+	overflow-x: auto;
+	padding: 1rem 0.5rem;
+	gap: 1.5rem;
+	scrollbar-width: thin;
+	scrollbar-color: var(--wood-accent) transparent;
+	min-height: 220px;
+}
+
+.bookshelf::-webkit-scrollbar {
+	height: 8px;
+}
+
+.bookshelf::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.bookshelf::-webkit-scrollbar-thumb {
+	background-color: var(--wood-accent);
+	border-radius: 4px;
 }
 
 .book {
-	width: 140px;
-	height: 200px;
+	min-width: 160px;
+	height: 220px;
+	width: 160px;
+	margin: 0 20px;
+	border-radius: 4px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	cursor: pointer;
+	transition:
+		transform 0.2s,
+		box-shadow 0.2s;
+	box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.4);
+	position: relative;
+	overflow: hidden;
+	transform-style: preserve-3d;
+	perspective: 600px;
 }
 
-.book.small {
-	width: 120px;
-	height: 190px;
+.book:hover {
+	transform: translateY(-8px) rotate(1deg);
+	box-shadow: 10px 12px 25px rgba(0, 0, 0, 0.5);
 }
 
-.book:hover,
-.book.small:hover {
-	transform: translateY(-10px) rotateX(5deg) rotateY(-5deg) scale(1.05);
-	box-shadow:
-		0 20px 30px rgba(0, 0, 0, 0.4),
-		0 4px 8px rgba(0, 0, 0, 0.15) inset,
-		-8px 0 12px -4px rgba(0, 0, 0, 0.5);
-	z-index: 10;
+.book-spine {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 25px;
+	background-color: var(--book-spine);
+	box-shadow: inset -5px 0 10px rgba(0, 0, 0, 0.3);
 }
 
-.book::before,
-.book.small::before {
-	content: "";
+.book-cover {
 	position: absolute;
 	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: linear-gradient(
-		120deg,
-		transparent 0%,
-		rgba(255, 255, 255, 0.1) 50%,
-		transparent 100%
-	);
-	transform: translateX(-100%);
-	transition: transform 0.6s ease;
-}
-
-.book:hover::before,
-.book.small:hover::before {
-	transform: translateX(100%);
-}
-
-.book-image,
-.book.small .book-image {
+	left: 25px;
+	right: 0;
+	bottom: 0;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	position: relative;
+	justify-content: space-between;
+	padding: 1rem;
 	background: linear-gradient(
-		145deg,
-		var(--book-primary),
-		var(--book-highlight)
+		135deg,
+		var(--book-color),
+		var(--book-color-dark)
 	);
+	box-shadow:
+		inset 2px 0 5px rgba(255, 255, 255, 0.1),
+		inset -2px 0 5px rgba(0, 0, 0, 0.2);
+	border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.book-image {
-	height: 140px;
-	padding: 15px;
-}
-
-.book.small .book-image {
-	height: 130px;
-	padding: 12px;
-}
-
-.book-image i,
-.book.small .book-image i {
-	color: rgba(212, 175, 55, 0.7);
-	margin-bottom: 15px;
-	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-	transition: all 0.3s ease;
-}
-
-.book-image i {
-	font-size: 3rem;
-}
-
-.book.small .book-image i {
-	font-size: 2.5rem;
-	margin-bottom: 10px;
-}
-
-.book:hover .book-image i,
-.book.small:hover .book-image i {
-	color: var(--gold-light);
-	transform: scale(1.08);
-	text-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
-}
-
-.book-title,
-.book.small .book-title {
-	padding: 12px 8px;
-	text-align: center;
-	font-weight: 500;
-	background: rgba(0, 0, 0, 0.2);
-	min-height: 60px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-direction: column;
-	color: var(--book-text);
-	backdrop-filter: blur(2px);
-	border-top: 1px solid rgba(255, 255, 255, 0.1);
-	white-space: normal;
-}
-
-.book.small .book-title {
-	min-height: 60px;
-	padding: 8px;
-}
-
-.book-title h3,
-.book.small .book-title h3 {
-	color: var(--book-text);
-	line-height: 1.3;
-	margin-bottom: 3px;
-	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-.book-title h3 {
-	font-size: 0.95rem;
-}
-
-.book.small .book-title h3 {
-	font-size: 0.95rem;
-	font-weight: 700;
-}
-
-.book-title p,
-.book.small .book-title p {
-	font-size: 0.8rem;
-	color: #ddd;
-}
-
-.book.small .book-title p {
-	font-size: 0.75rem;
-}
-
-.surah-number-badge {
-	position: absolute;
-	top: 8px;
-	right: 8px;
-	width: 28px;
-	height: 28px;
-	background: var(--gold);
-	color: var(--dark);
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+.book-title {
 	font-weight: bold;
-	font-size: 0.85rem;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-	z-index: 2;
+	font-size: 0.95rem;
+	line-height: 1.2;
+	color: var(--book-text);
+	text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+	flex-grow: 1;
+	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: var(--arabic-font);
 }
 
-/* Detail Container Styles */
-.detail-header,
-.verse-item,
-.asma-card,
-.search-result-item {
+.book-subtitle {
+	font-size: 0.75rem;
+	color: var(--text-color);
+	text-align: center;
+	background-color: rgba(0, 0, 0, 0.15);
+	padding: 0.3rem;
+	border-radius: 3px;
+}
+
+/* Tampilan List Book */
+.listbook,
+.detailbook {
+	padding: 1rem;
+	display: none;
+	max-width: 1400px;
+	margin: 0 auto;
+}
+
+.search-container {
+	margin: 1.5rem 0;
+	display: flex;
+	gap: 0.5rem;
+	background-color: rgba(93, 64, 55, 0.7);
+	padding: 1rem;
+	border-radius: 8px;
+	box-shadow: 0 3px 6px var(--shadow);
+	background-image: var(--wood-texture);
+	background-blend-mode: multiply;
+}
+
+.search-input {
+	flex-grow: 1;
+	padding: 0.8rem 1.2rem;
+	border: none;
+	border-radius: 4px;
+	background-color: var(--search-bg);
+	color: var(--text-color);
+	font-size: 1rem;
+	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+	font-family: var(--arabic-font);
+}
+
+.search-btn {
+	background-color: var(--wood-accent);
+	color: white;
+	border: none;
+	border-radius: 4px;
+	padding: 0 1.5rem;
+	cursor: pointer;
+	font-weight: bold;
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+	transition: background-color 0.2s;
+	font-family: var(--arabic-font);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.search-btn .text {
+	display: inline;
+}
+
+.search-btn .icon {
+	display: none;
+}
+
+.search-btn:hover {
+	background-color: var(--wood-light);
+}
+
+.book-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 1.5rem;
+}
+
+.book-card {
+	background-color: var(--card-bg);
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 6px 12px var(--shadow);
+	cursor: pointer;
+	transition:
+		transform 0.2s,
+		box-shadow 0.2s;
 	position: relative;
+	height: 280px;
+	width: 200px;
+}
+
+.book-card:hover {
+	transform: translateY(-8px);
+	box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
+}
+
+.book-card-image {
+	height: 200px;
+	background: linear-gradient(
+		135deg,
+		var(--book-color),
+		var(--book-color-dark)
+	);
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	overflow: hidden;
 }
 
-.detail-header::before,
-.verse-item::before,
-.asma-card::before,
-.search-result-item::before {
+.book-card-image::after {
 	content: "";
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 100%;
-	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	opacity: 0.2;
+	width: 15px;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.25);
 }
 
-.detail-header {
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	padding: 15px;
-	border-radius: 8px;
-	margin: 25px auto;
+.book-card-title {
+	color: var(--book-text);
+	font-weight: bold;
+	padding: 0 1rem;
 	text-align: center;
-}
-
-.detail-header h2 {
-	font-size: 1.8rem;
-	font-family: "Playfair Display", serif;
-	margin-bottom: 8px;
-	position: relative;
-	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
-	color: var(--gold);
-}
-
-.detail-header h3 {
-	font-size: 1.4rem;
-	font-weight: 400;
-	margin-bottom: 15px;
-	position: relative;
-}
-
-.surah-meta {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-	gap: 8px;
-	margin-top: 10px;
-}
-
-.meta-item {
-	background: rgba(255, 255, 255, 0.2);
-	padding: 6px 12px;
-	border-radius: 25px;
-	font-size: 0.85rem;
-	backdrop-filter: blur(4px);
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	white-space: nowrap;
-	flex-shrink: 0;
-}
-
-.detail-content {
-	background: var(--card-dark);
-	border-radius: 8px;
-	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-	padding: 15px 10px;
-	margin-bottom: 25px;
-	border: 1px solid var(--border-dark);
-}
-
-.verse-item {
-	padding: 15px;
-	margin-bottom: 15px;
-	border-radius: 8px;
-	transition: all 0.3s ease;
-	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	border: 1px solid var(--wood-accent);
-}
-
-.verse-item:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-}
-
-.verse-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 10px;
-	padding-bottom: 8px;
-	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
-	position: relative;
-	z-index: 2;
-}
-
-.verse-number {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 30px;
-	height: 30px;
-	background: var(--gold);
-	color: var(--dark);
-	border-radius: 50%;
-	font-weight: 600;
-	font-size: 0.9rem;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.verse-controls {
-	display: flex;
-	gap: 10px;
-}
-
-.audio-btn,
-.share-btn {
-	padding: 7px 12px;
-	width: 40px;
-	height: 40px;
-}
-
-.audio-btn:hover,
-.share-btn:hover {
-	background: var(--gold-light);
-	transform: scale(1.04);
-}
-
-.arabic-text {
+	text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+	z-index: 1;
 	font-family: var(--arabic-font);
+}
+
+.book-card-content {
+	padding: 0.8rem;
+}
+
+.book-card-author {
+	font-size: 0.85rem;
+	color: var(--wood-accent);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-family: var(--arabic-font);
+}
+
+/* Tampilan Detail Book */
+.book-header {
+	text-align: center;
+	margin-bottom: 2rem;
+	padding-bottom: 1.5rem;
+	border-bottom: 1px solid var(--wood-accent);
+}
+
+.book-header h1 {
+	font-size: 2rem;
+	color: var(--wood-accent);
+	margin-bottom: 0.5rem;
+	font-family: var(--arabic-font);
+}
+
+.book-header-subtitle {
+	font-size: 1.2rem;
+	color: var(--text-color);
+	opacity: 0.8;
+	margin-bottom: 0.3rem;
+}
+
+.book-header-meta {
+	background: rgba(93, 64, 55, 0.2);
+	padding: 1.2rem;
+	border-radius: 10px;
+	max-width: 600px;
+	margin: 0 auto;
+	text-align: left;
+}
+
+.book-content {
+	background-color: var(--card-bg);
+	border-radius: 8px;
+	padding: 2rem;
+	box-shadow: 0 6px 16px var(--shadow);
+	line-height: 1.7;
+	font-size: 1.05rem;
+}
+
+.book-content h2 {
+	margin: 2rem 0 1.2rem;
+	color: var(--wood-accent);
+	font-size: 1.5rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 2px solid var(--wood-accent);
+	font-family: var(--arabic-font);
+}
+
+.book-content p {
+	margin-bottom: 1.2rem;
+	text-align: justify;
+}
+
+.book-content-item {
+	background: var(--wood-dark);
+	border-radius: 10px;
+	padding: 1.5rem 0.5rem;
+	margin-bottom: 1.5rem;
+	box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
+	border-left: 4px solid var(--wood-accent);
+	transition:
+		transform 0.3s ease,
+		box-shadow 0.3s ease;
+}
+
+.book-content-item:hover {
+	transform: translateY(-5px);
+	box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.content-header {
+	display: flex;
+	align-items: center;
+	gap: 15px;
+	margin-bottom: 15px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.content-title {
+	font-size: 1.4rem;
+	font-weight: bold;
+	color: var(--gold-light);
+	font-family: var(--arabic-font);
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.content-number {
+	display: flex;
+	align-content: center;
+	justify-content: center;
+	min-width: 36px;
+	height: 36px;
+	background: var(--wood-accent);
+	color: white;
+	border-radius: 50%;
+	font-weight: bold;
+	font-size: 1.2rem;
+}
+
+.content-body {
+	margin-top: 1rem;
+}
+
+.content-arabic {
 	font-size: 3rem;
 	text-align: right;
 	line-height: 1.8;
-	margin-bottom: 15px;
+	margin-bottom: 1rem;
+	font-family: var(--arabic-font);
+}
+
+.content-latin {
+	font-style: italic;
+	color: var(--wood-accent);
+	margin-bottom: 0.5rem;
+}
+
+.content-translation {
+	font-style: normal;
+	font-size: 1.1rem;
+	margin-bottom: 1rem;
+	line-height: 1.6;
+}
+
+.content-audio {
+	margin-top: 1rem;
+}
+
+.content-audio audio {
+	width: 100%;
+	max-width: 300px;
+}
+
+/* Ayat Al Quran*/
+.verse-item .content-arabic {
 	color: #fff;
 	padding: 10px;
 	border-radius: 6px;
@@ -572,1647 +561,634 @@ header {
 	hyphens: auto;
 }
 
-.latin-text,
-.translation-text {
-	font-size: 0.95rem;
-	line-height: 1.6;
-	color: #f0f0f0;
-	background: rgba(0, 0, 0, 0.3);
+.verse-item .content-translation {
+	padding: 10px;
 	border-radius: 6px;
+	background: rgba(0, 0, 0, 0.3);
+}
+
+.ojk-item .content-arabic {
+	font-size: 2.5rem;
+	text-align: left;
+	color: #fff;
+	padding: 10px;
+	border-radius: 6px;
+	background: rgba(0, 0, 0, 0.3);
 	backdrop-filter: blur(2px);
 	position: relative;
 	z-index: 2;
 	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.latin-text {
-	font-family: "Poppins", sans-serif;
-	padding: 15px;
-	direction: ltr;
-	text-align: left;
-	margin-bottom: 15px;
-}
-
-.translation-text {
-	padding: 10px;
-	border-top: 1px solid rgba(255, 255, 255, 0.1);
-	margin-top: 12px;
-}
-
-.surah-name {
-	background: rgba(139, 69, 19, 0.1);
-	border-radius: 8px;
-	padding: 8px 12px;
-	margin-bottom: 10px;
-	font-size: 1.1rem;
-	font-weight: 600;
-	color: white;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	border-left: 3px solid var(--gold);
-}
-
-.surah-name i {
-	color: var(--gold);
-}
-
-/* ================================= */
-/* BOOKSHELF STYLES */
-/* ================================= */
-.section-title {
-	font-family: "Playfair Display", serif;
-	font-size: 1.6rem;
-	text-align: center;
-	margin: 30px auto;
-	color: var(--primary);
-	position: relative;
-}
-
-.section-title::after {
-	content: "";
-	position: absolute;
-	bottom: -8px;
-	left: 50%;
-	transform: translateX(-50%);
-	width: 80px;
-	height: 2px;
-	background: var(--gold);
-}
-
-.shelf-header {
-	background: linear-gradient(
-		to bottom,
-		var(--wood-dark) 0%,
-		var(--primary) 100%
-	);
-	padding: 10px 15px;
-	border-radius: 6px 6px 0 0;
-	color: var(--light);
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	font-size: 1.1rem;
-	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-	position: relative;
-	z-index: 2;
-}
-
-.shelf-header i {
-	color: var(--gold);
-	font-size: 1rem;
-}
-
-.bookshelf {
-	background: linear-gradient(
-			to bottom,
-			var(--primary) 0%,
-			var(--wood-dark) 100%
-		),
-		url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	padding: 12px 12px 20px;
-	border-radius: 0 0 8px 8px;
-	box-shadow:
-		0 10px 20px rgba(0, 0, 0, 0.25),
-		0 8px 8px rgba(0, 0, 0, 0.15) inset;
-	margin-bottom: 40px;
-	position: relative;
-	border: 1px solid var(--wood-accent);
-	border-top: none;
-}
-
-.bookshelf::before {
-	content: "";
-	position: absolute;
-	top: -10px;
-	left: 0;
-	width: 100%;
-	height: 10px;
-	background: var(--wood-accent);
-	border-radius: 8px 8px 0 0;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) inset;
-}
-
-.books-container {
-	overflow-x: auto;
-	padding: 8px 4px 20px;
-	white-space: nowrap;
-	scrollbar-width: thin;
-	scrollbar-color: var(--wood-accent) var(--wood-dark);
-	-webkit-overflow-scrolling: touch;
-}
-
-.books-container::-webkit-scrollbar {
-	height: 6px;
-}
-
-.books-container::-webkit-scrollbar-track {
-	background: var(--wood-dark);
-	border-radius: 3px;
-}
-
-.books-container::-webkit-scrollbar-thumb {
-	background-color: var(--wood-accent);
-	border-radius: 3px;
-}
-
-.books {
-	display: inline-flex;
-	gap: 15px;
-	padding: 0 10px;
-	flex-wrap: nowrap;
-}
-
-/* ===== ASMAUL HUSNA STYLES ===== */
-.asma-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-	gap: 15px;
-	margin-top: 15px;
-}
-
-.asma-card {
-	background: linear-gradient(
-		to bottom,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	border-radius: 8px;
-	padding: 15px;
-	text-align: center;
-	color: white;
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-	border: 1px solid var(--wood-accent);
-	transition: transform 0.3s ease;
-	width: 100%;
-}
-
-.asma-card:hover {
-	transform: translateY(-5px);
-	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-}
-
-.asma-number {
-	position: absolute;
-	top: 8px;
-	left: 8px;
-	background: var(--gold);
-	color: var(--dark);
-	width: 25px;
-	height: 25px;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-weight: bold;
-	font-size: 0.8rem;
-}
-
-.asma-arabic {
-	font-family: var(--arabic-font);
-	font-size: 3rem;
-	margin: 10px 0;
-	line-height: 1.4;
-	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-}
-
-.asma-name {
-	font-weight: bold;
-	margin-bottom: 5px;
-	color: var(--gold);
-}
-
-.asma-meaning {
-	font-size: 0.85rem;
-	line-height: 1.4;
-}
-
-/* ===== PROPHET STORIES STYLES ===== */
-.prophet-grid {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 15px;
-	padding: 10px;
-}
-
-.prophet-card,
-.prophet-detail-image-container {
-	position: relative;
-	border-radius: 12px;
-	overflow: hidden;
-	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-	transition: all 0.4s ease;
-}
-
-.prophet-card {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	background: var(--card-dark);
-	border: 1px solid var(--border-dark);
-}
-
-.prophet-card:hover {
-	transform: translateY(-5px);
-	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-}
-
-.prophet-image-container {
-	position: relative;
-	width: 100%;
-	height: 150px;
-	overflow: hidden;
-}
-
-.prophet-image,
-.prophet-detail-image {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	transition: transform 0.5s ease;
-}
-
-.prophet-card:hover .prophet-image {
-	transform: scale(1.05);
-}
-
-.prophet-overlay {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-	padding: 10px;
-}
-
-.prophet-name {
-	font-family: "Playfair Display", serif;
-	font-size: 1.1rem;
-	color: var(--gold);
-	margin: 0;
-	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 	word-wrap: break-word;
-	white-space: normal;
-	line-height: 1.3;
-	min-height: 2.6em;
+	overflow-wrap: break-word;
+	hyphens: auto;
 }
 
-.prophet-meta {
-	display: flex;
-	align-items: center;
-	gap: 5px;
-	margin-top: 3px;
+.ojk-item .content-latin {
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	hyphens: auto;
 }
 
-.prophet-meta i {
-	color: var(--gold-light);
-	font-size: 0.8rem;
-}
-
-.prophet-year {
-	font-size: 0.9rem;
-	color: var(--light);
-	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-.prophet-info {
-	padding: 12px;
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.prophet-detail-image-container {
-	height: 300px; /* Tinggi default untuk mobile */
-	margin-bottom: 25px;
-	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-/* ===== PRAYER ITEM STYLES (MOBILE FIRST) ===== */
-.prayer-item {
-	background: linear-gradient(
-		to bottom,
-		var(--prayer-primary) 0%,
-		var(--prayer-secondary) 100%
-	);
+.ojk-item .content-translation {
+	padding: 10px;
 	border-radius: 6px;
-	padding: 12px;
-	margin-bottom: 15px;
-	box-shadow:
-		0 6px 12px rgba(0, 0, 0, 0.25),
-		0 3px 6px rgba(0, 0, 0, 0.15) inset,
-		-4px 0 6px -2px rgba(0, 0, 0, 0.3);
-	border-left: 10px solid var(--prayer-spine);
-	position: relative;
-	overflow: hidden;
-	transition: all 0.3s ease;
+	background: rgba(0, 0, 0, 0.3);
 }
 
-.prayer-item::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	opacity: 0.2;
+.header-actions {
+	margin-top: 1rem;
+	text-align: center;
 }
 
-.prayer-header {
-	display: flex;
-	align-items: center;
-	margin-bottom: 10px;
-	padding-bottom: 8px;
-	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
-	position: relative;
-	z-index: 2;
-	flex-wrap: wrap;
-}
-
-.prayer-number {
-	display: flex;
+/* Gaya untuk tombol deskripsi */
+.btn-description {
+	background: linear-gradient(to right, var(--wood-accent), var(--wood-dark));
+	color: white;
+	border: none;
+	padding: 0.8rem;
+	border-radius: 30px;
+	cursor: pointer;
+	font-weight: bold;
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 30px;
-	height: 30px;
-	background: var(--gold);
-	color: var(--dark);
-	border-radius: 50%;
-	font-weight: 700;
+	gap: 0.5rem;
+	margin-top: 1rem;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+	transition: all 0.3s ease;
 	font-size: 0.9rem;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-	flex-shrink: 0;
 }
 
-.prayer-title-container {
-	flex: 1;
-	padding: 0 10px;
-	min-width: calc(
-		100% - 80px
-	); /* Untuk memastikan judul tidak menumpuk dengan tombol */
+.btn-description:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
-.prayer-title {
+.btn-description i {
 	font-size: 1.1rem;
-	font-weight: 600;
+}
+
+/* Gaya untuk deskripsi surah */
+#description-container {
+	display: none;
+	background-color: var(--card-bg);
+	border-radius: 12px;
+	padding: 1.5rem;
+	margin-top: 1rem;
+	position: relative;
+}
+
+.description-title {
 	color: var(--gold-light);
-	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-	line-height: 1.3;
+	text-align: center;
+	margin-bottom: 1.2rem;
+	font-family: var(--arabic-font);
+	font-size: 1.4rem;
+	padding-bottom: 0.8rem;
+	border-bottom: 2px solid var(--wood-accent);
 }
 
-.prayer-controls {
-	flex-shrink: 0;
+.description-content {
+	font-size: 1rem;
+	line-height: 1.6;
+	text-align: justify;
+	background: rgba(93, 64, 55, 0.2);
+	padding: 1.2rem;
+	border-radius: 8px;
+	border-left: 3px solid var(--wood-accent);
 }
 
-.prayer-share-btn {
-	background: var(--gold);
-	color: var(--dark);
+.btn-close {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	background: var(--wood-dark);
+	color: white;
 	border: none;
 	border-radius: 50%;
-	width: 32px;
-	height: 32px;
+	cursor: pointer;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	cursor: pointer;
-	transition: all 0.3s ease;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+	font-size: 1.2rem;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+	transition: all 0.2s ease;
+	width: 40px;
+	height: 40px;
+	padding: 0;
 }
 
-.prayer-share-btn:hover {
-	background: var(--gold-light);
+.btn-close:hover {
+	background: var(--wood-accent);
 	transform: scale(1.05);
 }
 
-/* ================================= */
-/* OJK STYLES - MOBILE FIRST */
-/* ================================= */
-.ojk-section,
-.ojk-app,
-.ojk-illegal,
-.ojk-product {
-	padding: 15px;
-	margin-bottom: 15px;
-	border-radius: 8px;
-	position: relative;
-	overflow: hidden;
-	transition: all 0.3s ease;
-	box-shadow:
-		0 3px 8px rgba(0, 0, 0, 0.2),
-		0 2px 4px rgba(0, 0, 0, 0.1) inset;
-	border-left: 8px solid var(--book-spine);
-	background: linear-gradient(
-		to bottom,
-		rgba(139, 69, 19, 0.7) 0%,
-		rgba(93, 64, 55, 0.8) 100%
-	);
-}
-
-.ojk-section::before,
-.ojk-app::before,
-.ojk-illegal::before,
-.ojk-product::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	opacity: 0.3;
-	z-index: -1;
-}
-
-.ojk-section h3,
-.ojk-app h3,
-.ojk-illegal h3,
-.ojk-product h3 {
-	color: var(--gold-light);
-	margin-top: 2rem;
-	margin-bottom: 12px;
-	padding-bottom: 8px;
-	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
-	font-family: "Playfair Display", serif;
-	font-size: 1.2rem;
-	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-.detail-row {
-	margin-bottom: 10px;
-	padding-bottom: 8px;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-	display: flex;
-	flex-wrap: wrap;
-	word-break: break-word;
-}
-
-.detail-row:last-child {
-	border-bottom: none;
-	margin-bottom: 0;
-	padding-bottom: 0;
-}
-
-.detail-row strong {
-	color: var(--gold);
-	min-width: 100px;
-	display: block;
-	margin-bottom: 4px;
-}
-
-.detail-row span,
-.detail-row a {
-	flex: 1;
-	min-width: calc(100% - 100px);
-	word-break: break-word;
-	overflow-wrap: break-word;
-}
-
-.ojk-app {
-	border-left-color: var(--islam);
-}
-
-.ojk-illegal {
-	border-left-color: var(--science);
-}
-
-.ojk-product {
-	border-left-color: var(--gold);
-}
-
-.ojk-app a {
-	color: var(--science);
-	text-decoration: none;
-	word-break: break-all;
-	display: inline-block;
-	max-width: 100%;
-}
-
-.ojk-app a:hover {
-	color: var(--gold);
-	text-decoration: underline;
-}
-
-.ojk-number {
-	position: absolute;
-	top: 10px;
-	left: 10px;
-	background: var(--gold);
-	color: var(--dark);
-	width: 30px;
-	height: 30px;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-weight: bold;
-	font-size: 0.85rem;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-	z-index: 2;
-}
-
-.ojk-illegal .detail-row span {
-	display: block;
-	margin-top: 5px;
-}
-
-/* Garis pemisah lebih jelas */
-.ojk-app,
-.ojk-illegal,
-.ojk-product {
-	border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-	padding-bottom: 15px;
-}
-
-/* Spasi tambahan untuk elemen terakhir */
-.ojk-app:last-child,
-.ojk-illegal:last-child,
-.ojk-product:last-child {
-	border-bottom: none;
-	margin-bottom: 0;
-	padding-bottom: 0;
-}
-
-/* ================================ */
-/* SEARCH BOX */
-/* ================================ */
-.search-container {
-	max-width: 100%;
-	margin: 0 auto 25px;
-	position: relative;
-}
-
-.search-box {
-	width: 100%;
-	padding: 12px 18px;
-	padding-right: 45px;
-	border-radius: 30px;
-	border: 1px solid var(--border-dark);
-	font-size: 1rem;
-	background: var(--card-dark);
-	color: var(--text-dark);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-	transition: all 0.3s ease;
-}
-
-.search-box:focus {
-	outline: none;
-	border-color: var(--gold);
-	box-shadow: 0 4px 15px rgba(139, 69, 19, 0.15);
-}
-
-.search-icon {
-	position: absolute;
-	right: 15px;
-	top: 50%;
-	transform: translateY(-50%);
-	color: var(--primary);
-	font-size: 1.1rem;
-}
-
-.search-clear-btn {
-	position: absolute;
-	right: 10px;
-	top: 50%;
-	transform: translateY(-50%);
-	background: none;
-	border: none;
-	color: #999;
-	cursor: pointer;
+/* Teks "Tutup" disembunyikan secara default (mobile) */
+.close-text {
 	display: none;
 }
 
-/* ================================= */
-/* SEARCH RESULTS STYLES */
-/* ================================= */
-.search-results-section {
-	margin: 40px 0;
-	padding: 0 15px;
+.surah-description {
+	animation: slideIn 0.3s ease-out forwards;
 }
 
-.search-results-header {
-	text-align: center;
-	margin: 25px auto;
-	padding: 15px;
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	border-radius: 8px;
-	position: relative;
-	overflow: hidden;
+.surah-description.closing {
+	animation: slideOut 0.3s ease-in forwards;
 }
 
-.search-results-header::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-	opacity: 0.2;
-}
-
-.search-results-header h3 {
-	font-family: "Playfair Display", serif;
-	font-size: 1.6rem;
-	color: var(--gold);
-	margin-bottom: 10px;
-	position: relative;
-	z-index: 2;
-	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-.search-results-header p {
-	font-size: 1.1rem;
-	color: var(--light);
-	position: relative;
-	z-index: 2;
-}
-
-.search-results-container {
+/* ===== FILTER CONTAINER ===== */
+.filter-container {
 	display: grid;
-	gap: 20px;
+	grid-template-columns: 1fr;
+	gap: 1rem;
+	margin-bottom: 2rem;
+	padding: 1.5rem;
+	background-color: var(--card-bg);
+	border-radius: 10px;
+	box-shadow: 0 4px 12px var(--shadow);
 }
 
-.search-result-item {
-	background: linear-gradient(
-		to right,
-		var(--primary) 0%,
-		var(--wood-dark) 100%
-	);
-	border-radius: 8px;
-	padding: 18px;
-	box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-	border: 1px solid var(--wood-accent);
-	transition: all 0.3s ease;
-	position: relative;
-	overflow: hidden;
-}
-
-.search-result-item:hover {
-	transform: translateY(-5px);
-	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-}
-
-.result-meta {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 15px;
-	padding-bottom: 10px;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-	position: relative;
-	z-index: 2;
-}
-
-.surah-badge {
-	background: var(--gold);
-	color: var(--dark);
-	padding: 6px 12px;
-	border-radius: 20px;
-	font-weight: 600;
-	font-size: 0.9rem;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.result-surah-name {
-	background: rgba(255, 255, 255, 0.15);
-	padding: 6px 15px;
-	border-radius: 30px;
-	font-size: 1rem;
-	font-weight: 500;
-	color: var(--gold-light);
-	border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.result-actions {
-	display: flex;
-	gap: 12px;
-	margin-top: 20px;
-	flex-wrap: wrap;
-	position: relative;
-	z-index: 2;
-}
-
-.result-actions .audio-btn,
-.result-actions .share-btn {
-	padding: 10px 18px;
-	border-radius: 30px;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	font-weight: 500;
-	font-size: 0.95rem;
-	transition: all 0.3s ease;
-	box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-}
-
-.result-actions .audio-btn i,
-.result-actions .share-btn i {
-	font-size: 1.1rem;
-}
-
-.result-actions .audio-btn:hover,
-.result-actions .share-btn:hover {
-	background: var(--gold-light);
-	transform: translateY(-2px);
-	box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35);
-}
-
-mark {
-	background-color: #ffeb3b;
-	color: #000;
-	padding: 0 2px;
-	border-radius: 3px;
-}
-
-/* =============================== */
-/* FOOTER STYLES */
-/* =============================== */
-footer {
-	background: var(--wood-dark);
-	color: var(--light);
-	padding: 30px 0 15px;
-	margin-top: 50px;
-	border-top: 3px solid var(--wood-accent);
-}
-
-.footer-content {
+.filter-group {
 	display: flex;
 	flex-direction: column;
-	gap: 25px;
-	margin-bottom: 25px;
+	gap: 0.5rem;
 }
 
-.footer-section {
-	flex: 1;
-	min-width: 100%;
+.filter-group label {
+	font-weight: 600;
+	color: var(--wood-accent);
+	font-size: 0.9rem;
 }
 
-.footer-section h3 {
-	font-family: "Playfair Display", serif;
-	font-size: 1.3rem;
-	margin-bottom: 15px;
-	color: var(--gold);
-	position: relative;
-	padding-bottom: 8px;
+.filter-group select {
+	padding: 0.8rem;
+	border: 1px solid var(--wood-accent);
+	border-radius: 6px;
+	background-color: var(--search-bg);
+	color: var(--text-color);
+	font-size: 1rem;
+	width: 100%;
 }
 
-.footer-section h3::after {
-	content: "";
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	width: 40px;
-	height: 2px;
-	background: var(--gold);
-}
-
-.footer-section p {
-	margin-bottom: 12px;
-	line-height: 1.5;
-	font-size: 0.95rem;
-}
-
-.social-links {
-	display: flex;
-	gap: 12px;
-	margin-top: 15px;
-}
-
-.social-links a {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 36px;
-	height: 36px;
-	background: var(--primary);
-	color: var(--light);
-	border-radius: 50%;
+.filter-submit {
+	background: linear-gradient(to right, var(--wood-accent), var(--wood-dark));
+	color: white;
+	border: none;
+	padding: 1rem;
+	border-radius: 6px;
+	font-weight: bold;
+	cursor: pointer;
+	margin-top: 0.5rem;
 	transition: all 0.3s ease;
 }
 
-.social-links a:hover {
-	background: var(--gold);
-	color: var(--dark);
+.filter-submit:hover {
 	transform: translateY(-3px);
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
-.copyright {
-	text-align: center;
-	padding-top: 15px;
-	border-top: 1px solid rgba(210, 180, 140, 0.3);
-	font-size: 0.85rem;
+/* ===== SCHOOL CARD ===== */
+.school-card {
+	background-color: var(--card-bg);
+	border-radius: 10px;
+	padding: 1.5rem;
+	margin-bottom: 1.5rem;
+	box-shadow: 0 4px 10px var(--shadow);
+	transition: all 0.3s ease;
+	cursor: pointer;
 }
 
-/* =============================== */
-/* LOADING STYLES */
-/* =============================== */
-.loading-container {
-	margin-top: 80px;
-	text-align: center;
+.school-card:hover {
+	transform: translateY(-5px);
+	box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.school-header {
 	display: flex;
-	justify-content: center;
+	justify-content: space-between;
 	align-items: center;
-	padding: 30px;
-	min-height: 200px;
+	margin-bottom: 1rem;
+	padding-bottom: 1rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.loading-spinner {
-	width: 40px;
-	height: 40px;
-	border: 4px solid rgba(139, 69, 19, 0.1);
-	border-radius: 50%;
-	border-top-color: var(--primary);
-	animation: spin 1s ease-in-out infinite;
+.school-name {
+	font-weight: bold;
+	font-size: 1.2rem;
+	color: var(--gold-light);
+}
+
+.school-type {
+	background-color: var(--wood-accent);
+	color: white;
+	padding: 0.3rem 0.8rem;
+	border-radius: 20px;
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+
+.school-address {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+	color: var(--text-color);
+	opacity: 0.9;
+}
+
+.school-address i {
+	margin-top: 0.2rem;
+}
+
+.school-details {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.5rem;
+	font-size: 0.9rem;
+}
+
+/* Style untuk link Google Maps */
+.map-link {
+	display: inline-block;
+	color: white !important;
+	text-decoration: none;
+	padding: 4px 6px;
+	border-radius: 10px;
+	font-weight: 600;
+	font-size: 0.8rem;
+	margin: 5px 0;
+	transition: all 0.3s ease;
+	box-shadow: 0 6px 8px rgba(26, 115, 232, 0.3);
+	letter-spacing: 0.5px;
+}
+
+/* Efek hover pada link */
+.map-link:hover {
+	background: #0d62cb;
+	transform: translateY(-3px);
+	box-shadow: 0 7px 14px rgba(26, 115, 232, 0.4);
+}
+
+/* Efek aktif saat diklik */
+.map-link:active {
+	transform: translateY(1px);
+}
+
+/* Icon peta */
+.map-link::before {
+	content: "📍";
+	margin-right: 10px;
+	font-size: 1.4rem;
+}
+
+.loading {
+	text-align: center;
+	padding: 3rem;
+	color: var(--wood-accent);
+}
+
+.loading i {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+	display: block;
+	animation: spin 1s linear infinite;
+}
+
+/* Tambahkan di file CSS utama */
+mark {
+	background-color: yellow;
+	color: black;
+	font-weight: bold;
+}
+
+/* Animasi */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 @keyframes spin {
-	to {
+	100% {
 		transform: rotate(360deg);
 	}
 }
 
-/* =============================== */
-/* PAGINATION STYLES */
-/* =============================== */
-.pagination-container {
-	width: 100%;
-	margin-top: 20px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 10px;
-}
-
-.pagination-info {
-	font-size: 0.85rem;
-	color: var(--wood-dark);
-	text-align: center;
-}
-
-.pagination-controls {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 5px;
-	align-items: center;
-	justify-content: center;
-}
-
-.pagination-btn {
-	padding: 8px 15px;
-	background: var(--wood-accent);
-	color: white;
-	border: none;
-	border-radius: 5px;
-	cursor: pointer;
-	transition: all 0.3s ease;
-	display: flex;
-	align-items: center;
-	gap: 5px;
-}
-
-.pagination-btn:hover:not(.disabled) {
-	background: var(--wood-dark);
-	transform: translateY(-2px);
-}
-
-.pagination-btn.disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-}
-
-.pagination-text {
-	display: none;
-}
-
-.page-numbers {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 4px;
-	justify-content: center;
-}
-
-.page-number {
-	min-width: 35px;
-	height: 35px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: white;
-	border: 1px solid var(--wood-accent);
-	border-radius: 5px;
-	cursor: pointer;
-	transition: all 0.3s ease;
-	font-size: 0.9rem;
-}
-
-.page-number:hover:not(.active) {
-	background: #f0f0f0;
-}
-
-.page-number.active {
-	background: var(--wood-dark);
-	color: white;
-	border-color: var(--wood-dark);
-}
-
-.page-dots {
-	display: flex;
-	align-items: center;
-	padding: 0 5px;
-}
-
-/* ================================ */
-/* BACK TO TOP BUTTON */
-/* ================================ */
-#backToTopBtn {
-	display: none;
-	position: fixed;
-	bottom: 30px;
-	right: 30px;
-	z-index: 99;
-	border: none;
-	outline: none;
-	background-color: #2c3e50;
-	color: white;
-	cursor: pointer;
-	padding: 15px 18px;
-	border-radius: 50%;
-	font-size: 18px;
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-	transition: background-color 0.3s;
-}
-
-#backToTopBtn:hover {
-	background-color: #1a252f;
-}
-
-#backToTopBtn.show {
-	display: block;
-	animation: fadeIn 0.3s;
-}
-
-@keyframes fadeIn {
-	0% {
+/* Animasi untuk deskripsi surah */
+@keyframes slideIn {
+	from {
 		opacity: 0;
+		transform: translateY(30px);
 	}
-	100% {
+	to {
 		opacity: 1;
+		transform: translateY(0);
 	}
 }
 
-/* Responsive untuk list view */
-@media (max-width: 575px) {
-	#listContent .book {
-		flex-basis: calc(50% - 10px); /* 2 buku per baris */
-		max-width: calc(50% - 10px);
-	}
-
-	#listContent .book.small {
-		flex-basis: calc(50% - 10px); /* 2 buku per baris */
-		max-width: calc(50% - 10px);
-	}
+.animated {
+	animation: fadeIn 0.4s ease-out forwards;
 }
 
-/* ================================ */
-/* TABLET STYLES (min-width: 576px) */
-/* ================================ */
-@media (min-width: 576px) {
-	body {
-		padding-top: 70px;
+/* Responsive design untuk mobile */
+@media (max-width: 767px) {
+	.btn-nav .text {
+		display: none;
 	}
 
-	header {
-		padding: 1rem 0;
-		border-bottom: 4px solid var(--wood-accent);
+	.page-title {
+		font-size: 1rem;
+		max-width: 40vw;
 	}
 
-	.logo i,
-	.detail-header h2 {
-		font-size: 2rem;
-	}
-
-	.logo h1 {
-		font-size: 1.4rem;
-	}
-
-	.nav-btn {
-		padding: 9px 16px;
-		font-size: 0.95rem;
-		width: auto;
-	}
-
-	.nav-btn i,
-	.shelf-header i {
-		font-size: 1.1rem;
-	}
-
-	.nav-btn span {
-		display: inline;
-	}
-
-	.section-title {
-		font-size: 1.8rem;
-		margin-bottom: 35px;
-	}
-
-	.section-title::after {
-		bottom: -9px;
-		width: 90px;
-		height: 3px;
-	}
-
-	.shelf-header {
-		padding: 11px 18px;
-		font-size: 1.2rem;
-	}
-
-	.bookshelf {
-		padding: 14px 14px 22px;
-		border-radius: 0 0 10px 10px;
-		margin-bottom: 45px;
-	}
-
-	.bookshelf::before {
-		top: -12px;
-		height: 12px;
-	}
-
-	#listContent .book {
-		flex-basis: calc(33.333% - 15px); /* 3 buku per baris */
-		max-width: calc(33.333% - 15px);
-	}
-
-	#listContent .book.small {
-		flex-basis: calc(25% - 15px); /* 4 buku per baris */
-		max-width: calc(25% - 15px);
+	.shelf-title {
+		font-size: 1.3rem;
+		margin: 1.2rem 0 0.8rem;
+		padding: 0.5rem;
 	}
 
 	.book {
-		width: 160px;
-		height: 230px;
+		min-width: 140px;
+		height: 200px;
+		width: 140px;
+		margin: 0 10px;
 	}
 
-	.book.small {
+	.book-title {
+		font-size: 0.85rem;
+	}
+
+	.search-container {
+		padding: 0.8rem;
+		margin: 1.2rem 0;
+	}
+
+	.search-input {
+		padding: 0.7rem 1rem;
+		font-size: 0.9rem;
+	}
+
+	.search-btn {
+		padding: 0 1rem;
+	}
+
+	.search-btn .text {
+		display: none;
+	}
+
+	.search-btn .icon {
+		display: block;
+	}
+
+	.book-grid {
+		grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+		gap: 1rem;
+	}
+
+	.book-card {
+		height: 240px;
+		width: 160px;
+	}
+
+	.book-card-image {
+		height: 170px;
+	}
+
+	.book-card-title {
+		font-size: 0.9rem;
+	}
+
+	.book-detail-header {
+		padding: 1rem;
+		gap: 1.5rem;
+	}
+
+	.book-cover-large {
 		width: 140px;
 		height: 210px;
 	}
 
-	.book-image {
-		height: 160px;
-	}
-
-	.book.small .book-image {
-		height: 150px;
-	}
-
-	.book-image i {
-		font-size: 3.5rem;
-	}
-
-	.book.small .book-image i {
-		font-size: 3rem;
-	}
-
-	.book-title h3,
-	.book.small .book-title h3 {
+	.book-cover-large-title {
 		font-size: 1rem;
 	}
 
-	.detail-header {
-		padding: 18px;
-	}
-
-	.detail-header h3 {
-		font-size: 1.6rem;
-	}
-
-	.surah-meta {
-		flex-direction: row;
-		justify-content: center;
-		gap: 15px;
-		margin-top: 10px;
-	}
-
-	.meta-item {
-		font-size: 0.9rem;
-		padding: 8px 15px;
-	}
-
-	.prophet-grid {
-		gap: 20px;
-	}
-
-	.prophet-image-container {
-		height: 160px;
-	}
-
-	.prophet-name,
-	.search-results-header p {
-		font-size: 1.2rem;
-	}
-
-	.prayer-item {
-		padding: 15px;
-		border-left: 12px solid var(--prayer-spine);
-	}
-
-	.prayer-header {
-		margin-bottom: 12px;
-		padding-bottom: 10px;
-	}
-
-	.prayer-number {
-		width: 35px;
-		height: 35px;
-		font-size: 1rem;
-	}
-
-	.prayer-title-container {
-		padding: 0 15px;
-	}
-
-	.prayer-title {
-		font-size: 1.2rem;
-	}
-
-	.ojk-section,
-	.ojk-app,
-	.ojk-illegal,
-	.ojk-product {
-		padding: 18px;
-		margin-bottom: 18px;
-		border-left-width: 10px;
-	}
-
-	.ojk-section h3,
-	.ojk-app h3,
-	.ojk-illegal h3,
-	.ojk-product h3 {
-		font-size: 1.3rem;
-	}
-
-	.detail-row {
-		flex-direction: row;
-		align-items: flex-start;
-	}
-
-	.detail-row strong {
-		min-width: 120px;
-		margin-bottom: 0;
-	}
-
-	.detail-row span,
-	.detail-row a {
-		min-width: calc(100% - 120px);
-	}
-
-	.ojk-app a {
-		word-break: normal;
-	}
-
-	.pagination-container {
-		margin-top: 25px;
-	}
-
-	.pagination-info {
-		font-size: 0.9rem;
-	}
-
-	.pagination-controls {
-		gap: 8px;
-	}
-
-	.pagination-btn {
-		padding: 7px 14px;
-		font-size: 0.9rem;
-	}
-
-	.page-number {
-		min-width: 32px;
-		height: 32px;
-		font-size: 0.9rem;
-	}
-
-	.search-results-header h3 {
-		font-size: 1.8rem;
-	}
-
-	.arabic-text {
-		font-size: 3.2rem;
-	}
-
-	.result-meta {
-		flex-direction: row;
-	}
-
-	.result-actions {
-		justify-content: flex-end;
-	}
-}
-
-/* ================================= */
-/* DESKTOP STYLES (min-width: 768px) */
-/* ================================= */
-@media (min-width: 768px) {
-	body {
-		padding-top: 80px;
-	}
-
-	header {
-		padding: 1.2rem 0;
-		border-bottom: 5px solid var(--wood-accent);
-	}
-
-	.logo i {
-		font-size: 2.3rem;
-	}
-
-	.logo h1 {
-		font-size: 1.6rem;
-	}
-
-	.nav-btn {
-		padding: 10px 18px;
-		font-size: 1rem;
-	}
-
-	.nav-btn i,
-	.shelf-header i {
-		font-size: 1.2rem;
-	}
-
-	.section-title {
-		font-size: 2rem;
-		margin-bottom: 40px;
-	}
-
-	.section-title::after {
-		bottom: -10px;
-		width: 100px;
-		height: 3px;
-	}
-
-	.shelf-header {
-		padding: 12px 20px;
-		font-size: 1.3rem;
-	}
-
-	.bookshelf {
-		padding: 15px 15px 25px;
-		border-radius: 0 0 12px 12px;
-		margin-bottom: 50px;
-		min-height: 3px;
-	}
-
-	.bookshelf::before {
-		top: -15px;
-		height: 15px;
-	}
-
-	#listContent .book {
-		flex-basis: calc(25% - 20px); /* 4 buku per baris */
-		max-width: calc(25% - 20px);
-	}
-
-	#listContent .book.small {
-		flex-basis: calc(20% - 20px); /* 5 buku per baris */
-		max-width: calc(20% - 20px);
-	}
-
-	.books-container {
-		overflow: visible;
-		padding: 15px 20px 30px;
-	}
-
-	.books {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 20px;
-		white-space: normal;
-	}
-
-	.book {
-		width: 180px;
-		height: 260px;
-		margin-bottom: 20px;
-		flex: 0 0 calc(25% - 20px);
-		max-width: calc(25% - 20px);
-	}
-
-	.book.small {
-		width: 160px;
-		height: 240px;
-		flex: 0 0 calc(20% - 20px);
-		max-width: calc(20% - 20px);
-	}
-
-	.book-image {
-		height: 180px;
-	}
-
-	.book.small .book-image {
-		height: 170px;
-	}
-
-	.book-image i {
-		font-size: 4rem;
-	}
-
-	.book.small .book-image i {
-		font-size: 3.5rem;
-	}
-
-	.book-title h3,
-	.book.small .book-title h3 {
-		font-size: 1.05rem;
-	}
-
-	.detail-header {
-		padding: 20px;
-	}
-
-	.arabic-text {
-		font-size: 3.4rem;
-	}
-
-	.detail-header h3 {
-		font-size: 1.8rem;
-	}
-
-	.prophet-grid {
-		grid-template-columns: repeat(3, 1fr);
-		gap: 25px;
-	}
-
-	.prophet-image-container {
-		height: 180px;
-	}
-
-	.prophet-name {
-		font-size: 1.3rem;
-	}
-
-	.prophet-detail-image-container {
-		height: 400px;
-	}
-
-	.prayer-item {
-		padding: 18px;
-		margin-bottom: 20px;
-	}
-
-	.prayer-header {
-		margin-bottom: 15px;
-		padding-bottom: 12px;
-	}
-
-	.prayer-title {
-		font-size: 1.3rem;
-	}
-
-	.ojk-section,
-	.ojk-app,
-	.ojk-illegal,
-	.ojk-product {
-		padding: 20px;
-		margin-bottom: 20px;
-	}
-
-	.ojk-section h3,
-	.ojk-app h3,
-	.ojk-illegal h3,
-	.ojk-product h3 {
+	.book-meta h1 {
 		font-size: 1.4rem;
 	}
 
-	.detail-row {
-		margin-bottom: 12px;
+	.book-meta .label {
+		width: 80px;
 	}
 
-	.detail-row strong {
-		min-width: 140px;
+	.book-content {
+		padding: 1.2rem;
+		font-size: 0.95rem;
 	}
 
-	.detail-row span,
-	.detail-row a {
-		min-width: calc(100% - 140px);
+	.book-content h2 {
+		font-size: 1.2rem;
+		margin: 1.5rem 0 1rem;
 	}
 
-	/* Grid layout untuk hasil pencarian */
-	.search-results-container {
-		grid-template-columns: 1fr;
-	}
-
-	.search-results-header {
-		padding: 20px;
-	}
-
-	.search-results-header h3 {
-		font-size: 2rem;
-	}
-
-	.search-results-container {
-		grid-template-columns: 1fr;
-	}
-
-	.search-result-item {
-		padding: 22px;
-	}
-
-	.detail-header h2 {
+	.content-arabic {
 		font-size: 2.6rem;
 	}
 
-	.translation-text {
-		font-size: 1.05rem;
+	.book-content-item {
+		padding: 1.5rem;
 	}
 
-	.footer-content {
-		flex-direction: row;
-		gap: 30px;
+	.contet-title {
+		font-size: 1.2rem;
 	}
 
-	.footer-section {
-		min-width: auto;
-	}
-
-	.pagination-container {
-		margin-top: 30px;
-		flex-direction: row;
-		justify-content: space-between;
-	}
-
-	.pagination-controls {
+	.content-header {
 		gap: 10px;
 	}
 
-	.pagination-text {
-		display: inline-block;
+	.verse-item .content-arabic {
+		font-size: 2.6rem;
 	}
 
-	.page-numbers {
-		gap: 5px;
+	.btn-description {
+		padding: 0.7rem 1.2rem;
+		font-size: 0.9rem;
 	}
 
-	.page-number {
-		min-width: 35px;
-		height: 35px;
+	#description-container {
+		padding: 1.5rem;
+	}
+
+	.description-content {
+		padding: 1.2rem;
+	}
+
+	.description-title {
+		font-size: 1.4rem;
 	}
 }
 
-/* ================================== */
-/* LARGE DESKTOP STYLES (min-width: 992px) */
-/* ================================== */
-@media (min-width: 992px) {
-	.container {
-		padding: 0 20px;
+/* Responsive design untuk tablet */
+@media (min-width: 768px) {
+	.btn-nav .text {
+		display: inline;
 	}
 
-	#listContent .book {
-		flex-basis: calc(20% - 20px); /* 5 buku per baris */
-		max-width: calc(20% - 20px);
+	.page-title {
+		font-size: 1.5rem;
+		max-width: 60vw;
 	}
 
-	#listContent .book.small {
-		flex-basis: calc(16.666% - 20px); /* 6 buku per baris */
-		max-width: calc(16.666% - 20px);
+	.shelf-title {
+		font-size: 1.8rem;
+		margin: 2rem 0 1rem;
 	}
 
 	.book {
-		width: 200px;
-		height: 280px;
-		flex: 0 0 calc(20% - 20px);
-		max-width: calc(20% - 20px);
-	}
-
-	.book.small {
+		min-width: 180px;
+		height: 240px;
 		width: 180px;
-		height: 260px;
-		flex: 0 0 calc(16.666% - 20px);
-		max-width: calc(16.666% - 20px);
 	}
 
-	.book-image {
-		height: 200px;
+	.book-title {
+		font-size: 1.1rem;
 	}
 
-	.book.small .book-image {
-		height: 190px;
+	.book-grid {
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 	}
 
-	.book-image i {
-		font-size: 4.5rem;
+	.book-card {
+		height: 320px;
+		width: 240px;
 	}
 
-	.book.small .book-image i {
-		font-size: 4rem;
+	.book-card-image {
+		height: 230px;
 	}
 
-	.arabic-text {
-		font-size: 3.6rem;
+	.book-detail-header {
+		flex-direction: row;
 	}
 
-	.prophet-grid {
-		grid-template-columns: repeat(4, 1fr);
-		gap: 30px;
+	.book-cover-large {
+		align-self: flex-start;
+		width: 220px;
+		height: 320px;
 	}
 
-	.prophet-image-container {
-		height: 200px;
-	}
-
-	.prophet-name {
+	.book-cover-large-title {
 		font-size: 1.4rem;
 	}
 
-	.prophet-detail-image-container {
-		height: 500px;
+	.search-container {
+		margin: 2rem 0;
 	}
 
-	.ojk-section,
-	.ojk-app,
-	.ojk-illegal,
-	.ojk-product {
-		padding: 22px;
+	.search-btn .text {
+		display: inline;
 	}
 
-	.search-results-container {
-		grid-template-columns: 1fr;
+	.search-btn .icon {
+		display: none;
 	}
 
-	.search-results-section {
-		margin: 50px 0;
+	#description-container {
+		padding: 2rem;
+		margin-top: 1.5rem;
 	}
 
-	.detail-header h2 {
-		font-size: 2.8rem;
+	.description-title {
+		font-size: 1.6rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.description-content {
+		font-size: 1.1rem;
+		padding: 1.5rem;
+	}
+
+	.btn-description {
+		padding: 0.8rem 1.5rem;
+		font-size: 1rem;
+	}
+
+	.btn-description i {
+		font-size: 1.2rem;
+	}
+
+	.btn-close {
+		padding: 0.5rem 1rem;
+		width: auto;
+		height: auto;
+		border-radius: 30px;
+		gap: 0.5rem;
+	}
+
+	.close-text {
+		display: inline;
+		font-size: 1rem;
+		font-weight: 500;
+	}
+
+	.filter-container {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.school-details {
+		grid-template-columns: repeat(3, 1fr);
 	}
 }
 
-/* ================================= */
-/* EXTRA LARGE DESKTOP STYLES (min-width: 1200px) */
-/* ================================= */
-@media (min-width: 1200px) {
-	#listContent .book {
-		flex-basis: calc(16.666% - 20px); /* 6 buku per baris */
-		max-width: calc(16.666% - 20px);
+@media (min-width: 992px) {
+	.mainshelf,
+	.listbook,
+	.detailbook {
+		padding: 2rem;
 	}
 
-	#listContent .book.small {
-		flex-basis: calc(12.5% - 20px); /* 8 buku per baris */
-		max-width: calc(12.5% - 20px);
+	.book-grid {
+		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 	}
 
-	.book {
-		width: 220px;
-		height: 300px;
-		flex: 0 0 calc(16.666% - 20px);
-		max-width: calc(16.666% - 20px);
+	#description-container {
+		max-width: 800px;
+		margin: 2rem auto;
+		padding: 2.5rem;
 	}
 
-	.book.small {
-		width: 200px;
-		height: 280px;
-		flex: 0 0 calc(12.5% - 20px);
-		max-width: calc(12.5% - 20px);
+	.description-title {
+		font-size: 1.8rem;
 	}
 
-	.book-image {
-		height: 220px;
+	.description-content {
+		font-size: 1.15rem;
+		line-height: 1.8;
 	}
 
-	.book.small .book-image {
-		height: 210px;
+	.btn-close {
+		padding: 0.6rem 1.2rem;
+		font-size: 1.3rem;
 	}
 
-	.book-image i {
-		font-size: 5rem;
+	.close-text {
+		font-size: 1.1rem;
 	}
 
-	.book.small .book-image i {
-		font-size: 4.5rem;
+	.filter-container {
+		grid-template-columns: repeat(4, 1fr);
 	}
 
-	.arabic-text {
-		font-size: 3.8rem;
+	.filter-group:last-child {
+		grid-column: span 4;
 	}
 
-	.prophet-grid {
-		grid-template-columns: repeat(5, 1fr);
-		gap: 35px;
-	}
-
-	.prophet-image-container {
-		height: 220px;
-	}
-
-	.detail-header h2 {
-		font-size: 2.8rem;
+	.filter-submit {
+		margin-top: 1.5rem;
 	}
 }

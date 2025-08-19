@@ -8,122 +8,68 @@
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 		<link
-			href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap"
-			rel="stylesheet" />
-		<link
 			href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap"
 			rel="stylesheet" />
-		<link rel="stylesheet" href="style.css" type="text/css" media="all" />
+		<link rel="stylesheet" href="style.css" />
 	</head>
-	<body>
+	<body class="dark">
+		<!-- Header/Navbar -->
 		<header>
-			<div class="container">
-				<div class="header-content">
-					<div class="logo">
-						<i class="fas fa-book-quran"></i>
-						<h1>Perpustakaan <span>Digital</span></h1>
-					</div>
-					<div class="header-right">
-						<button class="nav-btn" id="backButton" style="display: none">
-							<i class="fas fa-arrow-left"></i> <span>Kembali</span>
-						</button>
-						<button id="themeToggle" class="theme-toggle">
-							<i class="fas fa-moon"></i>
-						</button>
-					</div>
-				</div>
+			<div class="nav-left">
+				<button class="btn-nav" id="btn-back" style="display: none">
+					<i class="fas fa-arrow-left"></i>
+					<span class="text">Kembali</span>
+				</button>
+				<h1 class="page-title" id="page-title">Perpustakaan Digital</h1>
+			</div>
+			<div class="nav-right">
+				<button class="btn-nav" id="btn-theme">
+					<i class="fas fa-moon"></i>
+					<span class="text">Mode Gelap</span>
+				</button>
 			</div>
 		</header>
 
-		<div class="container">
-			<!-- Container utama untuk semua tampilan -->
-			<div id="mainContent">
-				<!-- Rak buku utama -->
-				<div id="mainShelf">
-					<!-- Rak buku akan di-render secara dinamis di sini -->
-				</div>
+		<!-- Tampilan Utama (Mainshelf) -->
+		<section id="mainshelf" class="mainshelf">
+			<!-- Rak buku akan diisi oleh JavaScript -->
+		</section>
+
+		<!-- Tampilan List Book -->
+		<section id="listbook" class="listbook">
+			<div id="listbook-search" class="search-container animated">
+				<input type="text" class="search-input" placeholder="Cari buku..." />
+				<button class="search-btn">
+					<i class="fas fa-search icon"></i>
+					<span class="text">Cari</span>
+				</button>
+			</div>
+			<div class="book-grid" id="book-list">
+				<!-- Daftar buku akan diisi oleh JavaScript -->
+			</div>
+		</section>
+
+		<!-- Tampilan Detail Book -->
+		<section id="detailbook" class="detailbook">
+			<div id="detailbook-search" class="search-container animated">
+				<input
+					type="text"
+					class="search-input"
+					placeholder="Cari di dalam buku..." />
+				<button class="search-btn">
+					<i class="fas fa-search icon"></i>
+					<span class="text">Cari</span>
+				</button>
 			</div>
 
-			<!-- Container reusable untuk daftar konten -->
-			<div id="listContainer" class="bookshelf-container" style="display: none">
-				<h2 class="section-title" id="listTitle"></h2>
-				<div class="search-container">
-					<input
-						type="text"
-						class="search-box"
-						id="searchInput"
-						placeholder="Cari..." />
-					<button id="searchClearBtn" class="search-clear-btn">
-						<i class="fas fa-times"></i>
-					</button>
-				</div>
-				<div class="shelf-header">
-					<i class="fas fa-book" id="listIcon"></i>
-					<h3 id="listSubtitle"></h3>
-				</div>
-				<div class="bookshelf">
-					<div class="books-container">
-						<div class="loading-container" id="listLoading">
-							<div class="loading-spinner"></div>
-						</div>
-						<div class="books" id="listContent"></div>
-					</div>
-				</div>
+			<div class="book-content animated" id="book-content">
+				<!-- Isi buku akan diisi oleh JavaScript -->
 			</div>
+			<div id="description-container"></div>
+			<div id="pagination-container"></div>
+		</section>
 
-			<!-- Container reusable untuk detail konten -->
-			<div id="detailContainer" style="display: none"></div>
-
-			<!-- Container reusable untuk paginasi -->
-			<div id="paginationContainer" class="pagination-container"></div>
-		</div>
-
-		<footer>
-			<div class="container">
-				<div class="footer-content">
-					<div class="footer-section">
-						<h3>Perpustakaan Digital</h3>
-						<p>
-							Platform digital untuk mempelajari ilmu pengetahuan lebih mendalam
-							dan bacaan keseharian. Akses ribuan buku dan referensi dalam
-							genggaman Anda.
-						</p>
-					</div>
-
-					<div class="footer-section">
-						<h3>Ikuti Kami</h3>
-						<p>
-							Dapatkan update terbaru tentang koleksi dan fitur terbaru dari
-							perpustakaan kami.
-						</p>
-						<div class="social-links">
-							<a href="https://github.com/vicky-project/perpustakaan-digital"
-								><i class="fab fa-github"></i
-							></a>
-							<a href="https://vickyserver.my.id"
-								><i class="fas fa-globe"></i
-							></a>
-						</div>
-					</div>
-				</div>
-
-				<div class="copyright">
-					&copy; 2023 Perpustakaan Digital - Vicky Server. Semua Hak
-					<p>Dilindungi.</p>
-				</div>
-			</div>
-		</footer>
-
-		<button id="backToTopBtn" title="Kembali ke atas">
-			<i class="fas fa-arrow-up"></i>
-		</button>
-		<script
-			src="https://vickyserver.my.id/perpus/helper.js"
-			type="text/javascript"
-			charset="utf-8"></script>
-		<script
-			src="https://vickyserver.my.id/perpus/script.js"
-			type="text/javascript"
-			charset="utf-8"></script>
+		<script src="config-helper.js"></script>
+		<script src="script.js"></script>
 	</body>
 </html>

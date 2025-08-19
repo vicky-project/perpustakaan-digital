@@ -1,2105 +1,1532 @@
-// ====================== LIBRARY CONFIGURATION ======================
-const LibraryConfig = {
-	shelves: [
-		{
-			id: "islam",
-			title: "Islam",
-			icon: "fas fa-mosque",
-			books: [
-				{
-					id: "quran",
-					title: "Al-Quran Al-Karim",
-					subtitle: "",
-					icon: "fas fa-book-quran",
-					badge: "Q",
-					viewName: "surahList"
-				},
-				{
-					id: "hadith",
-					title: "Al-Hadiths",
-					subtitle: "Kitab Hadiths",
-					icon: "fas fa-book",
-					badge: "H",
-					viewName: "hadithList"
-				},
-				{
-					id: "daily-prayer",
-					title: "Doa Harian",
-					subtitle: "Kumpulan Doa Sehari hari",
-					icon: "fas fa-hands-praying",
-					badge: "D",
-					viewName: "dailyPrayerList"
-				},
-				{
-					id: "asmaul-husna",
-					title: "Asmaul Husna",
-					subtitle: "99 Nama Allah",
-					icon: "fas fa-signature",
-					badge: "A",
-					viewName: "asmaulHusnaList"
-				},
-				{
-					id: "prophet-stories",
-					title: "Kisah Nabi",
-					subtitle: "25 Nabi dan Rasul",
-					icon: "fas fa-book-open",
-					badge: "K",
-					viewName: "prophetStoriesList"
-				}
-			]
-		},
-		{
-			id: "rohani",
-			title: "Rohani",
-			icon: "fas fa-cross",
-			books: [
-				{
-					id: "alkitab",
-					title: "Kitab",
-					subtitle: "Al-Kitab",
-					icon: "fas fa-bible",
-					badge: "A",
-					viewName: "alkitabList"
-				}
-			]
-		},
-		{
-			id: "finances",
-			title: "Finances",
-			icon: "fas fa-coins",
-			books: [
-				{
-					id: "ojk",
-					title: "Otoritas Jasa keuangan",
-					subtitle: "Informasi Lembaga Jasa Keuangan",
-					icon: "fas fa-landmark",
-					badge: "O",
-					viewName: "ojkList"
-				}
-			]
-		},
-		{
-			id: "science",
-			title: "Sains",
-			icon: "fas fa-flask",
-			books: [
-				{
-					id: "physics",
-					title: "Fisika Dasar",
-					subtitle: "Prinsip Mekanika",
-					icon: "fas fa-atom",
-					badge: "F",
-					viewName: "physicsList"
-				},
-				{
-					id: "periodic-table",
-					title: "Tabel Periodik",
-					subtitle: "Unsur Kimia",
-					icon: "fas fa-table-cells",
-					badge: "T",
-					viewName: "periodicTableView"
-				}
-			]
-		}
-	]
+// Elemen DOM
+// ========== DOM SELECTORS ============
+const DOM = {
+	// Elemen utama
+	body: document.body,
+	header: document.querySelector("header"),
+	mainshelfSection: document.getElementById("mainshelf"),
+	listbookSection: document.getElementById("listbook"),
+	detailbook: document.getElementById("detailbook"),
+	bookList: document.getElementById("book-list"),
+	descriptionContainer: document.getElementById("description-container"),
+	paginationContainer: document.getElementById("pagination-container"),
+
+	// Tombol dan kontrol
+	btnTheme: document.getElementById("btn-theme"),
+	btnBack: document.getElementById("btn-back"),
+
+	// Elemen judul
+	pageTitle: document.getElementById("page-title"),
+
+	// Elemen detail buku
+	bookContent: document.getElementById("book-content"),
+
+	// Input pencarian
+	searchInputs: document.querySelectorAll(".search-input"),
+	searchButtons: document.querySelectorAll(".search-btn"),
+	listSearch: document.getElementById("listbook-search"),
+	detailSearch: document.getElementById("detailbook-search")
 };
 
-// ====================== LIBRARY MANAGER ======================
-const LibraryManager = {
-	shelves: [],
-
-	init: function () {
-		this.shelves = [...LibraryConfig.shelves];
+// ============== SEARCH VISIBILITY CONTROL ==============
+const SearchVisibility = {
+	hideAll() {
+		DomHelper.hide(DOM.listSearch);
+		DomHelper.hide(DOM.detailSearch);
 	},
 
-	addShelf: function (shelf) {
-		this.shelves.push(shelf);
+	showListSearch() {
+		DomHelper.show(DOM.listSearch, "flex");
+		DomHelper.hide(DOM.detailSearch);
 	},
 
-	addBook: function (shelfId, book) {
-		const shelf = this.shelves.find(s => s.id === shelfId);
-		if (shelf) {
-			if (!shelf.books) shelf.books = [];
-			shelf.books.push(book);
+	showDetailSearch() {
+		DomHelper.hide(DOM.listSearch);
+		DomHelper.show(DOM.detailSearch, "flex");
+	},
+
+	hideForDescription() {
+		DomHelper.hide(DOM.detailSearch);
+	}
+};
+
+// ============== NAVIGATION MANAGER ==============
+const NavigationManager = {
+	// Menangani semua logika navigasi kembali
+	handleBack: function () {
+		DomHelper.scrollToTop();
+		SearchService.clearAllInputs();
+
+		// 1. Tangani penutupan deskripsi jika terbuka
+		if (NavigationManager.handleDescriptionClose()) return;
+
+		const currentBook = AppState.currentBook;
+
+		// 2. Tangani navigasi berdasarkan halaman yang aktif
+		if (DOM.detailbook.style.display === "block") {
+			NavigationManager.handleDetailBack(currentBook);
+		} else if (DOM.listbookSection.style.display === "block") {
+			NavigationManager.handleListBack(currentBook);
+		}
+	},
+
+	// Menangani penutupan deskripsi surah
+	handleDescriptionClose: function () {
+		if (DOM.descriptionContainer?.style.display === "block") {
+			DomHelper.show(DOM.bookContent);
+			DomHelper.hide(DOM.descriptionContainer);
+
+			if (DOM.paginationContainer.children.length > 0) {
+				DomHelper.show(DOM.paginationContainer);
+			}
+
+			SearchVisibility.showDetailSearch();
 			return true;
 		}
 		return false;
 	},
 
-	getShelf: function (shelfId) {
-		return this.shelves.find(s => s.id === shelfId);
+	// Menangani navigasi dari halaman detail
+	handleDetailBack: function (currentBook) {
+		// Simpan state sebelum navigasi
+		const stateSnapshot = NavigationManager.getStateSnapshot(currentBook);
+
+		switch (currentBook) {
+			case "bible":
+				NavigationManager.handleBibleBack(stateSnapshot);
+				break;
+			case "sekolah":
+				NavigationManager.handleSekolahBack(stateSnapshot);
+				break;
+			default:
+				NavigationManager.handleBookBack(currentBook);
+		}
 	},
 
-	getAllBooks: function () {
-		return this.shelves.flatMap(shelf => shelf.books || []);
+	// Menangani navigasi dari halaman list
+	handleListBack: function (currentBook) {
+		if (currentBook === "bible") {
+			NavigationManager.handleBibleListBack();
+		} else if (currentBook === "sekolah") {
+			NavigationManager.handleSekolahBack(
+				NavigationManager.getStateSnapshot(currentBook)
+			);
+		} else {
+			showMainShelf();
+		}
+	},
+
+	// === BIBLE-SPECIFIC HANDLERS ===
+
+	// Navigasi Bible dari halaman detail
+	handleBibleBack: function (stateSnapshot) {
+		const { level, translationId, bookId } = stateSnapshot;
+
+		switch (level) {
+			case "verses":
+				BibleService.showList(translationId, bookId);
+				break;
+			case "chapters":
+				BibleService.showList(translationId);
+				break;
+			case "books":
+				BibleService.showList();
+				break;
+			default:
+				showMainShelf();
+		}
+	},
+
+	// Navigasi Bible dari halaman list
+	handleBibleListBack: function () {
+		const { level, translationId } = AppState.bible;
+
+		switch (level) {
+			case "chapters":
+				BibleService.showList(translationId);
+				break;
+			case "books":
+				BibleService.showList();
+				break;
+			default:
+				showMainShelf();
+		}
+	},
+
+	// === SEKOLAH-SPECIFIC HANDLER ===
+
+	handleSekolahBack: function (stateSnapshot) {
+		const { level } = stateSnapshot;
+
+		switch (level) {
+			case "kabkota":
+				AppState.setBookState("sekolah", { level: "provinsi", kabkota: null });
+				SekolahService.showList();
+				break;
+			case "kecamatan":
+				AppState.setBookState("sekolah", {
+					level: "kabkota",
+					provinsi: stateSnapshot.provinsi
+				});
+				SekolahService.showList();
+				break;
+			case "sekolah":
+				AppState.setBookState("sekolah", {
+					level: "kecamatan",
+					kabkota: stateSnapshot.kabkota,
+					provinsi: stateSnapshot.provinsi
+				});
+				SekolahService.showList();
+				break;
+			default:
+				showMainShelf();
+				break;
+		}
+	},
+
+	// === GENERAL BOOK HANDLER ===
+
+	handleBookBack: function (bookType) {
+		const serviceMap = {
+			quran: QuranService,
+			hadith: HadithService,
+			doa: DoaService,
+			prophet: ProphetService,
+			asmaul: AsmaulService,
+			ojk: OjkService,
+			bahasa: BahasaService
+		};
+
+		if (serviceMap[bookType]) {
+			serviceMap[bookType].showList();
+		} else {
+			showMainShelf();
+		}
+	},
+
+	// === UTILITY FUNCTIONS ===
+
+	// Membuat snapshot state untuk navigasi
+	getStateSnapshot: function (bookType) {
+		switch (bookType) {
+			case "bible":
+				return {
+					...AppState.bible,
+					level: AppState.bible.level,
+					translationId: AppState.bible.translationId,
+					bookId: AppState.bible.bookId,
+					chapterId: AppState.bible.chapterId
+				};
+			case "sekolah":
+				return {
+					...AppState.sekolah,
+					level: AppState.sekolah.level,
+					provinsi: AppState.sekolah.provinsi,
+					kabkota: AppState.sekolah.kabkota,
+					kecamatan: AppState.sekolah.kecamatan
+				};
+			default:
+				return { ...AppState[bookType] };
+		}
 	}
 };
 
-// Inisialisasi library manager
-LibraryManager.init();
-
-// ====================== STATE APLIKASI ======================
-const appState = {
-	currentView: "mainShelf",
-	currentData: null,
-	history: [],
-	searchQuery: "",
-	quranData: null,
-	hadithData: null,
-	dailyPrayerSources: [],
-	searchContext: null, // 'global_quran', 'surah_quran', 'global_hadith', 'book_hadith', 'doa', 'ojk_apps', 'ojk_illegals', 'ojk_products'
-	currentSurah: null,
-	currentHadithBook: null,
-	scrollToVerse: null,
-	scrollToHadith: null,
-	bibleTranslations: null,
-	currentBible: null,
-	currentBibleBook: null,
-	currentBibleChapter: null,
-	currentOJKType: null
-};
-
-// =========== DOM ELEMENTS =========
-const DOM = {
-	mainShelf: document.getElementById("mainShelf"),
-	listContainer: document.getElementById("listContainer"),
-	listTitle: document.getElementById("listTitle"),
-	listSubtitle: document.getElementById("listSubtitle"),
-	listIcon: document.getElementById("listIcon"),
-	listContent: document.getElementById("listContent"),
-	listLoading: document.getElementById("listLoading"),
-	detailContainer: document.getElementById("detailContainer"),
-	paginationContainer: document.getElementById("paginationContainer"),
-	backButton: document.getElementById("backButton"),
-	searchInput: document.getElementById("searchInput"),
-	detailSearchInput: document.getElementById("detailSearchInput"),
-	themeToggle: document.getElementById("themeToggle"),
-	backToTopBtn: document.getElementById("backToTopBtn"),
-	header: document.querySelector("header"),
-	searchClearBtn: document.getElementById("searchClearBtn")
-};
-
-// ====================== UTILITY FUNCTIONS ======================
-const Utils = {
-	showElement: (element, show = true) => {
-		if (element) element.style.display = show ? "block" : "none";
-	},
-
-	clearContainer: element => {
-		if (element) element.innerHTML = "";
-	},
-
-	toggleTheme: () => {
-		const currentTheme = document.documentElement.getAttribute("data-theme");
-		const newTheme = currentTheme === "dark" ? "light" : "dark";
-
-		document.documentElement.setAttribute("data-theme", newTheme);
-
-		const icon = DOM.themeToggle.querySelector("i");
-		icon.className = newTheme === "dark" ? "fas fa-moon" : "fas fa-sun";
-
-		localStorage.setItem("theme", newTheme);
-	},
-
-	renderLoading: (container, show = true) => {
-		if (container) {
-			container.style.display = show ? "flex" : "none";
-			if (show) {
-				container.innerHTML = '<div class="loading-spinner"></div>';
-			}
-		}
-	},
-
-	renderSearchLoading: (container, show = true) => {
-		if (container) {
-			if (show) {
-				container.innerHTML =
-					'<div class="search-loading"><div class="loading-spinner"></div></div>';
-			} else {
-				container.innerHTML = "";
-			}
-		}
-	},
-
-	renderShareButton: content =>
-		`<button class="share-btn" data-content="${encodeURIComponent(
-			content
-		)}"><i class="fas fa-share-alt"></i></button>`,
-
-	renderSearchInput:
-		() => `<div class="search-container" style="margin-top: 20px;">
-					<input
-						type="text"
-						class="search-box"
-						id="detailSearchInput"
-						placeholder="Cari..." />
-					<button id="searchClearBtn" class="search-clear-btn">
-						<i class="fas fa-times"></i>
-					</button>
-				</div>`,
-
-	setupSearchListener: async container => {
-		if (!container) return;
-
-		container.addEventListener("keyup", async e => {
-			if (e.key === "Enter") {
-				const query = e.target.value.trim();
-				appState.searchQuery = query;
-
-				DOM.searchClearBtn.style.display = query ? "block" : "none";
-
-				// Hanya lakukan pencarian jika query cukup panjang
-				if (query.length >= 3) {
-					// Tampilkan indikator loading
-					Utils.renderSearchLoading(DOM.detailContainer, true);
-					Utils.showElement(DOM.listContainer, false);
-					Utils.showElement(DOM.detailContainer, true);
-					Utils.showElement(DOM.paginationContainer, false);
-
-					try {
-						// Render hasil
-						const dataToPass =
-							appState.searchContext === "doa" ? null : appState.currentData;
-
-						Utils.renderSearchResults(
-							query,
-							appState.searchContext,
-							dataToPass
-						);
-					} catch (error) {
-						console.error("Search error:", error);
-						Utils.showError(error.message, DOM.detailContainer);
-					}
-				}
-			}
-		});
-	},
-
-	showError: (message, container) => {
-		if (container) {
-			container.innerHTML = `<div class="error-message"><i class="fas fa-exclamation-triangle"></i><p>${message}</p></div>`;
-		}
-	},
-
-	playAudio: url => {
-		if (url) new Audio(url).play().catch(console.log);
-	},
-
-	shareContent: content => {
-		if (!content) return;
-		const text = decodeURIComponent(content);
-
-		if (navigator.share) {
-			navigator
-				.share({
-					title: "Perpustakaan Digital",
-					text
-				})
-				.catch(console.log);
-		} else {
-			navigator.clipboard
-				.writeText(text)
-				.then(() => alert("Teks disalin!"))
-				.catch(console.error);
-		}
-	},
-
-	highlightText: (text, query) => {
-		if (!query || !text) return text;
-
-		const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-		const regex = new RegExp(`(${escapedQuery})`, "gi");
-
-		return text.replace(regex, "<mark>$1</mark>");
-	},
-
-	formatProphetYear: (year, prophetName) => {
-		if (!year) return { text: "Tidak diketahui", className: "" };
-		const yearNum = typeof year === "string" ? parseInt(year) || 0 : year;
-
-		if (prophetName.includes("Isa")) {
-			return {
-				text: "1 M (Kelahiran Nabi Isa AS)",
-				className: "isa-year"
-			};
-		}
-
-		return { text: `${yearNum}`, className: "sm-year" };
-	},
-
-	// Fungsi fetch umum dengan caching
-	fetchWithCache: async (url, cacheKey) => {
-		// Cek cache
-		const cachedData = await CacheManager.getItem(cacheKey);
-
-		if (cachedData) {
-			return cachedData;
-		}
-
-		// Fetch dari API
-		const response = await fetch(url);
-		if (!response.ok) {
-			throw new Error(`Gagal mengambil data dari ${url}`);
-		}
-
-		const data = await response.json();
-
-		// Simpan ke cache dengan timestamp
-		await CacheManager.setItem(cacheKey, data, API_CONFIG.cacheExpiry);
-
-		return data;
-	},
-
-	scrollToTop: () => {
-		const headerHeight = DOM.header ? DOM.header.offsetHeight - 70 : 70;
-		window.scrollTo({
-			top: headerHeight,
-			behavior: "smooth"
-		});
-	},
-
-	// Fungsi untuk merender buku
-	renderBook: book => {
-		return `
-            <div class="book" data-id="${book.id}" data-view="${book.viewName}">
-                <div class="book-image">
-                    <i class="${book.icon}"></i>
-                    ${
-											book.badge
-												? `<div class="surah-number-badge">${book.badge}</div>`
-												: ""
-										}
-                </div>
-                <div class="book-title">
-                    <h3>${book.title}</h3>
-                    ${book.subtitle ? `<p>${book.subtitle}</p>` : ""}
-                </div>
-            </div>
-        `;
-	},
-
-	renderSearchResults: (query, context, currentData, pageUrl = null) => {
-		let url =
-			pageUrl || `${API_CONFIG.urls.search}?query=${encodeURIComponent(query)}`;
-
-		const contextParams = {
-			global_quran: "&type=quran",
-			surah_quran: `&type=quran&surah_id=${currentData?.number || ""}`,
-			global_hadith: "&type=hadith",
-			book_hadith: `&type=hadith&book_id=${currentData?.id || ""}`,
-			doa: "&type=doa",
-			ojk_apps: "&type=ojk&name=apps",
-			ojk_illegals: "&type=ojk&name=illegals",
-			ojk_producta: "&type=ojk&name=products",
-			global_bible: "&type=bible",
-			translation_bible: `&type=bible&translation_id=${
-				appState.bibleTranslations?.id || ""
-			}`,
-			book_bible: `&type=bible&translation_id=${
-				appState.bibleTranslations?.id || ""
-			}&book_id=${appState.currentBibleBook?.id || ""}`,
-			chapter_bible: `&type=bible&translation_id=${
-				appState.bibleTranslations?.id || ""
-			}&book_id=${appState.currentBibleBook?.id || ""}&chapter_id=${
-				appState.currentBibleChapter?.id || ""
-			}`
-		};
-
-		url += contextParams[context] || "";
-
+const ServiceHelper = {
+	renderBookList: async (
+		service,
+		url,
+		cacheKey,
+		extractData,
+		attrId,
+		bookDataFn,
+		onClickFn,
+		title
+	) => {
 		try {
-			const searchConfigs = {
-				quran: {
-					loadingMessage: "Memuat ayat...",
-					header: (data, currentData) =>
-						`<div class="search-results-header"><h3>Hasil Pencarian Quran: ${
-							currentData?.name_latin || ""
-						}</h3>Mencari: <em>"${query}"</em><p>Ditemukan ${
-							data.quran.total
-						} hasil</p></div>`,
-					content: (data, currentData) =>
-						`<div class="search-results-container">${data.quran.data
-							.map(item =>
-								DataManager.renderVerseItem(
-									item,
-									item.surah,
-									!currentData, // showSurahName jika tidak ada currentData (global)
-									query
-								)
-							)
-							.join("")}</div>`,
-					dataKey: "quran"
-				},
-				hadith: {
-					loadingMessage: "Memuat hadits...",
-					header: (data, currentData) =>
-						`<div class="search-results-header"><h3>Hasil Pencarian Hadits: ${
-							currentData?.name || ""
-						}</h3>Mencari: <em>"${query}"</em><p>Ditemukan ${
-							data.hadith.total
-						} hasil</p></div>`,
-					content: (data, currentData) =>
-						`<div class="search-results-container">${data.hadith.data
-							.map(hadith =>
-								DataManager.renderHadithItem(
-									hadith,
-									currentData ? null : hadith.book_id,
-									query
-								)
-							)
-							.join("")}</div>`,
-					dataKey: "hadith"
-				},
-				doa: {
-					loadingMessage: "Memuat hasil doa...",
-					header: data =>
-						`<div class="search-results-header"><h3>Pencarian Doa</h3><p>Mencari: <em>"${query}"</em></p><p>Ditemukan ${data.doa.total} hasil</p></div>`,
-					content: data => {
-						const prayers = data.doa.data || [];
-						const startNumber = data.doa.from || 1;
+			AppState.currentData = null;
+			const data = await ApiHelper.fetchWithCache(url, cacheKey);
 
-						return `<div class="search-results-container">${prayers
-							.map((prayer, index) =>
-								DataManager.renderPrayerItem(prayer, startNumber + index, query)
-							)
-							.join("")}</div>`;
+			if (!data) {
+				alert("Gagal memuat data...");
+				return;
+			}
+
+			AppState.currentData = data;
+
+			DomHelper.setHTML(DOM.bookList, "");
+			const items = extractData(data);
+			items.forEach(item => {
+				const card = DomHelper.createElement("div", {
+					className: "book-card-container",
+					dataset: {
+						id: attrId(item)
 					},
-					dataKey: "doa"
-				},
-				ojk: {
-					loadingMessage: "Memuat hasil OJK...",
-					header: (data, currentData) => {
-						const titleMap = {
-							apps: "Aplikasi",
-							illegals: "Lembaga Ilegal",
-							products: "Produk"
-						};
-
-						const type = context.split("_")[1];
-						return `<div class="search-results-header"><h3>Hasil Pencarian OJK: ${
-							titleMap[type]
-						}</h3>Mencari: <em>"${query}"</em><p>Ditemukan: ${
-							data.ojk.total || 0
-						} hasil</p></div>`;
-					},
-					content: (data, currentData) => {
-						const items = data.ojk.data || [];
-						const startNumber = data.ojk.from || 1;
-						const type = context.split("_")[1];
-
-						return `<div class="search-results-container">${items
-							.map((item, index) => {
-								switch (type) {
-									case "apps":
-										return DataManager.renderOJKSections(
-											[item],
-											"Aplikasi",
-											startNumber + index,
-											query
-										);
-									case "illegals":
-										return DataManager.renderOJKSections(
-											[item],
-											"Lembaga Ilegal",
-											startNumber + index,
-											query
-										);
-									case "products":
-										return DataManager.renderOJKProducts(
-											[item],
-											startNumber + index,
-											query
-										);
-									default:
-										return "";
-								}
-							})
-							.join("")}</div>`;
-					},
-					dataKey: "ojk"
-				},
-				bible: {
-					loadingMessage: "Memuat hasil alkitab...",
-					header: (data, currentData) => {
-						const params = data.bible.search_parameters || {};
-						let headerText = "Hasil Pencarian Alkitab";
-
-						if (params.translation)
-							headerText += ` (${params.translation?.name || ""})`;
-						if (params.book) headerText += ` - ${params.book?.name || ""}`;
-						if (params.chapter)
-							headerText += ` Pasal ${params.chapter?.number || ""}`;
-
-						return `<div class="search-results-header">
-      <h3>${headerText}</h3>
-      <p>Mencari: <em>"${query}"</em></p>
-      <p>Ditemukan ${data.bible.total || 0} hasil</p>
-    </div>`;
-					},
-					content: data => {
-						return `<div class="search-results-container">
-      ${data.bible.data
-				.map(verse => DataManager.renderBibleVerseItem(verse, null, query))
-				.join("")}
-    </div>`;
-					},
-					dataKey: "bible"
-				}
-			};
-
-			if (!context) return alert("Search fitur not available here.");
-			let searchType;
-			if (context.includes("quran")) searchType = "quran";
-			else if (context.includes("hadith")) searchType = "hadith";
-			else if (context === "doa") searchType = "doa";
-			else if (context.startsWith("ojk_")) searchType = "ojk";
-			else if (context.includes("bible")) searchType = "bible";
-
-			if (!searchType) return;
-
-			const config = searchConfigs[searchType];
-
-			const addEventListeners = () => {
-				DOM.detailContainer.querySelectorAll(".audio-btn").forEach(btn => {
-					btn.addEventListener("click", () =>
-						Utils.playAudio(btn.dataset.audio)
-					);
+					html: TemplateHelper.createBookCard(bookDataFn(item))
 				});
-
-				DOM.detailContainer.querySelectorAll(".share-btn").forEach(btn => {
-					btn.addEventListener("click", () =>
-						Utils.shareContent(btn.dataset.content)
-					);
-				});
-
-				// Untuk Bible search, tambahkan navigasi ke ayat
-				if (searchType === "bible") {
-					DOM.detailContainer.querySelectorAll(".verse-item").forEach(item => {
-						item.addEventListener("click", () => {
-							const verseId = item.dataset.verseId;
-							const verse = data.bible.data.find(v => v.id == verseId);
-
-							if (verse) {
-								// Navigate to chapter view
-								appState.currentBibleChapter = {
-									id: verse.chapter.id,
-									number: verse.chapter.number,
-									book_name: verse.book.name
-								};
-
-								ViewManager.navigateTo("alkitabVerseDetail");
-								appState.scrollToVerse = verse.verse_number;
-							}
-						});
-					});
-				}
-			};
-
-			DataManager.renderDetailWithPagination({
-				container: DOM.detailContainer,
-				loadingMessage: config.loadingMessage,
-				fetchUrl: url,
-				renderHeader: data => config.header(data, currentData),
-				renderContent: data => config.content(data, currentData),
-				onPageChange: newPageUrl => {
-					const newUrl = Utils.convertToHttps(newPageUrl);
-					Utils.renderSearchResults(query, context, currentData, newUrl);
-				},
-				dataObject: data => data[config.dataKey],
-				onRenderComplete: addEventListeners
+				DOM.bookList.appendChild(card);
 			});
+
+			document
+				.querySelectorAll(".book-card-container")
+				.forEach(card => card.addEventListener("click", () => onClickFn(card)));
+
+			DOM.pageTitle.textContent = title;
+			showListBook();
 		} catch (error) {
 			console.error(error);
-			Utils.showError(
-				"Terjadi kesalahan saat memuat hasil pencarian",
-				DOM.detailContainer
-			);
 		}
 	},
 
-	// Karna paginasi mengembalikan links http bukan https yang menyebabkan error saat pindah halaman
-	convertToHttps: url => {
-		try {
-			const urlObj = new URL(url);
-			if (urlObj.protocol === "http:") {
-				urlObj.protocol = "https:";
-				if (urlObj.port === "80") urlObj.port = "";
-			}
-			return urlObj.toString();
-		} catch {
-			return url.startsWith("//") ? `https:${url}` : url;
+	renderDetail: options => {
+		SearchService.clearListSearch();
+		if (options.pageTitle) {
+			DOM.pageTitle.textContent = options.pageTitle;
 		}
+		TemplateHelper.renderDetailWithPagination({
+			container: DOM.bookContent,
+			paginationContainer: DOM.paginationContainer,
+			...options
+		});
+
+		showDetailBook();
 	}
 };
 
-// ====================== VIEW MANAGER ======================
-const ViewManager = {
-	navigateTo: (viewName, data = null) => {
-		// Simpan state Alkitab saat ini ke history
-		const bibleState = {
-			translations: appState.bibleTranslations,
-			currentBook: appState.currentBibleBook,
-			currentChapter: appState.currentBibleChapter
-		};
-
-		appState.history.push({
-			view: appState.currentView,
-			data: appState.currentData,
-			bibleState
+const QuranService = {
+	showList: async () => {
+		AppState.setBookState("quran", {
+			currentPage: "list"
 		});
 
-		[appState.currentView, appState.currentData] = [viewName, data];
-
-		const searchContextMap = {
-			surahList: "global_quran",
-			surahDetail: "surah_quran",
-			hadithList: "global_hadith",
-			hadithDetail: "book_hadith",
-			dailyPrayerList: "doa",
-			dailyPrayerDetail: "doa",
-			ojkList: null,
-			alkitabList: "global_bible",
-			alkitabBookList: "translation_bible",
-			alkitabChapterList: "book_bible",
-			alkitabVerseDetail: "chapter_bible"
-		};
-
-		appState.searchContext = searchContextMap[viewName] || null;
-		ViewManager.renderCurrentView();
-		Utils.scrollToTop();
+		await ServiceHelper.renderBookList(
+			this,
+			APP_CONFIG.endpoints.quran,
+			"quran_list",
+			data => data,
+			item => item.id,
+			surah => ({
+				number: surah.number,
+				title: surah.name_latin,
+				subtitle: surah.name,
+				content: `${surah.number_of_verses} ayat`
+			}),
+			card => QuranService.showDetail(card.dataset.id),
+			"Al-Quran"
+		);
 	},
-
-	clearBibleContext: function () {
-		appState.bibleTranslations = null;
-		appState.currentBibleBook = null;
-		appState.currentBibleChapter = null;
-	},
-
-	goBack: () => {
-		if (appState.history.length > 0) {
-			const prevState = appState.history.pop();
-			[appState.currentView, appState.currentData] = [
-				prevState.view,
-				prevState.data
-			];
-
-			// Pulihkan state Alkitab dari history
-			if (prevState.bibleState) {
-				appState.bibleTranslations = prevState.bibleState.translations;
-				appState.currentBibleBook = prevState.bibleState.currentBook;
-				appState.currentBibleChapter = prevState.bibleState.currentChapter;
-			}
-
-			ViewManager.renderCurrentView();
-			Utils.scrollToTop();
-		} else {
-			ViewManager.navigateTo("mainShelf");
-		}
-	},
-
-	renderCurrentView: () => {
-		const hiddenEl = [
-			DOM.mainShelf,
-			DOM.listContainer,
-			detailContainer,
-			DOM.paginationContainer
-		];
-		Object.values(hiddenEl).forEach(el => {
-			if (el instanceof HTMLElement) Utils.showElement(el, false);
+	showDetail: async (id, pageUrl = null) => {
+		AppState.setBookState("quran", {
+			currentPage: "detail",
+			surahId: id
 		});
-		Utils.clearContainer(DOM.detailContainer);
 
-		Utils.showElement(DOM.backButton, appState.currentView !== "mainShelf");
-
-		const viewHandlers = {
-			mainShelf: () => ViewManager.renderMainShelf(),
-			surahList: () => ViewManager.renderListView(),
-			hadithList: () => ViewManager.renderListView(),
-			asmaulHusnaList: () => ViewManager.renderListView(),
-			prophetStoriesList: () => ViewManager.renderListView(),
-			dailyPrayerList: () => ViewManager.renderListView(),
-			alkitabList: () => ViewManager.renderListView(),
-			alkitabBookList: () => ViewManager.renderListView(),
-			alkitabChapterList: () => ViewManager.renderListView(),
-			ojkList: () => ViewManager.renderListView(),
-			surahDetail: () => DataManager.renderSurahDetail(appState.currentData),
-			hadithDetail: () => DataManager.renderHadithDetail(appState.currentData),
-			asmaDetail: () => DataManager.renderAsmaDetail(appState.currentData),
-			prophetDetail: () =>
-				DataManager.renderProphetDetail(appState.currentData),
-			dailyPrayerDetail: () =>
-				DataManager.renderDailyPrayerDetail(appState.currentData),
-			alkitabVerseDetail: () =>
-				DataManager.renderBibleVerses(appState.currentBibleChapter),
-			ojkDetail: () => DataManager.renderOJKDetail(appState.currentOJKType),
-			periodicTableView: () => DataManager.renderPeriodicTable()
-		};
-
-		Utils.showElement(DOM.detailContainer, true);
-
-		viewHandlers[appState.currentView]?.();
-	},
-
-	renderMainShelf: () => {
-		Utils.showElement(DOM.mainShelf, true);
-		appState.searchQuery = "";
-		ViewManager.clearBibleContext();
-
-		// Render rak buku berdasarkan konfigurasi
-		DOM.mainShelf.innerHTML = `
-            <h2 class="section-title">Rak Buku</h2>
-            ${LibraryManager.shelves
-							.map(
-								shelf => `
-                <div class="shelf-header">
-                    <i class="${shelf.icon}"></i>
-                    <h3>${shelf.title}</h3>
-                </div>
-                <div class="bookshelf">
-                    <div class="books-container">
-                        <div class="books">
-                            ${
-															shelf.books
-																? shelf.books
-																		.map(book => Utils.renderBook(book))
-																		.join("")
-																: '<p class="empty-message">Belum ada buku</p>'
-														}
-                        </div>
-                    </div>
-                </div>
-            `
-							)
-							.join("")}
-        `;
-	},
-
-	renderListView: () => {
-		const configs = {
-			surahList: {
-				title: "Daftar Surah Al-Quran",
-				subtitle: "Pilih Surah",
-				icon: "fas fa-book-quran",
-				placeholder: "Cari surah berdasarkan nama atau nomor...",
-				fetchFunction: DataManager.fetchQuranData
-			},
-			hadithList: {
-				title: "Kitab Hadits Utama",
-				subtitle: "Pilih Kitab Hadits",
-				icon: "fas fa-book",
-				placeholder: "Cari hadits dalam semua kitab...",
-				fetchFunction: DataManager.fetchHadithData
-			},
-			asmaulHusnaList: {
-				title: "Asmaul Husna",
-				subtitle: "99 Nama Allah",
-				icon: "fas fa-signature",
-				placeholder: "Cari nama Allah...",
-				fetchFunction: DataManager.fetchAsmaulHusnaData
-			},
-			prophetStoriesList: {
-				title: "Kisah Nabi dan Rasul",
-				subtitle: "25 Nabi dan Rasul",
-				icon: "fas fa-book-open",
-				placeholder: "Cari nabi...",
-				fetchFunction: DataManager.fetchProphetStoriesData
-			},
-			dailyPrayerList: {
-				title: "Sumber Doa Harian",
-				subtitle: "Pilih Kategori Doa",
-				icon: "fas fa-hands-praying",
-				placeholder: "Cari doa...",
-				fetchFunction: DataManager.fetchPrayerData
-			},
-			alkitabList: {
-				title: "Daftar Terjemahan AlKitab",
-				subtitle: "Pilih Terjemahan Al-Kitab",
-				icon: "fas fa-book-bible",
-				placeholder: "Cari di semua terjemahan...",
-				fetchFunction: DataManager.fetchBibleTranslations
-			},
-			alkitabBookList: {
-				title: "Daftar Buku Al-Kitab",
-				subtitle: "Pilih buku AlKitab",
-				icon: "fas fa-book-bible",
-				placeholder: "Cari di semua buku...",
-				fetchFunction: DataManager.fetchBibleBooks
-			},
-			alkitabChapterList: {
-				title: "Pasal Al-Kitab",
-				subtitle: "Pilih Pasal",
-				icon: "fas fa-book-bible",
-				placeholder: "Cari di dalam pasal...",
-				fetchFunction: DataManager.fetchBibleChapters
-			},
-			ojkList: {
-				title: "Otoritas Jasa Keuangan",
-				subtitle: "Informasi Lembaga Jasa Keuangan",
-				icon: "fas fa-landmark",
-				placeholder: "Cari di OJK...",
-				fetchFunction: DataManager.fetchOJKContents
-			}
-		};
-
-		const config = configs[appState.currentView];
-		if (!config) return;
-
-		// Atur tampilan
-		[DOM.listTitle.textContent, DOM.listSubtitle.textContent] = [
-			config.title,
-			config.subtitle
-		];
-		[DOM.listIcon.className, DOM.searchInput.placeholder] = [
-			config.icon,
-			config.placeholder
-		];
-		[DOM.searchInput.value, appState.searchQuery] = ["", ""];
-
-		if (appState.currentView === "ojkList") appState.searchContext = null;
-
-		Utils.showElement(DOM.listContainer, true);
-		config.fetchFunction();
-	}
-};
-
-// ====================== DATA MANAGER ======================
-const DataManager = {
-	// Fungsi helper untuk render detail dengan paginasi
-	async renderDetailWithPagination(options) {
-		const {
-			container,
-			loadingMessage,
-			fetchUrl,
-			renderHeader,
-			renderContent,
-			onPageChange,
-			dataObject,
-			onRenderComplete
-		} = options;
-
-		// Tampilkan loading state
-		container.innerHTML = `<div class="loading">${loadingMessage}</div>`;
-		Utils.showElement(DOM.paginationContainer, false);
-
-		try {
-			// Fetch data
-			const response = await fetch(fetchUrl);
-			if (!response.ok) throw new Error("Gagal mengambil data");
-			const data = await response.json();
-			console.log(data);
-			// Render konten
-			container.innerHTML = renderHeader(data) + renderContent(data);
-
-			// Handle paginasi
-			if (dataObject(data).last_page > 1) {
-				paginationModule.render(
-					DOM.paginationContainer,
-					dataObject(data),
-					newPageUrl => {
-						Utils.scrollToTop();
-						onPageChange(newPageUrl);
-					}
-				);
-				Utils.showElement(DOM.paginationContainer, true);
-			}
-
-			onRenderComplete?.();
-			// Panggil callback jika ada
-		} catch (error) {
-			console.error("Error:", error);
-			Utils.showError(error.message + JSON.stringify(error), container);
-		}
-	},
-
-	fetchQuranData: async () => {
-		Utils.renderLoading(DOM.listLoading, true);
-		Utils.clearContainer(DOM.listContent);
-
-		try {
-			const data = await Utils.fetchWithCache(
-				API_CONFIG.urls.quran,
-				"quran_data"
-			);
-			appState.quranData = data;
-			DataManager.renderSurahList(data);
-		} catch (error) {
-			console.error("Error fetching Quran data:", error);
-			Utils.showError(error.message, DOM.listContent);
-		} finally {
-			Utils.renderLoading(DOM.listLoading, false);
-		}
-	},
-
-	renderSurahList: data => {
-		DOM.listContent.innerHTML = data
-			.map(
-				surah => `
-                    <div class="book small" data-id="${surah.number}">
-                        <div class="book-image">
-                            <i class="fas fa-book"></i>
-                            <div class="surah-number-badge">${surah.number}</div>
-                        </div>
-                        <div class="book-title">
-                            <h3>${surah.name_latin}</h3>
-                            <p>${surah.number_of_verses} Ayat • ${surah.place}</p>
-                        </div>
-                    </div>
-                `
-			)
-			.join("");
-
-		// Event listener
-		DOM.listContent.querySelectorAll(".book").forEach(book => {
-			book.addEventListener("click", () => {
-				const surah = data.find(s => s.number === parseInt(book.dataset.id));
-				ViewManager.navigateTo("surahDetail", surah);
-			});
-		});
-	},
-
-	fetchHadithData: async () => {
-		Utils.renderLoading(DOM.listLoading, true);
-		Utils.clearContainer(DOM.listContent);
-
-		try {
-			const data = await Utils.fetchWithCache(
-				API_CONFIG.urls.hadith,
-				"hadith_data"
-			);
-			appState.hadithData = data;
-			DataManager.renderHadithList(data);
-		} catch (error) {
-			console.error("Error fetching Hadith data:", error);
-			Utils.showError(error.message, DOM.listContent);
-		} finally {
-			Utils.renderLoading(DOM.listLoading, false);
-		}
-	},
-
-	renderHadithList: data => {
-		DOM.listContent.innerHTML = data
-			.map(
-				collection => `
-                    <div class="book small" data-id="${collection.id}">
-                        <div class="book-image">
-                            <i class="fas fa-book"></i>
-                            <div class="surah-number-badge">${collection.id
-															.charAt(0)
-															.toUpperCase()}</div>
-                        </div>
-                        <div class="book-title">
-                            <h3>${collection.name}</h3>
-                            <p>${collection.total_hadiths} Hadits</p>
-                        </div>
-                    </div>
-                `
-			)
-			.join("");
-
-		// Event listener
-		DOM.listContent.querySelectorAll(".book").forEach(book => {
-			book.addEventListener("click", () => {
-				const collection = data.find(c => c.id === book.dataset.id);
-				ViewManager.navigateTo("hadithDetail", collection);
-			});
-		});
-	},
-
-	fetchAsmaulHusnaData: async () => {
-		Utils.renderLoading(DOM.listLoading, true);
-		Utils.clearContainer(DOM.listContent);
-
-		try {
-			const data = await Utils.fetchWithCache(
-				API_CONFIG.urls.asmaulHusna,
-				"asmaul_husna"
-			);
-			DataManager.renderAsmaulHusnaList(data);
-		} catch (error) {
-			console.error("Error fetching Asmaul Husna data:", error);
-			Utils.showError(error.message, DOM.listContent);
-		} finally {
-			Utils.renderLoading(DOM.listLoading, false);
-		}
-	},
-
-	renderAsmaulHusnaList: data => {
-		// Gunakan grid layout untuk Asmaul Husna
-		DOM.listContent.innerHTML = `
-            <div class="asma-grid">${data.data
-							.map(
-								asma => `
-                <div class="asma-card" data-id="${asma.id}">
-                    <div class="asma-number">${asma.number}</div>
-                    <div class="asma-text-container">
-                        <div class="asma-arabic">${asma.arabic}</div>
-                        <div class="asma-name">${asma.latine}</div>
-                        <div class="asma-meaning">${asma.meaning.id}</div>
-                    </div>
-                </div>`
-							)
-							.join("")}</div>
-        `;
-
-		// Event listener
-		DOM.listContent.querySelectorAll(".asma-card").forEach(card => {
-			card.addEventListener("click", () => {
-				ViewManager.navigateTo("asmaDetail", card.dataset.id);
-			});
-		});
-	},
-
-	fetchPrayerData: async () => {
-		Utils.renderLoading(DOM.listLoading, true);
-		Utils.clearContainer(DOM.listContent);
-
-		try {
-			const data = await Utils.fetchWithCache(
-				`${API_CONFIG.urls.dailyPrayers}/sumber`,
-				"prayer_data"
-			);
-
-			appState.dailyPrayerSources = data.sumber;
-			DataManager.renderDailyPrayerSourcesList(data.sumber);
-		} catch (error) {
-			console.error("Error fetching prayer data:", error);
-			Utils.showError(error.message, DOM.listContent);
-		} finally {
-			Utils.renderLoading(DOM.listLoading, false);
-		}
-	},
-
-	renderDailyPrayerSourcesList: data => {
-		DOM.listContent.innerHTML = data
-			.map(
-				source => `
-                <div class="book small" data-id="${source.nama}">
-                    <div class="book-image">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <div class="book-title">
-                        <h3>${source.nama}</h3>
-                        <p>${source.jumlah} Doa</p>
-                    </div>
-                </div>
-            `
-			)
-			.join("");
-
-		// Event listener
-		DOM.listContent.querySelectorAll(".book").forEach(book => {
-			book.addEventListener("click", () => {
-				const source = data.find(s => s.nama === book.dataset.id);
-				ViewManager.navigateTo("dailyPrayerDetail", book.dataset.id);
-			});
-		});
-	},
-
-	renderDailyPrayerDetail: (sumberId, pageUrl = null) => {
-		DOM.detailContainer.innerHTML =
-			'<div class="loading">Memuat detail kisah nabi...</div>';
-
-		const url = pageUrl
-			? pageUrl
-			: `${API_CONFIG.urls.dailyPrayers}/sumber/${sumberId}`;
-
-		DataManager.renderDetailWithPagination({
-			container: DOM.detailContainer,
-			loadingMessage: "Memuat daftar doa...",
-			fetchUrl: url,
-			renderHeader: () =>
-				`<div class="detail-header">
-                    <h2>Doa Harian</h2>
-                    <h3>${sumberId}</h3>
-                </div>`,
-			renderContent: response => {
-				const prayers = response.data?.data || [];
-				const startNumber =
-					(response.data.current_page - 1) * response.data.per_page + 1;
-
-				return `<div class="detail-content">
-                    ${prayers
-											.map((prayer, index) =>
-												DataManager.renderPrayerItem(
-													prayer,
-													startNumber + index
-												)
-											)
-											.join("")}
-                </div>`;
-			},
-			onPageChange: newPageUrl => {
-				DataManager.renderDailyPrayerDetail(sumberId, newPageUrl);
-			},
-			dataObject: response => response.data
-		});
-	},
-
-	renderPrayerItem: (prayer, number, query = null) => {
-		const shareContent = `${prayer.judul}\n\n${prayer.arab || ""}\n\n${
-			prayer.latin || ""
-		}\n\nTerjemahan: ${prayer.terjemahan || ""}`;
-
-		const highlight = text => (query ? Utils.highlightText(text, query) : text);
-
-		return `
-            <div class="prayer-item">
-                <div class="prayer-header">
-                    <div class="prayer-number">${number}</div>
-                    <div class="prayer-title-container">
-                        <h3 class="prayer-title">${highlight(prayer.judul)}</h3>
-                    </div>
-                    <div class="prayer-controls">${Utils.renderShareButton(
-											shareContent
-										)}
-                    </div>
-                </div>
-                ${
-									prayer.arab
-										? `<div class="arabic-text">${highlight(prayer.arab)}</div>`
-										: ""
-								}
-                ${
-									prayer.latin
-										? `<div class="latin-text">${highlight(prayer.latin)}</div>`
-										: ""
-								}
-                ${
-									prayer.terjemahan
-										? `<div class="translation-text">${highlight(
-												prayer.terjemahan
-										  )}</div>`
-										: ""
-								}
-            </div>
-        `;
-	},
-
-	fetchProphetStoriesData: async () => {
-		Utils.renderLoading(DOM.listLoading, true);
-		Utils.clearContainer(DOM.listContent);
-
-		try {
-			const data = await Utils.fetchWithCache(
-				API_CONFIG.urls.prophetStories,
-				"prophet_stories"
-			);
-			DataManager.renderProphetStoriesList(data);
-		} catch (error) {
-			console.error("Error fetching Prophet stories data:", error);
-			Utils.showError(error.message, DOM.listContent);
-		} finally {
-			Utils.renderLoading(DOM.listLoading, false);
-		}
-	},
-
-	renderProphetStoriesList: data => {
-		// Gunakan grid layout untuk kisah nabi
-		DOM.listContent.innerHTML = `
-            <div class="prophet-grid">
-                ${data.data
-									.map(prophet => {
-										const { text, className } = Utils.formatProphetYear(
-											prophet.birth_year,
-											prophet.name
-										);
-										return `
-                        <div class="prophet-card" data-id="${prophet.id}">
-                            <div class="prophet-image-container">
-                                <img src="${prophet.image_url}" alt="${prophet.name}" class="prophet-image">
-                                <div class="prophet-overlay">
-                                    <h3 class="prophet-name">${prophet.name}</h3>
-                                    <div class="prophet-meta">
-                                        <i class="fas fa-calendar"></i>
-                                        <span class="prophet-year ${className}">${text}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-									})
-									.join("")}
-            </div>
-        `;
-
-		// Event listener
-		DOM.listContent.querySelectorAll(".prophet-card").forEach(card => {
-			card.addEventListener("click", () => {
-				ViewManager.navigateTo("prophetDetail", card.dataset.id);
-			});
-		});
-	},
-
-	renderSurahDetail: (surah, pageUrl = null) => {
-		let url = pageUrl || `${API_CONFIG.urls.quran}/${surah.number}/verses`;
-
-		url = Utils.convertToHttps(url);
-
-		DataManager.renderDetailWithPagination({
-			container: DOM.detailContainer,
-			loadingMessage: "Memuat detail surah...",
-			fetchUrl: url,
-			renderHeader: () => `
-                <div class="detail-header">
-                    <h2>${surah.name}</h2>
-                    <h3>${surah.name_latin}</h3>
-                    <div class="surah-meta">
-                        <div>${surah.number_of_verses} Ayat</div>
-                        <div>${surah.place}</div>
-                        <div>Arti: ${surah.meaning}</div>
-                    </div>
-                    ${Utils.renderSearchInput()}
-                </div>
-            `,
-			renderContent: verses => `
-                <div class="detail-content">
-                    ${verses.data
-											.map(verse => DataManager.renderVerseItem(verse, surah))
-											.join("")}
-                </div>
-            `,
-			onPageChange: newPageUrl => {
-				const newUrl = Utils.convertToHttps(newPageUrl);
-				DataManager.renderSurahDetail(surah, newUrl);
-			},
-			dataObject: data => data,
-			onRenderComplete: () => {
-				Utils.setupSearchListener(
-					DOM.detailContainer.querySelector("#detailSearchInput")
-				);
-
-				// Scroll ke ayat setelah render jika ada permintaan
-				if (appState.scrollToVerse) {
-					const verseElement = DOM.detailContainer.querySelector(
-						`.verse-item[data-verse-number="${appState.scrollToVerse}"]`
-					);
-					if (verseElement) {
-						verseElement.scrollIntoView({
-							behavior: "smooth",
-							block: "center"
-						});
-						verseElement.classList.add("highlight");
-						setTimeout(() => verseElement.classList.remove("highlight"), 2000);
-					}
-					// Reset state
-					delete appState.scrollToVerse;
-				}
-			}
-		});
-	},
-
-	renderVerseItem: (verse, surah, showSurahName = false, query = null) => {
-		const audio = verse.audio?.["05"] || "";
-		const shareContent = `Q.S. ${surah.name_latin}:${verse.verse_number}\n\n${verse.arabic_text}\n\nTerjemahan: ${verse.translation}`;
-
-		const highlight = text => (query ? Utils.highlightText(text, query) : text);
-
-		return `
-            <div class="verse-item" data-verse-number="${verse.verse_number}">
-                ${
-									showSurahName
-										? `
-                    <div class="surah-name">
-                        <i class="fas fa-book-quran"></i>${surah.name_latin} (${surah.number})
-                    </div>`
-										: ""
-								}
-                <div class="verse-header">
-                    <div class="verse-number">${verse.verse_number}</div>
-                    <div class="verse-controls">
-                        <button class="audio-btn" data-audio="${audio}">
-                            <i class="fas fa-play"></i>
-                        </button>${Utils.renderShareButton(shareContent)}
-                    </div>
-                </div>
-                <div class="arabic-text">${highlight(verse.arabic_text)}</div>
-                <div class="latin-text">${highlight(verse.latin_text)}</div>
-                <div class="translation-text">${highlight(
-									verse.translation
-								)}</div>
-            </div>
-        `;
-	},
-
-	renderHadithDetail: (collection, pageUrl = null) => {
-		let url = pageUrl || `${API_CONFIG.urls.hadith}/${collection.id}/hadiths`;
-		url = Utils.convertToHttps(url);
-
-		DataManager.renderDetailWithPagination({
-			container: DOM.detailContainer,
-			loadingMessage: "Memuat hadits...",
-			fetchUrl: url,
-			renderHeader: () => `
-                <div class="detail-header">
-                    <h2>${collection.name}</h2>
-                    <div class="surah-meta">
-                        <div>Total Hadits: ${collection.total_hadiths}</div>
-                    </div>
-                    ${Utils.renderSearchInput()}
-                </div>
-            `,
-			renderContent: hadiths => `
-                <div class="detail-content">
-                    ${hadiths.hadiths.data
-											.map(hadith =>
-												DataManager.renderHadithItem(hadith, collection)
-											)
-											.join("")}
-                </div>
-            `,
-			onPageChange: newPageUrl => {
-				const newUrl = Utils.convertToHttps(newPageUrl);
-				DataManager.renderHadithDetail(collection, newUrl);
-			},
-			dataObject: data => data.hadiths,
-			onRenderComplete: () => {
-				Utils.setupSearchListener(
-					DOM.detailContainer.querySelector("#detailSearchInput")
-				);
-
-				// Scroll ke hadits setelah render jika ada permintaan
-				if (appState.scrollToHadith) {
-					const hadithElement = DOM.detailContainer.querySelector(
-						`.verse-item[data-hadith-number="${appState.scrollToHadith}"]`
-					);
-					if (hadithElement) {
-						hadithElement.scrollIntoView({
-							behavior: "smooth",
-							block: "center"
-						});
-						hadithElement.classList.add("highlight");
-						setTimeout(() => hadithElement.classList.remove("highlight"), 2000);
-					}
-					// Reset state
-					delete appState.scrollToHadith;
-				}
-			}
-		});
-	},
-
-	renderHadithItem: (hadith, collection = null, query = null) => {
-		const shareContent = `${
-			collection ? collection.name : "Kitab Hadits"
-		} - Hadits No. ${hadith.number}\n\n${hadith.arabic}\n\nTerjemahan: ${
-			hadith.translation
-		}`;
-
-		const highlight = text => (query ? Utils.highlightText(text, query) : text);
-
-		return `
-            <div class="verse-item" data-hadith-number="${hadith.number}">
-                <div class="verse-header">
-                    <div class="verse-number">${hadith.number}</div>
-                    ${
-											collection
-												? `<div class="surah-name">${
-														collection?.name || collection
-												  }</div>`
-												: ""
-										}
-                    <div class="verse-controls">${Utils.renderShareButton(
-											shareContent
-										)}
-                    </div>
-                </div>
-                <div class="arabic-text">${highlight(hadith.arabic)}</div>
-                <div class="translation-text">
-                    <strong>Terjemahan:</strong>
-                    <p>${highlight(hadith.translation)}</p>
-                </div>
-            </div>
-        `;
-	},
-
-	renderAsmaDetail: id => {
-		// Tampilkan loading sementara
-		DOM.detailContainer.innerHTML =
-			'<div class="loading">Memuat detail Asmaul Husna...</div>';
-
-		// Fetch data detail
-		fetch(`${API_CONFIG.urls.asmaulHusna}/${id}`)
-			.then(response => response.json())
-			.then(data => {
-				const asma = data.data;
-				DOM.detailContainer.innerHTML = `
-                    <div class="detail-header">
-                        <h2>${asma.latine}</h2>
-                        <h3>${asma.arabic}</h3>
-                        <div class="surah-meta">
-                            <div>Nomor: ${asma.number}</div>
-                            <div>Arti: ${asma.meaning}</div>
-                        </div>
-                    </div>
-                    <div class="detail-content">
-                        <div class="surah-section">
-                            <h3>Penjelasan</h3>
-                            <p>${asma.description}</p>
-                        </div>
-                        <div class="surah-section">
-                            <h3>Ayat Referensi</h3>
-                            <div class="verses-container">${asma.verses
-															.map(verse =>
-																DataManager.renderVerseItem(
-																	verse,
-																	verse.surah,
-																	true
-																)
-															)
-															.join("")}
-                            </div>
-                        </div>
-                    </div>
-                `;
-			})
-			.catch(error => {
-				console.error("Error fetching asma detail:", error);
-				Utils.showError(error.message, DOM.detailContainer);
-			});
-	},
-
-	renderProphetDetail: id => {
-		// Tampilkan loading sementara
-		DOM.detailContainer.innerHTML =
-			'<div class="loading">Memuat detail kisah nabi...</div>';
-
-		// Fetch data detail
-		fetch(`${API_CONFIG.urls.prophetStories}/${id}`)
-			.then(response => response.json())
-			.then(data => {
-				const prophet = data.data;
-				const { text, className } = Utils.formatProphetYear(
-					prophet.birth_year,
-					prophet.name
-				);
-
-				DOM.detailContainer.innerHTML = `
-                    <div class="detail-header">
-                        <h2>${prophet.name}</h2>
-                        <div class="surah-meta">
-                            <div class="meta-item ${className}">Tahun Kelahiran: ${text}</div>
-                            <div class="meta-item">Usia: ${
-															prophet.age || "Tidak diketahui"
-														}</div>
-                            <div class="meta-item">Tempat: ${
-															prophet.place || "Tidak diketahui"
-														}</div>
-                        </div>
-                    </div>
-                    <div class="detail-content">
-                        <div class="prophet-detail-image-container">
-                            <img src="${prophet.image_url}" alt="${
-															prophet.name
-														}" class="prophet-detail-image">
-                            <div class="image-caption">${prophet.name}</div>
-                        </div>
-                        <div class="surah-description">
-                            <p>${prophet.description}</p>
-                        </div>
-                    </div>
-                `;
-			})
-			.catch(error => {
-				console.error("Error fetching prophet detail:", error);
-				Utils.showError(error.message, DOM.detailContainer);
-			});
-	},
-
-	// Di DataManager
-	fetchBibleTranslations: async () => {
-		Utils.renderLoading(DOM.listLoading, true);
-		Utils.clearContainer(DOM.listContent);
-
-		try {
-			const response = await fetch(API_CONFIG.urls.alkitab);
-			const data = await response.json();
-
-			if (data.success) {
-				//appState.bibleTranslations = data.data;
-				DataManager.renderBibleTranslationList(data.data);
-			} else {
-				throw new Error("Gagal mengambil data terjemahan Al-Kitab");
-			}
-		} catch (error) {
-			console.error("Error fetching Bible translations:", error);
-			Utils.showError(error.message, DOM.listContent);
-		} finally {
-			Utils.renderLoading(DOM.listLoading, false);
-		}
-	},
-
-	renderBibleTranslationList: translations => {
-		DOM.listContent.innerHTML = translations
-			.map(
-				trans => `
-        <div class="book small" data-id="${trans.id}">
-          <div class="book-image">
-            <i class="fas fa-bible"></i>
-          </div>
-          <div class="book-title">
-            <h3>${trans.name}</h3>
-            <p>${trans.language} (${trans.abbreviation})</p>
-          </div>
-        </div>
-      `
-			)
-			.join("");
-
-		// Event listener
-		DOM.listContent.querySelectorAll(".book").forEach(book => {
-			book.addEventListener("click", () => {
-				const translation = translations.find(
-					t => t.id === parseInt(book.dataset.id)
-				);
-				appState.bibleTranslations = translation;
-				ViewManager.navigateTo("alkitabBookList", translation);
-			});
-		});
-	},
-
-	fetchBibleBooks: async () => {
-		Utils.renderLoading(DOM.listLoading, true);
-		Utils.clearContainer(DOM.listContent);
-
-		try {
-			const translationId = appState.bibleTranslations.id;
-
-			const response = await fetch(
-				`${API_CONFIG.urls.alkitab}/${translationId}/books`
-			);
-			const data = await response.json();
-
-			if (data.success) {
-				DataManager.renderBibleBookList(data.data);
-			} else {
-				throw new Error("Gagal mengambil data buku Al-Kitab");
-			}
-		} catch (error) {
-			console.error("Error fetching Bible books:", error);
-			Utils.showError(error.message, DOM.listContent);
-		} finally {
-			Utils.renderLoading(DOM.listLoading, false);
-		}
-	},
-
-	renderBibleBookList: books => {
-		DOM.listContent.innerHTML = books
-			.map(
-				book => `
-        <div class="book small" data-id="${book.book_id}">
-          <div class="book-image">
-            <i class="fas fa-book-bible"></i>
-          </div>
-          <div class="book-title">
-            <h3>${book.name}</h3>
-            <p>${book.chapters_count} pasal</p>
-          </div>
-        </div>
-      `
-			)
-			.join("");
-
-		// Event listener
-		DOM.listContent.querySelectorAll(".book").forEach(book => {
-			book.addEventListener("click", () => {
-				const bibleBook = books.find(b => b.book_id === book.dataset.id);
-				appState.currentBibleBook = bibleBook || null;
-				ViewManager.navigateTo("alkitabChapterList", bibleBook);
-			});
-		});
-	},
-
-	fetchBibleChapters: async () => {
-		Utils.renderLoading(DOM.listLoading, true);
-		Utils.clearContainer(DOM.listContent);
-
-		try {
-			const bookId = appState.currentBibleBook.book_id;
-			const trans_id = appState.currentBibleBook.translation_id;
-			const response = await fetch(
-				`${API_CONFIG.urls.alkitab}/${trans_id}/books/${bookId}/chapters`
-			);
-			const data = await response.json();
-
-			if (data.success) {
-				DataManager.renderBibleChapterList(data.data);
-			} else {
-				throw new Error("Gagal mengambil data pasal Al-Kitab");
-			}
-		} catch (error) {
-			console.error("Error fetching Bible chapters:", error);
-			Utils.showError(error.message, DOM.listContent);
-		} finally {
-			Utils.renderLoading(DOM.listLoading, false);
-		}
-	},
-
-	renderBibleChapterList: chapters => {
-		DOM.listContent.innerHTML = chapters
-			.map(
-				chapter => `
-        <div class="book small" data-id="${chapter.id}">
-          <div class="book-image">
-            <i class="fas fa-list-ol"></i>
-          </div>
-          <div class="book-title">
-            <h3>Pasal ${chapter.number}</h3>
-            <p>${chapter.verses_count} ayat</p>
-          </div>
-        </div>
-      `
-			)
-			.join("");
-
-		// Event listener
-		DOM.listContent.querySelectorAll(".book").forEach(book => {
-			book.addEventListener("click", () => {
-				const chapter = chapters.find(c => c.id === parseInt(book.dataset.id));
-				appState.currentBibleChapter = chapter;
-				ViewManager.navigateTo("alkitabVerseDetail");
-			});
-		});
-	},
-
-	renderBibleVerses: (chapter, pageUrl = null) => {
-		let url = pageUrl || `${API_CONFIG.urls.alkitab}/${chapter.id}/verses`;
-		url = Utils.convertToHttps(url);
-
-		DataManager.renderDetailWithPagination({
-			container: DOM.detailContainer,
-			loadingMessage: "Memuat alkitab...",
-			fetchUrl: url,
-			renderHeader: data => `<div class="detail-header">
-                    <h2>${data.chapter.book_name}</h2>
-                    <div class="surah-meta">
-                        <div>Total Ayat: ${data.chapter.verses_count}</div>
-                    </div>
-                    ${Utils.renderSearchInput()}
-                </div>
-            `,
-			renderContent: data => `<div class="detail-content">
-                    ${data.data.data
-											.map(verse =>
-												DataManager.renderBibleVerseItem(verse, data.chapter)
-											)
-											.join("")}
-                </div>`,
-			onPageChange: newPageUrl => {
-				const newUrl = Utils.convertToHttps(newPageUrl);
-				DataManager.renderBibleVerses(chapter, newUrl);
-			},
-			dataObject: data => data.data,
-			onRenderComplete: () => {
-				Utils.setupSearchListener(
-					DOM.detailContainer.querySelector("#detailSearchInput")
-				);
-
-				// Scroll ke ayat setelah render jika ada permintaan
-				if (appState.scrollToVerse) {
-					const verseElement = DOM.detailContainer.querySelector(
-						`.verse-item[data-verse-number="${appState.scrollToVerse}"]`
-					);
-					if (verseElement) {
-						verseElement.scrollIntoView({
-							behavior: "smooth",
-							block: "center"
-						});
-						verseElement.classList.add("highlight");
-						setTimeout(() => verseElement.classList.remove("highlight"), 2000);
-					}
-					// Reset state
-					delete appState.scrollToVerse;
-				}
-			}
-		});
-	},
-
-	renderBibleVerseItem: (verse, chapter = null, query = null) => {
-		const shareContent = `${
-			chapter ? chapter.book_name : verse.chapter?.book_name || "Al-Kitab"
-		} ${verse.chapter?.number || ""}:${verse.number}\n\n${verse.text}`;
-
-		const highlight = text => (query ? Utils.highlightText(text, query) : text);
-
-		return `
-            <div class="verse-item" data-verse-id="${
-							verse.id
-						}" data-verse-number="${verse.number}">
-                <div class="verse-header">
-                    <div class="verse-number">${verse.number}</div>
-                    <div class="surah-name">
-                        ${
-													chapter?.book_name ||
-													verse.book?.name ||
-													verse.chapter?.book_name ||
-													"Al-Kitab"
-												} 
-                        ${
-													verse.chapter?.number
-														? `Pasal ${verse.chapter.number}`
-														: ""
-												}
-                    </div>
-                    <div class="verse-controls">${Utils.renderShareButton(
-											shareContent
-										)}
-                    </div>
-                </div>
-                <div class="translation-text">
-                    <p>${highlight(verse.text)}</p>
-                </div>
-            </div>
-        `;
-	},
-
-	fetchOJKContents: async () => {
-		Utils.renderLoading(DOM.listLoading, true);
-		Utils.clearContainer(DOM.listContent);
-
-		try {
-			const res = await fetch(`${API_CONFIG.urls.ojk}`);
-			if (!res.ok) throw new Error("Gagal mengambil data OJK");
-			const data = await res.json();
-
-			DataManager.renderOJKContents(data.data);
-		} catch (error) {
-			console.error("Error fetching OJK contents:", error);
-			Utils.showError(error.message, DOM.listContent);
-		} finally {
-			Utils.renderLoading(DOM.listLoading, false);
-		}
-	},
-
-	renderOJKContents: contents => {
-		DOM.listContent.innerHTML = contents
-			.map(
-				item => `
-			<div class="book small" data-type="${item.toLowerCase()}">
-				<div class="book-image">
-					<i class="fas fa-folder"></i>
-				</div>
-				<div class="book-title">
-					<h3>${item}</h3>
-				</div>
-			</div>
-		`
-			)
-			.join("");
-
-		// Event listener
-		DOM.listContent.querySelectorAll(".book").forEach(book => {
-			book.addEventListener("click", () => {
-				const type = book.dataset.type;
-				appState.currentOJKType = type;
-				ViewManager.navigateTo("ojkDetail");
-			});
-		});
-	},
-
-	renderOJKDetail: (type, pageUrl = null) => {
-		let url =
-			pageUrl || `https://vickyserver.my.id/server/api/books/ojk/${type}`;
-
-		url = Utils.convertToHttps(url);
-		appState.searchContext = `ojk_${type}`;
-
-		DataManager.renderDetailWithPagination({
-			container: DOM.detailContainer,
-			loadingMessage: "Memuat data OJK...",
-			fetchUrl: url,
-			renderHeader: () => `
-				<div class="detail-header ojk-detail-header">
-					<h2>Otoritas Jasa Keuangan</h2>
-					<h3>${
-						type === "apps"
-							? "Aplikasi Resmi"
-							: type === "illegals"
-							? "Lembaga Ilegal"
-							: type === "products"
-							? "Product Keuangan"
-							: ""
-					}</h3>
-					${Utils.renderSearchInput()}
-				</div>
-			`,
-			renderContent: data => {
-				// Sesuaikan rendering berdasarkan tipe data
-				const items = data.data.data || [];
-
-				switch (type) {
-					case "apps":
-						return DataManager.renderOJKSections(
-							items,
-							"Aplikasi",
-							data.data.from
-						);
-					case "illegals":
-						return DataManager.renderOJKSections(
-							items,
-							"Lembaga Ilegal",
-							data.data.from
-						);
-					case "products":
-						return DataManager.renderOJKProducts(items, data.data.from);
-					default:
-						return "<div>Tipe data tidak dikenali</div>";
-				}
-			},
-			onPageChange: newPageUrl => {
-				DataManager.renderOJKDetail(type, Utils.convertToHttps(newPageUrl));
-			},
-			dataObject: data => data.data,
-			onRenderComplete: () => {
-				Utils.setupSearchListener(
-					DOM.detailContainer.querySelector("#detailSearchInput")
-				);
-			}
-		});
-	},
-
-	renderOJKSections: (data, title, startNumber = null, query = null) => {
-		const highlight = text => (query ? Utils.highlightText(text, query) : text);
-		return `
-        <div class="detail-content">
-            ${data
-							.map((item, index) => {
-								const number =
-									startNumber !== null ? startNumber + index : null;
-
-								// Render khusus untuk Apps
-								if (title === "Aplikasi") {
-									return `
-                        <div class="ojk-app">${
-													number
-														? `<div class="ojk-number">${number}</div>`
-														: ""
-												}<h3>${highlight(item.name)}</h3>
-                            <div class="app-details">
-                                ${
-																	item.url
-																		? `<div class="detail-row"><strong>URL:</strong> <a href="${
-																				item.url
-																		  }" target="_blank" rel="noopener noreferrer">${highlight(
-																				item.url
-																		  )}</a></div>`
-																		: ""
-																}
-                                ${
-																	item.owner
-																		? `<div class="detail-row"><strong>Pemilik:</strong> ${highlight(
-																				item.owner
-																		  )}</div>`
-																		: ""
-																}
-                            </div>
-                        </div>
-                    `;
-								}
-								// Render khusus untuk Illegals
-								else if (title === "Lembaga Ilegal") {
-									return `
-                        <div class="ojk-illegal">${
-													number
-														? `<div class="ojk-number">${number}</div>`
-														: ""
-												}<h3>${highlight(item.name)}</h3>
-                            <div class="illegal-details">
-                                ${
-																	item.alias?.length
-																		? `<div class="detail-row"><strong>Alias:</strong> ${highlight(
-																				item.alias.join(", ")
-																		  )}</div>`
-																		: ""
-																}
-                                ${
-																	item.address?.length
-																		? `<div class="detail-row"><strong>Alamat:</strong> ${highlight(
-																				item.address.join(", ")
-																		  )}</div>`
-																		: ""
-																}
-                                ${
-																	item.web?.length
-																		? `<div class="detail-row"><strong>Web:</strong> ${highlight(
-																				item.web.join(", ")
-																		  )}</div>`
-																		: ""
-																}
-                                ${
-																	item.email?.length
-																		? `<div class="detail-row"><strong>Email:</strong> ${highlight(
-																				item.email.join(", ")
-																		  )}</div>`
-																		: ""
-																}
-                                ${
-																	item.phone?.length
-																		? `<div class="detail-row"><strong>Telepon:</strong> ${item.phone.join(
-																				", "
-																		  )}</div>`
-																		: ""
-																}
-                                ${
-																	item.entity_type
-																		? `<div class="detail-row"><strong>Tipe Entitas:</strong> ${highlight(
-																				item.entity_type
-																		  )}</div>`
-																		: ""
-																}
-                                ${
-																	item.activity_type?.length
-																		? `<div class="detail-row"><strong>Tipe Aktivitas:</strong> ${highlight(
-																				item.activity_type.join(", ")
-																		  )}</div>`
-																		: ""
-																}
-                                ${
-																	item.description
-																		? `<div class="detail-row"><strong>Keterangan:</strong> ${highlight(
-																				item.description
-																		  )}</div>`
-																		: ""
-																}
-                            </div>
-                        </div>
-                    `;
-								}
-							})
-							.join("")}
-        </div>
-    `;
-	},
-
-	renderOJKProducts: (data, startNumber = null) => {
-		return `
-        <div class="detail-content">
-            ${data
-							.map((product, index) => {
-								const number =
-									startNumber !== null ? startNumber + index : null;
-								return `<div class="ojk-product">${
-									number ? `<div class="ojk-number">${number}</div>` : ""
-								}
-                    <h3>${product.name}</h3>
-                    <div class="product-details">
-                        ${
-													product.management
-														? `<div class="detail-row"><strong>Manajemen:</strong> ${product.management}</div>`
-														: ""
-												}
-                        ${
-													product.custodian
-														? `<div class="detail-row"><strong>Kustodian:</strong> ${product.custodian}</div>`
-														: ""
-												}
-                        ${
-													product.type
-														? `<div class="detail-row"><strong>Tipe:</strong> ${product.type}</div>`
-														: ""
-												}
-                    </div>
-                </div>
-            `;
-							})
-							.join("")}
-        </div>
-    `;
-	},
-
-	renderPeriodicTable: () => {
-		DOM.detailContainer.innerHTML = PeriodicTableModule.render();
-	},
-
-	filterList: () => {
-		const query = appState.searchQuery.toLowerCase();
-		const items = DOM.listContent.querySelectorAll(
-			".book, .asma-card, .prophet-card"
+		const url = ApiHelper.convertToHttps(
+			pageUrl || `${APP_CONFIG.endpoints.quran}/${id}/verses`
 		);
 
-		items.forEach(item => {
-			const text = item.textContent.toLowerCase();
-			item.style.display = text.includes(query) ? "block" : "none";
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data ayat...",
+			fetchUrl: url,
+			renderHeader: data => {
+				const surah = data.data[0].surah;
+				AppState.quran.currentSurah = surah;
+
+				return TemplateHelper.renderDetailHeaderView(
+					{
+						title: surah.name_latin,
+						subtitle: surah.name,
+						meta: `${surah.place} - ${surah.number_of_verses} Ayat`
+					},
+					true
+				);
+			},
+			renderContent: data =>
+				data.data
+					.map(surah =>
+						TemplateHelper.renderDetailContentItem(
+							{
+								number: surah.verse_number,
+								arabic: surah.arabic_text,
+								latin: surah.latin_text,
+								translation: surah.translation,
+								audio: surah.audio
+							},
+							"verse-item"
+						)
+					)
+					.join(""),
+			onPageChange: newPageUrl => QuranService.showDetail(id, newPageUrl),
+			dataObject: data => data,
+			onRenderComplete: () => {
+				DomHelper.scrollToTop();
+				const btnDescription = document.getElementById("btn-show-description");
+				if (btnDescription) {
+					btnDescription.addEventListener("click", () => {
+						QuranService.showSurahDescription(AppState.quran.currentSurah);
+					});
+				}
+			}
+		});
+	},
+
+	showSurahDescription(surah) {
+		// Sembunyikan konten utama
+		DomHelper.hide(DOM.bookContent);
+		DomHelper.hide(DOM.paginationContainer);
+
+		// Buat container untuk deskripsi jika belum ada
+		if (!DOM.descriptionContainer) {
+			DOM.descriptionContainer = document.createElement("div");
+			DOM.descriptionContainer.id = "description-container";
+			DOM.detailbook.appendChild(DOM.descriptionContainer);
+		}
+
+		SearchVisibility.hideForDescription();
+
+		// Render deskripsi surah
+		DomHelper.setHTML(
+			DOM.descriptionContainer,
+			TemplateHelper.renderSurahDescription(
+				surah.description || "Deskripsi surah tidak tersedia."
+			)
+		);
+
+		DomHelper.show(DOM.descriptionContainer);
+
+		// Tambahkan event listener untuk tombol tutup
+		document
+			.getElementById("btn-close-description")
+			.addEventListener("click", () => {
+				// Sembunyikan description-container
+				DomHelper.hide(DOM.descriptionContainer);
+				SearchVisibility.showDetailSearch();
+				DomHelper.show(DOM.bookContent);
+				QuranService.showDetail(surah.id);
+			});
+	}
+};
+
+const HadithService = {
+	showList: async () => {
+		AppState.setBookState("hadith", {
+			currentPage: "list"
+		});
+
+		await ServiceHelper.renderBookList(
+			this,
+			APP_CONFIG.endpoints.hadith,
+			"hadith_list",
+			data => data,
+			item => item.id,
+			book => ({
+				number: book.id,
+				title: book.name,
+				content: `${book.total_hadiths} hadith`
+			}),
+			card => HadithService.showDetail(card.dataset.id),
+			"Kitab Hadits"
+		);
+	},
+
+	showDetail: (id, pageUrl = null) => {
+		AppState.setBookState("hadith", {
+			currentPage: "detail",
+			bookId: id
+		});
+
+		const url = ApiHelper.convertToHttps(
+			pageUrl || `${APP_CONFIG.endpoints.hadith}/${id}/hadiths`
+		);
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data hadiths...",
+			fetchUrl: url,
+			renderHeader: data => {
+				return TemplateHelper.renderDetailHeaderView({
+					title: data.name,
+					meta: `Total ${data.total_hadiths} hadits`
+				});
+			},
+			renderContent: data =>
+				data.hadiths.data
+					.map(hadith =>
+						TemplateHelper.renderDetailContentItem(hadith, "verse-item")
+					)
+					.join(""),
+			dataObject: data => data.hadiths,
+			onPageChange: newPageUrl => HadithService.showDetail(id, newPageUrl),
+			onRenderComplete: () => DomHelper.scrollToTop()
 		});
 	}
 };
 
-// ====================== EVENT LISTENERS ======================
-function setupEventListeners() {
-	// Navigasi utama menggunakan event delegation
-	DOM.mainShelf.addEventListener("click", function (e) {
-		const bookElement = e.target.closest(".book");
-		if (bookElement) {
-			const viewName = bookElement.dataset.view;
-			if (viewName) {
-				// Clear Bible context saat berpindah dari Alkitab
-				if (!viewName.startsWith("alkitab")) {
-					ViewManager.clearBibleContext();
+const BibleService = {
+	showList: async (transId = null, bookId = null) => {
+		DomHelper.scrollToTop();
+		let level, state;
+
+		if (!transId && !bookId) {
+			// Level 1: Daftar terjemahan
+			level = "translations";
+			state = {
+				currentPage: "list",
+				level: "translations",
+				translationId: null,
+				bookId: null,
+				chapterId: null
+			};
+		} else if (transId && !bookId) {
+			// Level 2: Daftar buku
+			level = "books";
+			state = {
+				currentPage: "list",
+				level: "books",
+				translationId: transId,
+				bookId: null,
+				chapterId: null
+			};
+		} else if (transId && bookId) {
+			// Level 3: Daftar chapter
+			level = "chapters";
+			state = {
+				currentPage: "list",
+				level: "chapters",
+				translationId: transId,
+				bookId: bookId,
+				chapterId: null
+			};
+		}
+
+		AppState.setBookState("bible", {
+			...state,
+			translations: AppState.bible.translations || null,
+			books: AppState.bible.books || null,
+			chapters: AppState.bible.chapters || null
+		});
+
+		switch (level) {
+			case "translations":
+				await ServiceHelper.renderBookList(
+					this,
+					APP_CONFIG.endpoints.bible,
+					"bible_translation",
+					data => {
+						AppState.bible.translations = data.data;
+						return data.data;
+					},
+					item => item.id,
+					item => ({
+						number: item.id,
+						title: item.name,
+						content: item.language
+					}),
+					card => BibleService.showList(card.dataset.id),
+					"Terjemahan Alkitab"
+				);
+				break;
+			case "books":
+				await ServiceHelper.renderBookList(
+					this,
+					`${APP_CONFIG.endpoints.bible}/${transId}/books`,
+					`bible_books_${transId}`,
+					data => {
+						AppState.bible.books = data.data;
+						return data.data;
+					},
+					item => item.id,
+					item => ({
+						number: item.id,
+						title: item.name,
+						content: item.book_id
+					}),
+					card => BibleService.showList(transId, card.dataset.id),
+					"Daftar Kitab"
+				);
+				break;
+			case "chapters":
+				await ServiceHelper.renderBookList(
+					this,
+					`${APP_CONFIG.endpoints.bible}/${transId}/books/${bookId}/chapters`,
+					`bible_chapters_${transId}_${bookId}`,
+					data => {
+						AppState.bible.chapters = data.data;
+						return data.data;
+					},
+					item => item.id,
+					item => ({
+						number: item.number,
+						title: `Pasal ${item.number}`,
+						content: `${item.verses_count} ayat`
+					}),
+					card => BibleService.showDetail(card.dataset.id),
+					"Daftar Pasal"
+				);
+				break;
+		}
+	},
+
+	showDetail: (chapterId, pageUrl = null) => {
+		const url = ApiHelper.convertToHttps(
+			pageUrl || `${APP_CONFIG.endpoints.bible}/${chapterId}/verses`
+		);
+
+		// Set state untuk level verses
+		AppState.setBookState("bible", {
+			...AppState.bible,
+			currentPage: "detail",
+			level: "verses",
+			chapterId: chapterId
+		});
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat ayat...",
+			fetchUrl: url,
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView({
+					title: data.chapter.book_name,
+					subtitle: `${data.translation.name} (${data.translation.language})`,
+					meta: `Pasal ${data.chapter.number} • ${data.chapter.verses_count} ayat`
+				}),
+			renderContent: data =>
+				data.data.data
+					.map(verse =>
+						TemplateHelper.renderDetailContentItem(
+							{
+								number: verse.number,
+								translation: verse.text
+							},
+							"verse-item"
+						)
+					)
+					.join(""),
+			dataObject: data => data.data,
+			onPageChange: newPageUrl =>
+				BibleService.showDetail(chapterId, newPageUrl),
+			onRenderComplete: () => DomHelper.scrollToTop()
+		});
+	}
+};
+
+const DoaService = {
+	showList: async () => {
+		AppState.setBookState("doa", {
+			currentPage: "list"
+		});
+
+		await ServiceHelper.renderBookList(
+			this,
+			`${APP_CONFIG.endpoints.doa}/sumber`,
+			"doa_list",
+			data => data.sumber,
+			item => item.nama,
+			item => ({
+				title: item.nama,
+				content: `${item.jumlah} doa`
+			}),
+			card => DoaService.showDetail(card.dataset.id),
+			"Daftar Doa Harian"
+		);
+	},
+
+	showDetail: (name, pageUrl = null) => {
+		AppState.setBookState("doa", {
+			currentPage: "detail",
+			sourceName: name
+		});
+
+		const url = ApiHelper.convertToHttps(
+			pageUrl || `${APP_CONFIG.endpoints.doa}/sumber/${name}`
+		);
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat doa...",
+			fetchUrl: url,
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView({
+					title: data.sumber,
+					meta: `Total ${data.data.total}`
+				}),
+			renderContent: data =>
+				data.data.data
+					.map(doa =>
+						TemplateHelper.renderDetailContentItem(
+							{
+								number: doa.id,
+								title: doa.judul,
+								arabic: doa.arab,
+								latin: doa.latin,
+								translation: doa.terjemahan
+							},
+							"verse-item"
+						)
+					)
+					.join(""),
+			dataObject: data => data.data,
+			onPageChange: newPageUrl => DoaService.showDetail(name, newPageUrl),
+			onRenderComplete: () => DomHelper.scrollToTop()
+		});
+	}
+};
+
+const ProphetService = {
+	showList: async () => {
+		AppState.setBookState("prophet", {
+			currentPage: "list"
+		});
+
+		await ServiceHelper.renderBookList(
+			this,
+			APP_CONFIG.endpoints.prophet,
+			"prophet_list",
+			data => data.data,
+			item => item.id,
+			item => ({
+				title: item.name,
+				content: DomHelper.formatProphetYear(item.birth_year, item.name).text
+			}),
+			card => ProphetService.showDetail(card.dataset.id),
+			"Cerita Nabi"
+		);
+
+		SearchVisibility.hideAll();
+	},
+
+	showDetail: id => {
+		AppState.setBookState("prophet", {
+			currentPage: "detail",
+			prophetId: id
+		});
+
+		const url = ApiHelper.convertToHttps(
+			`${APP_CONFIG.endpoints.prophet}/${id}`
+		);
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data nabi...",
+			fetchUrl: url,
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView({
+					title: data.data.name,
+					subtitle: `${data.data.birth_year} (${data.data.age} age)`,
+					meta: `${data.data.place}`
+				}),
+			renderContent: data =>
+				TemplateHelper.renderDetailContentItem(
+					{
+						number: data.data.birth_year,
+						translation: data.data.description
+					},
+					"verse-item"
+				),
+			dataObject: data => data.data,
+			onRenderComplete: () => {
+				DomHelper.scrollToTop();
+				SearchVisibility.hideAll();
+			}
+		});
+	}
+};
+
+const AsmaulService = {
+	showList: async () => {
+		AppState.setBookState("asmaul", {
+			currentPage: "list"
+		});
+
+		await ServiceHelper.renderBookList(
+			this,
+			APP_CONFIG.endpoints.asmaul,
+			"asmaul_husna",
+			data => data.data,
+			item => item.id,
+			item => ({
+				title: item.arabic,
+				content: item.latine
+			}),
+			card => AsmaulService.showDetail(card.dataset.id),
+			"Asmaul Husna"
+		);
+
+		SearchVisibility.hideAll();
+	},
+
+	showDetail: id => {
+		AppState.setBookState("asmaul", {
+			currentPage: "detail",
+			asmaulId: id
+		});
+
+		const url = ApiHelper.convertToHttps(
+			`${APP_CONFIG.endpoints.asmaul}/${id}`
+		);
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data asmaul husna...",
+			fetchUrl: url,
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView({
+					title: data.data.arabic,
+					subtitle: `${data.data.latine} (${data.data.meaning})`,
+					meta: `${data.data.description}.<br>Found: ${data.data.found}`
+				}),
+			renderContent: data =>
+				data.data.verses
+					.map(verse =>
+						TemplateHelper.renderDetailContentItem(
+							{
+								number: verse.verse_number,
+								title: `Q.S. ${verse.surah.name_latin} (${verse.surah_number}:${verse.verse_number})`,
+								arabic: verse.arabic_text,
+								latin: verse.latin_text,
+								translation: verse.translation,
+								audio: verse.audio
+							},
+							"verse-item"
+						)
+					)
+					.join(""),
+			dataObject: data => data.data,
+			onRenderComplete: () => {
+				DomHelper.scrollToTop();
+				SearchVisibility.hideAll();
+			}
+		});
+	}
+};
+
+const OjkService = {
+	showList: async () => {
+		AppState.setBookState("ojk", {
+			currentPage: "list"
+		});
+
+		await ServiceHelper.renderBookList(
+			this,
+			APP_CONFIG.endpoints.ojk,
+			"ojk_list",
+			data => data.data,
+			item => item.toLowerCase(),
+			item => ({
+				title: item,
+				content: `Daftar ${item}`
+			}),
+			card => OjkService.showDetail(card.dataset.id),
+			"OJK Portal"
+		);
+
+		SearchVisibility.hideAll();
+	},
+
+	showDetail: (type, pageUrl = null) => {
+		AppState.setBookState("ojk", {
+			currentPage: "detail",
+			currentType: type
+		});
+
+		const url = ApiHelper.convertToHttps(
+			pageUrl || `${APP_CONFIG.endpoints.ojk}/${type}`
+		);
+
+		let dataObjectFn;
+
+		switch (type) {
+			case "apps":
+				dataObjectFn = data => data.data;
+
+				break;
+			case "illegals":
+				dataObjectFn = data => data.data;
+
+				break;
+			case "products":
+				dataObjectFn = data => data.data;
+
+				break;
+		}
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data ojk...",
+			fetchUrl: url,
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView({
+					title: type.toUpperCase(),
+					meta: `Total ${type.toUpperCase()}: ${data.data.total} item`
+				}),
+			renderContent: data =>
+				TemplateHelper.renderOjkItems(data.data.data, type),
+			dataObject: dataObjectFn,
+			onPageChange: newPageUrl => OjkService.showDetail(type, newPageUrl),
+			pageTitle: type.toUpperCase()
+		});
+	}
+};
+
+const SekolahService = {
+	levelConfigs: {
+		provinsi: {
+			url: state => `${APP_CONFIG.endpoints.sekolah}/provinsi`,
+			cacheKey: "sekolah_provinsi",
+			attrKey: "kode_prop",
+			title: "Sekolah: Daftar Provinsi",
+			nextLevel: "kabkota",
+			contentFormat: item => item.kode_prop
+		},
+		kabkota: {
+			url: state =>
+				`${APP_CONFIG.endpoints.sekolah}/kab-kota/${state.provinsi}`,
+			cacheKey: state => `sekolah_kabkota_${state.provinsi}`,
+			attrKey: "kode_kab_kota",
+			title: "Sekolah: Daftar Kabupaten Kota",
+			nextLevel: "kecamatan",
+			contentFormat: item => item.kode_kab_kota
+		},
+		kecamatan: {
+			url: state =>
+				`${APP_CONFIG.endpoints.sekolah}/kecamatan/${state.kabkota}`,
+			cacheKey: state => `sekolah_kecamatan_${state.kabkota}`,
+			attrKey: "kode_kec",
+			title: "Sekolah: Daftar Kecamatan",
+			nextLevel: "sekolah",
+			contentFormat: item => item.kode_kec
+		}
+	},
+	showList: async () => {
+		const level = AppState.sekolah.level || "provinsi";
+		const state = AppState.sekolah;
+
+		const config = SekolahService.levelConfigs[level];
+
+		if (!config) return;
+
+		await ServiceHelper.renderBookList(
+			this,
+			config.url(state),
+			typeof config.cacheKey === "function"
+				? config.cacheKey(state)
+				: config.cacheKey,
+			data => data.data,
+			item => item[config.attrKey],
+			item => ({
+				title: item.nama,
+				content: config.contentFormat(item)
+			}),
+			card => {
+				const newState = {
+					...state,
+					level: config.nextLevel,
+					[level]: card.dataset.id,
+					currentPage: "list"
+				};
+
+				AppState.setBookState("sekolah", newState);
+				if (config.nextLevel === "sekolah") {
+					SekolahService.showDetail(card.dataset.id);
+				} else {
+					SekolahService.showList();
+				}
+			},
+			config.title
+		);
+	},
+
+	showDetail: async (kode_kec, newPageUrl = null) => {
+		AppState.setBookState("sekolah", {
+			...AppState.sekolah,
+			currentPage: "detail",
+			level: "sekolah",
+			kecamatan: kode_kec
+		});
+
+		const url =
+			newPageUrl ||
+			`${APP_CONFIG.endpoints.sekolah}?kode_kec=${kode_kec}&with_wilayah=1`;
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data sekolah...",
+			fetchUrl: ApiHelper.convertToHttps(url),
+			renderHeader: data => "",
+			renderContent: data =>
+				data.data.data
+					.map(
+						sekolah =>
+							`<div class="school-card" id="${
+								sekolah.id
+							}">${TemplateHelper.createSchoolCard(sekolah)}</div>`
+					)
+					.join(""),
+			dataObject: data => data.data,
+			onPageChange: newPageUrl =>
+				SekolahService.showDetail(kode_kec, newPageUrl),
+			pageTitle: "Daftar Sekolah"
+		});
+	},
+
+	renderSekolahLevel: async config => {
+		const { level, url, cacheKey, attrKey, title, nextLevel } = config;
+
+		return ServiceHelper.renderBookList(
+			this,
+			url,
+			cacheKey,
+			data => data.data,
+			item => item[attrKey],
+			item => ({
+				title: item.nama,
+				content: `Kode ${level}: ${item[attrKey]}`
+			}),
+			card => {
+				const stateUpdate = { level: nextLevel };
+				stateUpdate[level] = card.dataset.id;
+				stateUpdate = {
+					...AppState.sekolah
+				};
+
+				AppState.setBookState("sekolah", stateUpdate);
+				SekolahService.showList();
+			},
+			title
+		);
+	}
+};
+
+const BahasaService = {
+	showList: async () => {
+		AppState.setBookState("bahasa", {
+			currentPage: "list"
+		});
+
+		await ServiceHelper.renderBookList(
+			this,
+			`${APP_CONFIG.endpoints.bahasa}/provinsi`,
+			"bahasa_provinsi",
+			data => data.data,
+			item => item.id,
+			item => ({
+				title: item.nama || "Tidak diketahui",
+				content: `${item.jumlah_bahasa} bahasa`
+			}),
+			card => BahasaService.showDetail(card.dataset.id),
+			"Bahasa Daerah"
+		);
+	},
+	showDetail: (id, pageUrl = null) => {
+		AppState.setBookState("bahasa", {
+			currentPage: "detail",
+			provinceName: id
+		});
+
+		const url = ApiHelper.convertToHttps(
+			pageUrl || `${APP_CONFIG.endpoints.bahasa}/provinsi/${id}`
+		);
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data bahasa daerah...",
+			fetchUrl: url,
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView({
+					title: data.data.provinsi.nama
+				}),
+			renderContent: data =>
+				'<h1 style="margin-bottom:2rem;">Daftar Bahasa Daerah:</h1>' +
+				data.data.bahasa_daerah
+					.map(bahasa =>
+						TemplateHelper.renderDetailContentItem(
+							{
+								title: bahasa.nama,
+								latin: bahasa.sumber,
+								translation:
+									bahasa.deskripsi.map(d => `<p>${d}</p>`).join("<br />") ||
+									"No deskripsi"
+							},
+							"ojk-item"
+						)
+					)
+					.join(""),
+			dataObject: data => data.meta,
+			onPageChange: newPageUrl => BahasaService.showDetail(id, newPageUrl),
+			onRenderComplete: () => DomHelper.scrollToTop()
+		});
+	}
+};
+
+const SearchService = {
+	contextParams: {
+		quran: {
+			list: () => ({ type: "quran" }),
+			detail: () => ({ type: "quran", surah_id: AppState.quran.surahId })
+		},
+		hadith: {
+			list: () => ({ type: "hadith" }),
+			detail: () => ({ type: "hadith", book_id: AppState.hadith.bookId })
+		},
+		bible: {
+			translations: () => ({
+				type: "bible",
+				search_type: "translations"
+			}),
+			books: () => ({
+				type: "bible",
+				translation_id: AppState.bible.translationId
+			}),
+			chapters: () => ({
+				type: "bible",
+				translation_id: AppState.bible.translationId,
+				book_id: AppState.bible.bookId
+			}),
+			verses: () => ({
+				type: "bible",
+				translation_id: AppState.bible.translationId,
+				book_id: AppState.bible.bookId,
+				chapter_id: AppState.bible.chapterId
+			})
+		},
+		doa: {
+			list: () => ({ type: "doa" }),
+			detail: () => ({ type: "doa", source: AppState.doa.sourceName })
+		},
+		sekolah: {
+			provinsi: state => ({
+				type: "sekolah",
+				with_wilayah: 1
+			}),
+			kabkota: state => ({
+				type: "sekolah",
+				with_wilayah: 1,
+				kode_prop: state.provinsi
+			}),
+			kecamatan: state => ({
+				type: "sekolah",
+				with_wilayah: 1,
+				kode_prop: state.provinsi,
+				kode_kab_kota: state.kabkota
+			}),
+			sekolah: state => ({
+				type: "sekolah",
+				with_wilayah: 1,
+				kode_prop: state.provinsi,
+				kode_kab_kota: state.kabkota,
+				kode_kec: state.kecamatan
+			})
+		},
+		bahasa: {
+			list: () => ({ type: "bahasa" }),
+			detail: () => ({
+				type: "bahasa",
+				provinsi_id: AppState.bahasa.provinceName
+			})
+		},
+		ojk: {
+			detail: state => ({ type: "ojk", name: state.currentType })
+		},
+		default: () => ({ type: AppState.currentBook })
+	},
+
+	resultRenderers: {
+		quran: (verses, query) =>
+			verses.quran.data
+				.map(verse =>
+					TemplateHelper.renderDetailContentItem(
+						{
+							number: verse.verse_number,
+							arabic: DomHelper.highlightMatches(verse.arabic_text, query),
+							latin: DomHelper.highlightMatches(verse.latin_text, query),
+							translation: DomHelper.highlightMatches(verse.translation, query),
+							audio: verse.audio,
+							title: `Surah ${verse.surah.name_latin} (${verse.surah_number}:${verse.verse_number})`
+						},
+						"verse-item"
+					)
+				)
+				.join(""),
+
+		hadith: (hadiths, query) =>
+			hadiths.hadith.data
+				.map(hadith =>
+					TemplateHelper.renderDetailContentItem(
+						{
+							number: hadith.number,
+							title: hadith.book_id,
+							arabic: DomHelper.highlightMatches(hadith.arabic, query),
+							latin: DomHelper.highlightMatches(hadith.latin, query),
+							translation: DomHelper.highlightMatches(hadith.translation, query)
+						},
+						"verse-item"
+					)
+				)
+				.join(""),
+
+		bible: (verses, query) =>
+			verses.bible.data
+				.map(verse =>
+					TemplateHelper.renderDetailContentItem(
+						{
+							number: verse.number,
+							title: verse.translation?.name || null,
+							latin: `${verse.book?.name || ""} Pasal ${verse.chapter.number}:${
+								verse.number
+							}`,
+							translation: DomHelper.highlightMatches(verse.text, query)
+						},
+						"verse-item"
+					)
+				)
+				.join(""),
+
+		doa: (doas, query) =>
+			doas.doa.data
+				.map(doa =>
+					TemplateHelper.renderDetailContentItem(
+						{
+							title: DomHelper.highlightMatches(doa.judul, query),
+							arabic: DomHelper.highlightMatches(doa.arab, query),
+							latin: DomHelper.highlightMatches(doa.latin, query),
+							translation: DomHelper.highlightMatches(doa.terjemahan, query)
+						},
+						"verse-item"
+					)
+				)
+				.join(""),
+		sekolah: (data, query) =>
+			data.sekolah.data
+				.map(
+					sekolah =>
+						`<div class="school-card" id="${
+							sekolah.id
+						}">${TemplateHelper.createSchoolCard(sekolah, query)}</div>`
+				)
+				.join(""),
+
+		bahasa: (data, query) =>
+			data.bahasa.data
+				.map(bahasa =>
+					TemplateHelper.renderDetailContentItem(
+						{
+							title: `${bahasa.nama} (${bahasa.provinsis[0].nama})`,
+							latin: bahasa.provinsis[0].sumber,
+							translation: bahasa.provinsis
+								.map(p =>
+									p.deskripsi
+										.map(d => `<p>${DomHelper.highlightMatches(d, query)}</p>`)
+										.join("")
+								)
+								.join("<br />")
+						},
+						"ojk-item"
+					)
+				)
+				.join(""),
+
+		ojk: (data, query) =>
+			TemplateHelper.renderOjkItems(
+				data.ojk.data,
+				AppState.ojk.currentType,
+				query
+			),
+
+		default: items =>
+			items
+				.map(
+					item => `
+      <div class="search-result-item">
+        <h3>${item.title || item.name}</h3>
+        ${
+					item.content
+						? `<div class="result-content">${item.content}</div>`
+						: ""
+				}
+        ${
+					item.description
+						? `<div class="result-description">${item.description}</div>`
+						: ""
+				}
+      </div>
+    `
+				)
+				.join("")
+	},
+
+	performSearch: async (query, pageUrl = null) => {
+		if (!query) return;
+
+		try {
+			DomHelper.showLoading();
+
+			// 1. Dapatkan parameter pencarian
+			const bookType = AppState.currentBook;
+			let viewType = AppState[bookType].currentPage || "list";
+
+			if (bookType === "bible") {
+				viewType = AppState.bible.level || viewType;
+			} else if (bookType === "sekolah") {
+				viewType = AppState.sekolah.level || viewType;
+			} else if (bookType === "ojk") {
+				if (viewType !== "detail") {
+					alert("Pencarian OJK hanya tersedia di halaman detail.");
+					return;
 				}
 
-				ViewManager.navigateTo(viewName);
+				if (!AppState.ojk.currentType) {
+					alert(
+						"Jenis OJK tidak ditemukan. Silakan pilih jenis terlebih dahulu"
+					);
+					return;
+				}
 			}
+
+			// 2. Dapatkan fungsi parameter
+			let paramsGetter;
+			if (SearchService.contextParams[bookType]?.[viewType]) {
+				paramsGetter = SearchService.contextParams[bookType][viewType];
+			} else if (SearchService.contextParams[bookType]) {
+				paramsGetter =
+					SearchService.contextParams[bookType].list ||
+					SearchService.contextParams.default;
+			} else {
+				paramsGetter = SearchService.contextParams.default;
+			}
+
+			const params = paramsGetter(AppState[bookType]);
+
+			const renderer =
+				SearchService.resultRenderers[params.type] ||
+				SearchService.resultRenderers.default;
+
+			const url = pageUrl || SearchService.generateSearchParams(query, params);
+
+			ServiceHelper.renderDetail({
+				loadingMessage: "Memuat hasil pencarian",
+				fetchUrl: ApiHelper.convertToHttps(url),
+				renderHeader: data =>
+					TemplateHelper.renderDetailHeaderView({
+						title: "Hasil Pencarian",
+						meta: `Ditemukan ${
+							data[params.type]?.total || 0
+						} hasil untuk pencarian "${query}"`
+					}),
+				renderContent: data => renderer(data, query),
+				dataObject: data => data[params.type],
+				onPageChange: newPageUrl =>
+					SearchService.performSearch(query, newPageUrl),
+				onRenderComplete: () => DomHelper.scrollToTop(),
+				pageTitle: `Pencarian ${query}`
+			});
+		} catch (error) {
+			console.error("Search error:", error);
+			alert("Pencarian gagal, Silakan coba lagi!");
+		} finally {
+			DomHelper.hideLoading();
 		}
-	});
+	},
 
-	// Tombol kembali
-	DOM.backButton.addEventListener("click", ViewManager.goBack);
-
-	Utils.setupSearchListener(DOM.searchInput);
-
-	// Tombol clear search
-	DOM.searchClearBtn.addEventListener("click", function () {
-		DOM.searchInput.value = "";
-		appState.searchQuery = "";
-		this.style.display = "none";
-		restoreOriginalView();
-	});
-
-	// Delegated events for audio and share buttons
-	document.addEventListener("click", e => {
-		const audioBtn = e.target.closest(".audio-btn");
-		if (audioBtn) {
-			Utils.playAudio(audioBtn.dataset.audio);
-		}
-
-		const shareBtn = e.target.closest(".share-btn");
-		if (shareBtn) {
-			Utils.shareContent(shareBtn.dataset.content);
-		}
-	});
-
-	// Tombol kembali ke atas
-	if (DOM.backToTopBtn) {
-		window.addEventListener("scroll", () => {
-			DOM.backToTopBtn.classList.toggle("show", window.scrollY > 300);
+	generateSearchParams: (query, params) => {
+		const urlSearch = new URL(APP_CONFIG.endpoints.search);
+		urlSearch.searchParams.append("query", query);
+		Object.entries(params).forEach(([key, value]) => {
+			if (value) urlSearch.searchParams.append(key, value);
 		});
+		console.log(urlSearch.toString());
 
-		DOM.backToTopBtn.addEventListener("click", () => {
-			window.scrollTo({ top: 0, behavior: "smooth" });
+		return urlSearch.toString();
+	},
+
+	clearAllInputs: () => {
+		// Bersihkan semua input pencarian
+		DOM.searchInputs.forEach(input => {
+			input.value = "";
 		});
+	},
+
+	clearListSearch: () => {
+		// Bersihkan input pencarian di halaman list
+		const listSearchInput = DOM.listSearch.querySelector(".search-input");
+		if (listSearchInput) listSearchInput.value = "";
+	},
+
+	clearDetailSearch: () => {
+		// Bersihkan input pencarian di halaman detail
+		const detailSearchInput = DOM.detailSearch.querySelector(".search-input");
+		if (detailSearchInput) detailSearchInput.value = "";
+	}
+};
+
+const ThemeManager = {
+	async init() {
+		try {
+			const savedTheme = await CacheManager.getItem("themePreferences");
+
+			if (savedTheme === "light") {
+				DOM.body.classList.add("light-mode");
+				ThemeManager.updateThemeButton(true);
+			} else {
+				ThemeManager.updateThemeButton(false);
+			}
+		} catch (error) {
+			console.error(error);
+		}
+	},
+
+	async toggle() {
+		try {
+			const isLight = DOM.body.classList.toggle("light-mode");
+			ThemeManager.updateThemeButton(isLight);
+			await CacheManager.setItem(
+				"themePreferences",
+				isLight ? "light" : "dark",
+				60 * 60 * 1000
+			);
+		} catch (error) {
+			console.erro(error);
+		}
+	},
+
+	updateThemeButton(isLight) {
+		DOM.btnTheme.innerHTML = isLight
+			? '<i class="fas fa-sun"></i><span class="text">Mode Terang</span>'
+			: '<i class="fas fa-moon"></i><span class="text">Mode Gelap</span>';
+	}
+};
+
+// Fungsi untuk menginisialisasi rak buku utama
+const initMainShelf = () => {
+	let shelvesHTML = "";
+
+	// Membuat rak untuk setiap kategori
+	for (const category in APP_CONFIG.bookshelves) {
+		const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+		shelvesHTML += TemplateHelper.createBookshelf(
+			categoryName,
+			APP_CONFIG.bookshelves[category]
+		);
+	}
+
+	DomHelper.setHTML(DOM.mainshelfSection, shelvesHTML);
+
+	// Menambahkan event listener untuk buku di main shelf
+	document.querySelectorAll(".book-cover").forEach(cover => {
+		cover.style.setProperty("--book-color", APP_CONFIG.primaryBookColor.main);
+		cover.style.setProperty(
+			"--book-color-dark",
+			APP_CONFIG.primaryBookColor.dark
+		);
+	});
+
+	document
+		.querySelectorAll(".book")
+		.forEach(book =>
+			book.addEventListener("click", () =>
+				handleListAction(book.getAttribute("data-type"))
+			)
+		);
+};
+
+// Fungsi untuk menampilkan main shelf
+function showMainShelf() {
+	AppState.reset(); // Reset state saat kembali ke main shelf
+
+	DomHelper.animateSectionChange(() => {
+		DomHelper.show(DOM.mainshelfSection);
+		DomHelper.hide(DOM.listbookSection);
+		DomHelper.hide(DOM.detailbook);
+		DomHelper.hide(DOM.btnBack);
+		DOM.pageTitle.textContent = "Perpustakaan Digital";
+	});
+
+	SearchVisibility.hideAll();
+}
+
+function showListBook() {
+	SearchService.clearDetailSearch();
+	DomHelper.animateSectionChange(() => {
+		DomHelper.hide(DOM.mainshelfSection);
+		DomHelper.show(DOM.listbookSection);
+		DomHelper.hide(DOM.detailbook);
+		DomHelper.show(DOM.btnBack);
+	});
+	SearchVisibility.showListSearch();
+	DomHelper.scrollToTop();
+}
+
+function showDetailBook() {
+	SearchService.clearListSearch();
+	DomHelper.animateSectionChange(() => {
+		DomHelper.hide(DOM.mainshelfSection);
+		DomHelper.hide(DOM.listbookSection);
+		DomHelper.show(DOM.detailbook);
+	});
+	SearchVisibility.showDetailSearch();
+	DomHelper.scrollToTop();
+}
+
+function handleListAction(bookType, transId = null, bookId = null) {
+	DomHelper.scrollToTop();
+	switch (bookType) {
+		case "quran":
+			QuranService.showList();
+			break;
+		case "hadith":
+			HadithService.showList();
+			break;
+		case "bible":
+			BibleService.showList(transId, bookId);
+			break;
+		case "doa":
+			DoaService.showList();
+			break;
+		case "nabi":
+			ProphetService.showList();
+			break;
+		case "asmaul":
+			AsmaulService.showList();
+			break;
+		case "ojk":
+			OjkService.showList();
+			break;
+		case "sekolah":
+			SekolahService.showList();
+			AppState.setBookState("sekolah", { level: "provinsi" });
+			break;
+		case "bahasadaerah":
+			BahasaService.showList();
+			break;
 	}
 }
 
-// ====================== INISIALISASI APLIKASI ======================
-function initApp() {
-	// Inisialisasi tema
-	const savedTheme = localStorage.getItem("theme") || "dark";
-	document.documentElement.setAttribute("data-theme", savedTheme);
+// ============== EVENT LISTENERS ==============
+function setupEventListeners() {
+	// Toggle tema
+	DOM.btnTheme.addEventListener("click", () => ThemeManager.toggle());
 
-	const icon = DOM.themeToggle.querySelector("i");
-	icon.className = savedTheme === "dark" ? "fas fa-moon" : "fas fa-sun";
+	// Tombol kembali
+	DOM.btnBack.addEventListener("click", () => NavigationManager.handleBack());
 
-	DOM.themeToggle.addEventListener("click", Utils.toggleTheme);
+	// Pencarian
+	DOM.searchInputs.forEach(input =>
+		input.addEventListener("keyup", function (e) {
+			if (e.key === "Enter") {
+				SearchService.performSearch(this.value.trim());
+			}
+		})
+	);
 
-	// Setup event listeners
-	setupEventListeners();
-
-	// Tambahkan padding untuk header
-	document.body.style.paddingTop = DOM.header
-		? `${DOM.header.offsetHeight}px`
-		: "70px";
-
-	// Tampilkan tampilan utama
-	ViewManager.renderCurrentView();
+	DOM.searchButtons.forEach(btn =>
+		btn.addEventListener("click", function () {
+			const input = this.previousElementSibling;
+			SearchService.performSearch(input.value.trim());
+		})
+	);
 }
 
-// Jalankan aplikasi saat DOM siap
-document.addEventListener("DOMContentLoaded", initApp);
+// Inisialisasi aplikasi
+const initApp = async () => {
+	try {
+		initMainShelf();
+		setupEventListeners();
+		showMainShelf();
+		await ThemeManager.init();
+	} catch (error) {
+		console.error(error);
+	}
+};
+
+// Jalankan inisialisasi saat dokumen siap
+document.addEventListener("DOMContentLoaded", () => initApp());
