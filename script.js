@@ -1525,6 +1525,7 @@ const initApp = async () => {
 		await ThemeManager.init();
 	} catch (error) {
 		console.error(error);
+		alert(error);
 	}
 };
 
