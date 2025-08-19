@@ -1049,6 +1049,39 @@ const BahasaService = {
 	}
 };
 
+const HeroService = {
+	showDetail: (pageUrl = null) => {
+		AppState.setBookState("hero", {
+			currentPage: "detail"
+		});
+		const url = pageUrl || APP_CONFIG.endpoints.heroes;
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data pahlawan...",
+			fetchUrl: ApiHelper.convertToHttps(url),
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView({
+					title: "Daftar Pahlawan Nasional",
+					meta: `Total: ${data.data.total} pahlawan`
+				}),
+			renderContent: data =>
+				data.data.data
+					.map(h =>
+						TemplateHelper.renderDetailContentItem({
+							title: h.name,
+							latin: `${h.birth_year} - ${h.death_year}`,
+							translation: `<div>${h.description}</div><br /><div><small>Diangkat sebagai pahlawan pada: <em>${h.ascension_year}</em></small></div>`
+						})
+					)
+					.join(""),
+			dataObject: data => data.data,
+			onPageChange: newPageUrl => HeroService.showDetail(newPageUrl),
+			onRenderComplete: () => DomHelper.scrollToTop(),
+			pageTitle: "Pahlawan Nasional"
+		});
+	}
+};
+
 const SearchService = {
 	contextParams: {
 		quran: {
@@ -1113,6 +1146,11 @@ const SearchService = {
 			detail: () => ({
 				type: "bahasa",
 				provinsi_id: AppState.bahasa.provinceName
+			})
+		},
+		hero: {
+			detail: () => ({
+				type: "hero"
 			})
 		},
 		ojk: {
@@ -1222,6 +1260,26 @@ const SearchService = {
 				AppState.ojk.currentType,
 				query
 			),
+
+		hero: (data, query) =>
+			data.hero.data
+				.map(h =>
+					TemplateHelper.renderDetailContentItem({
+						title: DomHelper.highlightMatches(h.name, query),
+						latin: `${DomHelper.highlightMatches(
+							h.birth_year,
+							query
+						)} - ${DomHelper.highlightMatches(h.death_year, query)}`,
+						translation: `<div>${DomHelper.highlightMatches(
+							h.description,
+							query
+						)}</div><br /><div><small>Diangkat sebagai pahlawan pada: <em>${DomHelper.highlightMatches(
+							h.ascension_year,
+							query
+						)}</em></small></div>`
+					})
+				)
+				.join(""),
 
 		default: items =>
 			items
@@ -1452,6 +1510,7 @@ function showDetailBook() {
 		DomHelper.hide(DOM.mainshelfSection);
 		DomHelper.hide(DOM.listbookSection);
 		DomHelper.show(DOM.detailbook);
+		DomHelper.show(DOM.btnBack);
 	});
 	SearchVisibility.showDetailSearch();
 	DomHelper.scrollToTop();
@@ -1487,6 +1546,9 @@ function handleListAction(bookType, transId = null, bookId = null) {
 			break;
 		case "bahasadaerah":
 			BahasaService.showList();
+			break;
+		case "hero":
+			HeroService.showDetail();
 			break;
 	}
 }

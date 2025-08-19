@@ -9,6 +9,7 @@ const APP_CONFIG = {
 		ojk: "https://vickyserver.my.id/server/api/books/ojk",
 		sekolah: "https://vickyserver.my.id/server/api/books/sekolah",
 		bahasa: "https://vickyserver.my.id/server/api/books/bahasa",
+		heroes: "https://vickyserver.my.id/server/api/books/heroes",
 		search: "https://vickyserver.my.id/server/api/search"
 	},
 	bookshelves: {
@@ -44,6 +45,26 @@ const APP_CONFIG = {
 				type: "asmaul"
 			}
 		],
+		education: [
+			{
+				id: "sekolah",
+				title: "Data Sekolah",
+				subtitle: "Daftar sekolah di Indonesia",
+				type: "sekolah"
+			},
+			{
+				id: "bahasadaerah",
+				title: "Bahasa Daerah",
+				subtitle: "Bahasa Daerah di Indonesia",
+				type: "bahasadaerah"
+			},
+			{
+				id: "hero",
+				title: "Pahlawan Nasional",
+				subtitle: "Pahlawan Nasional di Indonesia",
+				type: "hero"
+			}
+		],
 		rohani: [
 			{
 				id: "bible",
@@ -58,20 +79,6 @@ const APP_CONFIG = {
 				title: "Otoritas Jasa Keuangan",
 				subtitle: "Informasi Lembaga Jasa Keuangan",
 				type: "ojk"
-			}
-		],
-		education: [
-			{
-				id: "sekolah",
-				title: "Data Sekolah",
-				subtitle: "Daftar sekolah di Indonesia",
-				type: "sekolah"
-			},
-			{
-				id: "bahasadaerah",
-				title: "Bahasa Daerah",
-				subtitle: "Bahasa Daerah di Indonesia",
-				type: "bahasadaerah"
 			}
 		]
 	},
@@ -135,6 +142,8 @@ const AppState = {
 	bahasa: {
 		provinceName: null
 	},
+
+	hero: {},
 
 	// Fungsi untuk reset state
 	reset() {
@@ -469,7 +478,7 @@ const DomHelper = {
 		const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		const regex = new RegExp(`(${escapedQuery})`, "gi");
 
-		return text.replace(regex, "<mark>$1</mark>");
+		return text.toString().replace(regex, "<mark>$1</mark>");
 	}
 };
 
