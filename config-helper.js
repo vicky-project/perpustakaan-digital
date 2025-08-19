@@ -790,7 +790,7 @@ const TemplateHelper = {
 	 */
 	renderDetailContentItem(data, customClass = "") {
 		const audioKeys = data.audio ? Object.keys(data.audio) : [];
-		const audioUrl = audioKeys.length ? data.audio[audioKeys[0]] : "";
+		const audioUrl = audioKeys.length ? data.audio[audioKeys[5]] : "";
 
 		return `<div class="book-content-item ${customClass}">
 		  <div class="content-header">${
