@@ -10,6 +10,8 @@ const APP_CONFIG = {
 		sekolah: "https://vickyserver.my.id/server/api/books/sekolah",
 		bahasa: "https://vickyserver.my.id/server/api/books/bahasa",
 		heroes: "https://vickyserver.my.id/server/api/books/heroes",
+		volcano: "https://vickyserver.my.id/server/api/books/volcanoes",
+		kbbi: "https://vickyserver.my.id/server/api/books/kbbi",
 		search: "https://vickyserver.my.id/server/api/search"
 	},
 	bookshelves: {
@@ -63,6 +65,18 @@ const APP_CONFIG = {
 				title: "Pahlawan Nasional",
 				subtitle: "Pahlawan Nasional di Indonesia",
 				type: "hero"
+			},
+			{
+				id: "volcano",
+				title: "Gunung Berapi",
+				subtitle: "Gunung berapi di Indonesia",
+				type: "volcano"
+			},
+			{
+				id: "kbbi",
+				title: "KBBI",
+				subtitle: "Kamus Besar Bahasa Indonesia",
+				type: "kbbi"
 			}
 		],
 		rohani: [
@@ -145,6 +159,15 @@ const AppState = {
 
 	hero: {},
 
+	volcano: {
+		bentuk: null,
+		currentPage: null,
+		filters: {
+			tinggiMin: null,
+			tinggiMax: null
+		}
+	},
+
 	// Fungsi untuk reset state
 	reset() {
 		this.currentCategory = "";
@@ -169,6 +192,7 @@ const AppState = {
 		this.ojk = { currentType: null };
 		this.sekolah = {};
 		this.bahasa = { provinceName: null };
+		this.volcano = { bentuk: null };
 	},
 
 	// Set state untuk buku tertentu
@@ -762,14 +786,36 @@ const TemplateHelper = {
 	 * @param {string} [headerData.subtitle] - Subjudul
 	 * @param {string} [headerData.meta] - Metadata tambahan
 	 * @param {boolean} [showDescriptionButton=false] - Tampilkan tombol deskripsi?
+	 * @param {string} [filterHtml] - HTML string untuk form filter
 	 * @returns {string} HTML header detail
 	 */
-	renderDetailHeaderView(headerData, showDescriptionButton = false) {
+	renderDetailHeaderView(
+		headerData,
+		showDescriptionButton = false,
+		filterHtml = null
+	) {
 		const descriptionButton = showDescriptionButton
 			? `<button id="btn-show-description" class="btn-description">
                   <i class="fas fa-book-open"></i> Deskripsi Surah
                </button>`
 			: "";
+
+		// Toggle filter dengan animasi CSS
+		const filterToggle = filterHtml
+			? `
+      <div class="filter-toggle-wrapper">
+        <label class="filter-toggle">
+          <input type="checkbox" onchange="document.getElementById('filter-content').classList.toggle('show')">
+          <span class="toggle-slider"></span>
+          <span class="toggle-text">Filter</span>
+        </label>
+        <div id="filter-content" class="filter-content">
+          ${filterHtml}
+        </div>
+      </div>
+    `
+			: "";
+
 		return `<div class="book-header">
 	    <h1>${headerData.title}</h1>
 	    ${
@@ -781,7 +827,7 @@ const TemplateHelper = {
 				headerData.meta
 					? `<div class="book-header-meta">${headerData.meta}</div>`
 					: ""
-			}<div class="header-actions">${descriptionButton}</div>
+			}<div class="header-actions">${descriptionButton}${filterToggle}</div>
 	  </div>`;
 	},
 
@@ -801,19 +847,17 @@ const TemplateHelper = {
 		const audioKeys = data.audio ? Object.keys(data.audio) : [];
 		const audioUrl = audioKeys.length ? data.audio[audioKeys[5]] : "";
 
-		return `<div class="book-content-item ${customClass}">
-		  <div class="content-header">${
-				data.number ? `<div class="content-number">${data.number}</div>` : ""
-			}${
-				data.title || data.book_id
-					? `<div class="content-title">${
-							data.title ||
-							`HR. ${data.book_id.replace("-", " ").toUpperCase()}`
-					  }</div>`
-					: ""
-			}
+		const content = `		  <div class="content-header">${
+			data.number ? `<div class="content-number">${data.number}</div>` : ""
+		}${
+			data.title || data.book_id
+				? `<div class="content-title">${
+						data.title || `HR. ${data.book_id.replace("-", " ").toUpperCase()}`
+				  }</div>`
+				: ""
+		}
 		  </div>
-		  <div class="content-body">
+		  <div class="content-body ${customClass}">
 		    ${data.arabic ? `<div class="content-arabic">${data.arabic}</div>` : ""}
 		    ${data.latin ? `<div class="content-latin">${data.latin}</div>` : ""}
 				${
@@ -830,8 +874,11 @@ const TemplateHelper = {
 				</div>`
 						: ""
 				}
-		  </div>
-		</div>`;
+		  </div>`;
+
+		return customClass
+			? `<div class="book-content-item ${customClass}">${content}</div>`
+			: content;
 	},
 
 	/**
@@ -904,6 +951,95 @@ const TemplateHelper = {
 				}
 			})
 			.join("");
+	},
+
+	/**
+	 * Membuat form filter fleksibel
+	 * @param {Array} fields - Array konfigurasi field filter
+	 * @param {Function} onApply - Callback saat filter diterapkan
+	 * @param {Function} onReset - Callback saat filter direset
+	 * @returns {string} HTML form filter
+	 *
+	 * Struktur field:
+	 * {
+	 *   type: 'number|text|select|etc',
+	 *   name: 'nama_field',
+	 *   label: 'Label field',
+	 *   placeholder: 'Placeholder',
+	 *   value: 'nilai_default',
+	 *   options: [{value: '', text: ''}] // untuk type select
+	 * }
+	 */
+	createFilterForm(fields) {
+		const fieldsHtml = fields
+			.map(field => {
+				let inputHtml = "";
+
+				switch (field.type) {
+					case "select":
+						inputHtml = `<select name="${
+							field.name
+						}" class="filter-input">${field.options
+							.map(
+								opt =>
+									`<option value="${opt.value}" ${
+										field.value === opt.value ? "selected" : ""
+									}>${opt.text}</option>`
+							)
+							.join("")}</select>`;
+						break;
+					default:
+						inputHtml = `<input type="${field.type}" name="${
+							field.name
+						}" value="${field.value || ""}" placeholder="${
+							field.placeholder || ""
+						}" class="filter-input">`;
+				}
+
+				return `<div class="filter-field">
+                    <label>${field.label}</label>
+                    ${inputHtml}
+                </div>`;
+			})
+			.join("");
+
+		return `<div class="filter-form">
+                ${fieldsHtml}
+                <div class="filter-buttons">
+                    <button type="button" class="btn-apply-filter">Terapkan</button>
+                    <button type="button" class="btn-reset-filter">Reset</button>
+                </div>
+            </div>`;
+	},
+
+	/**
+	 * Inisialisasi event listeners untuk form filter
+	 * @param {string} formContainer - Selector container form
+	 * @param {Function} onApply - Callback saat filter diterapkan
+	 * @param {Function} onReset - Callback saat filter direset
+	 */
+	initFilterForm(formContainer, onApply, onReset) {
+		const form = document.querySelector(formContainer);
+		if (!form) return;
+
+		// Handler terapkan filter
+		form.querySelector(".btn-apply-filter").addEventListener("click", () => {
+			const formData = new FormData(form);
+			const filters = {};
+			formData.forEach((value, key) => {
+				if (value) filters[key] = value;
+			});
+			onApply(filters);
+		});
+
+		// Handler reset filter
+		form.querySelector(".btn-reset-filter").addEventListener("click", () => {
+			form.querySelectorAll(".filter-input").forEach(input => {
+				input.value = "";
+				if (input.tagName === "SELECT") input.selectedIndex = 0;
+			});
+			onReset();
+		});
 	}
 };
 

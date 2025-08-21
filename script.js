@@ -194,7 +194,8 @@ const NavigationManager = {
 			prophet: ProphetService,
 			asmaul: AsmaulService,
 			ojk: OjkService,
-			bahasa: BahasaService
+			bahasa: BahasaService,
+			volcano: VolcanoService
 		};
 
 		if (serviceMap[bookType]) {
@@ -711,13 +712,10 @@ const ProphetService = {
 					meta: `${data.data.place}`
 				}),
 			renderContent: data =>
-				TemplateHelper.renderDetailContentItem(
-					{
-						number: data.data.birth_year,
-						translation: data.data.description
-					},
-					"verse-item"
-				),
+				TemplateHelper.renderDetailContentItem({
+					number: data.data.birth_year,
+					translation: data.data.description
+				}),
 			dataObject: data => data.data,
 			onRenderComplete: () => {
 				DomHelper.scrollToTop();
@@ -1015,13 +1013,11 @@ const BahasaService = {
 			provinceName: id
 		});
 
-		const url = ApiHelper.convertToHttps(
-			pageUrl || `${APP_CONFIG.endpoints.bahasa}/provinsi/${id}`
-		);
+		const url = pageUrl || `${APP_CONFIG.endpoints.bahasa}/provinsi/${id}`;
 
 		ServiceHelper.renderDetail({
 			loadingMessage: "Memuat data bahasa daerah...",
-			fetchUrl: url,
+			fetchUrl: ApiHelper.convertToHttps(url),
 			renderHeader: data =>
 				TemplateHelper.renderDetailHeaderView({
 					title: data.data.provinsi.nama
@@ -1078,6 +1074,156 @@ const HeroService = {
 			onPageChange: newPageUrl => HeroService.showDetail(newPageUrl),
 			onRenderComplete: () => DomHelper.scrollToTop(),
 			pageTitle: "Pahlawan Nasional"
+		});
+	}
+};
+
+const VolcanoService = {
+	showList: async () => {
+		AppState.setBookState("volcano", {
+			currentPage: "list",
+			bentuk: null,
+			filters: AppState.volcano.filters
+		});
+
+		await ServiceHelper.renderBookList(
+			this,
+			`${APP_CONFIG.endpoints.volcano}/bentuk`,
+			"volcano_bentuk",
+			data => data.data,
+			item => item.bentuk,
+			item => ({
+				title: item.bentuk,
+				content: `${item.jumlah} gunung`
+			}),
+			card => VolcanoService.showDetail(card.dataset.id),
+			"Bentuk Gunung berapi"
+		);
+	},
+
+	showDetail: (nama, pageUrl = null) => {
+		const state = AppState.volcano;
+		AppState.setBookState("volcano", {
+			currentPage: "detail",
+			bentuk: nama,
+			filters: state.filters
+		});
+
+		let params;
+		if (state.filters?.tinggiMin) {
+			params += `&tinggi_min=${state.filters.tinggiMin}`;
+		}
+		if (state.filters?.tinggiMax) {
+			params += `&tinggi_max=${state.filters.tinggiMax}`;
+		}
+
+		let url =
+			pageUrl ||
+			`${APP_CONFIG.endpoints.volcano}?bentuk=${nama}${params || ""}`;
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data gunung berapi...",
+			fetchUrl: ApiHelper.convertToHttps(url),
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView(
+					{
+						title: nama.toUpperCase(),
+						meta: `Total ${data.data.total} gunung`
+					},
+					false,
+					TemplateHelper.createFilterForm([
+						{
+							type: "number",
+							name: "tinggiMin",
+							label: "Tinggi Min (mdpl)",
+							placeholder: "Minimum",
+							value: state.filters?.tinggiMin || ""
+						},
+						{
+							type: "number",
+							name: "tinggiMax",
+							label: "Tinggi Max (mdpl)",
+							placeholder: "Maksimum",
+							value: state.filters?.tinggiMax || ""
+						}
+					])
+				),
+			renderContent: data =>
+				data.data.data
+					.map(item =>
+						TemplateHelper.renderDetailContentItem({
+							title: item.nama,
+							latin: item.geolokasi,
+							translation: `<div>Tinggi: ${item.tinggi_numeric} <em>mdpl</em></div><div>Estimasi letusan terakhir: ${item.estimasi_letusan_terakhir}</div>                <div><a href="https://www.google.com/maps?q=&layer=c&cbll=${item.latitude},${item.longitude}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a></div>`
+						})
+					)
+					.join(""),
+			dataObject: data => data.data,
+			onPageChange: newPageUrl => VolcanoService.showDetail(nama, newPageUrl),
+			onRenderComplete: () => {
+				DomHelper.scrollToTop();
+
+				TemplateHelper.initFilterForm(
+					".filter-form",
+					filters => VolcanoService.applyTinggiFilter(filters),
+					() => VolcanoService.resetTinggiFilter()
+				);
+			},
+			pageTitle: nama.toUpperCase()
+		});
+	},
+
+	applyTinggiFilter: (min, max) => {
+		const state = AppState.volcano;
+
+		AppState.setBookState("volcano", {
+			filters: {
+				tinggiMin: min || null,
+				tinggiMax: max || null
+			}
+		});
+
+		// Reload data dengan filter baru
+		VolcanoService.showDetail(state.bentuk);
+	},
+
+	resetTinggiFilter: () => {
+		const state = AppState.volcano;
+
+		AppState.setBookState("volcano", {
+			filters: {
+				tinggiMin: null,
+				tinggiMax: null
+			}
+		});
+
+		// Reload data tanpa filter
+		VolcanoService.showDetail(state.bentuk);
+	}
+};
+
+const KbbiService = {
+	showDetail: (pageUrl = null) => {
+		const url = pageUrl || APP_CONFIG.endpoints.kbbi;
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data kbbi...",
+			fetchUrl: ApiHelper.convertToHttps(url),
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView({
+					title: "Kamus Besar Bahasa Indonesia",
+					meta: `Total ${data.data.total} item`
+				}),
+			renderContent: data =>
+				data.data.data.map(k =>
+					TemplateHelper.renderDetailContentItem({
+						arabic: k.word,
+						translation: `${k.arti}`
+					})
+				),
+			dataObject: data => data.data,
+			onPageChange: newPageUrl => KbbiService.showDetail(newPageUrl),
+			pageTitle: "KBBI"
 		});
 	}
 };
@@ -1155,6 +1301,10 @@ const SearchService = {
 		},
 		ojk: {
 			detail: state => ({ type: "ojk", name: state.currentType })
+		},
+		volcano: {
+			list: state => ({ type: "volcano" }),
+			detail: state => ({ type: "volcano", bentuk: state.bentuk })
 		},
 		default: () => ({ type: AppState.currentBook })
 	},
@@ -1277,6 +1427,26 @@ const SearchService = {
 							h.ascension_year,
 							query
 						)}</em></small></div>`
+					})
+				)
+				.join(""),
+		volcano: (data, query) =>
+			data.volcano.data
+				.map(v =>
+					TemplateHelper.renderDetailContentItem({
+						title: v.bentuk,
+						arabic: DomHelper.highlightMatches(v.nama, query),
+						latin: v.geolokasi,
+						translation: `<div>${
+							v.tinggi_numeric
+						} <em>mdpl</em></div><div>Estimasi letusan terakhir: ${DomHelper.highlightMatches(
+							v.estimasi_letusan_terakhir,
+							query
+						)}</div><div><a href="https://www.google.com/maps?q=&layer=c&cbll=${
+							v.latitude
+						},${
+							v.longitude
+						}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a></div>`
 					})
 				)
 				.join(""),
@@ -1549,6 +1719,12 @@ function handleListAction(bookType, transId = null, bookId = null) {
 			break;
 		case "hero":
 			HeroService.showDetail();
+			break;
+		case "volcano":
+			VolcanoService.showList();
+			break;
+		case "kbbi":
+			KbbiService.showDetail();
 			break;
 	}
 }
