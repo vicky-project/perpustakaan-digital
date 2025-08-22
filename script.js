@@ -199,6 +199,7 @@ const NavigationManager = {
 		};
 
 		if (serviceMap[bookType]) {
+			AppState.reset();
 			serviceMap[bookType].showList();
 		} else {
 			showMainShelf();
@@ -1102,14 +1103,14 @@ const VolcanoService = {
 	},
 
 	showDetail: (nama, pageUrl = null) => {
-		const state = AppState.volcano;
 		AppState.setBookState("volcano", {
+			...AppState.volcano,
 			currentPage: "detail",
-			bentuk: nama,
-			filters: state.filters
+			bentuk: nama
 		});
+		const state = AppState.volcano;
 
-		let params;
+		let params = "";
 		if (state.filters?.tinggiMin) {
 			params += `&tinggi_min=${state.filters.tinggiMin}`;
 		}
@@ -1120,6 +1121,7 @@ const VolcanoService = {
 		let url =
 			pageUrl ||
 			`${APP_CONFIG.endpoints.volcano}?bentuk=${nama}${params || ""}`;
+		console.log(url);
 
 		ServiceHelper.renderDetail({
 			loadingMessage: "Memuat data gunung berapi...",
@@ -1165,7 +1167,7 @@ const VolcanoService = {
 
 				TemplateHelper.initFilterForm(
 					".filter-form",
-					filters => VolcanoService.applyTinggiFilter(filters),
+					(min, max) => VolcanoService.applyTinggiFilter(min, max),
 					() => VolcanoService.resetTinggiFilter()
 				);
 			},
@@ -1177,6 +1179,7 @@ const VolcanoService = {
 		const state = AppState.volcano;
 
 		AppState.setBookState("volcano", {
+			...AppState.volcano,
 			filters: {
 				tinggiMin: min || null,
 				tinggiMax: max || null
@@ -1204,6 +1207,9 @@ const VolcanoService = {
 
 const KbbiService = {
 	showDetail: (pageUrl = null) => {
+		AppState.setBookState("kbbi", {
+			currentPage: "detail"
+		});
 		const url = pageUrl || APP_CONFIG.endpoints.kbbi;
 
 		ServiceHelper.renderDetail({
@@ -1216,10 +1222,13 @@ const KbbiService = {
 				}),
 			renderContent: data =>
 				data.data.data.map(k =>
-					TemplateHelper.renderDetailContentItem({
-						arabic: k.word,
-						translation: `${k.arti}`
-					})
+					TemplateHelper.renderDetailContentItem(
+						{
+							arabic: k.word,
+							translation: `${k.arti}`
+						},
+						"verse-item"
+					)
 				),
 			dataObject: data => data.data,
 			onPageChange: newPageUrl => KbbiService.showDetail(newPageUrl),
@@ -1305,6 +1314,9 @@ const SearchService = {
 		volcano: {
 			list: state => ({ type: "volcano" }),
 			detail: state => ({ type: "volcano", bentuk: state.bentuk })
+		},
+		kbbi: {
+			detail: state => ({ type: "kbbi" })
 		},
 		default: () => ({ type: AppState.currentBook })
 	},
@@ -1447,6 +1459,16 @@ const SearchService = {
 						},${
 							v.longitude
 						}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a></div>`
+					})
+				)
+				.join(""),
+
+		kbbi: (data, query) =>
+			data.kbbi.data
+				.map(k =>
+					TemplateHelper.renderDetailContentItem({
+						title: DomHelper.highlightMatches(k.word, query),
+						translation: DomHelper.highlightMatches(k.arti, query)
 					})
 				)
 				.join(""),

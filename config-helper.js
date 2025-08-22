@@ -168,6 +168,8 @@ const AppState = {
 		}
 	},
 
+	kbbi: {},
+
 	// Fungsi untuk reset state
 	reset() {
 		this.currentCategory = "";
@@ -192,7 +194,13 @@ const AppState = {
 		this.ojk = { currentType: null };
 		this.sekolah = {};
 		this.bahasa = { provinceName: null };
-		this.volcano = { bentuk: null };
+		this.volcano = {
+			bentuk: null,
+			filters: {
+				tinggiMin: null,
+				tinggiMax: null
+			}
+		};
 	},
 
 	// Set state untuk buku tertentu
@@ -1024,12 +1032,9 @@ const TemplateHelper = {
 
 		// Handler terapkan filter
 		form.querySelector(".btn-apply-filter").addEventListener("click", () => {
-			const formData = new FormData(form);
-			const filters = {};
-			formData.forEach((value, key) => {
-				if (value) filters[key] = value;
-			});
-			onApply(filters);
+			const tinggiMin = form.querySelector('[name="tinggiMin"]').value;
+			const tinggiMax = form.querySelector('[name="tinggiMax"]').value;
+			onApply(tinggiMin, tinggiMax);
 		});
 
 		// Handler reset filter
