@@ -50,201 +50,18 @@ const SearchVisibility = {
 	}
 };
 
-// ============== NAVIGATION MANAGER ==============
-const NavigationManager = {
-	// Menangani semua logika navigasi kembali
-	handleBack: function () {
-		DomHelper.scrollToTop();
-		SearchService.clearAllInputs();
-
-		// 1. Tangani penutupan deskripsi jika terbuka
-		if (NavigationManager.handleDescriptionClose()) return;
-
-		const currentBook = AppState.currentBook;
-
-		// 2. Tangani navigasi berdasarkan halaman yang aktif
-		if (DOM.detailbook.style.display === "block") {
-			NavigationManager.handleDetailBack(currentBook);
-		} else if (DOM.listbookSection.style.display === "block") {
-			NavigationManager.handleListBack(currentBook);
-		}
-	},
-
-	// Menangani penutupan deskripsi surah
-	handleDescriptionClose: function () {
-		if (DOM.descriptionContainer?.style.display === "block") {
-			DomHelper.show(DOM.bookContent);
-			DomHelper.hide(DOM.descriptionContainer);
-
-			if (DOM.paginationContainer.children.length > 0) {
-				DomHelper.show(DOM.paginationContainer);
-			}
-
-			SearchVisibility.showDetailSearch();
-			return true;
-		}
-		return false;
-	},
-
-	// Menangani navigasi dari halaman detail
-	handleDetailBack: function (currentBook) {
-		// Simpan state sebelum navigasi
-		const stateSnapshot = NavigationManager.getStateSnapshot(currentBook);
-
-		switch (currentBook) {
-			case "bible":
-				NavigationManager.handleBibleBack(stateSnapshot);
-				break;
-			case "sekolah":
-				NavigationManager.handleSekolahBack(stateSnapshot);
-				break;
-			default:
-				NavigationManager.handleBookBack(currentBook);
-		}
-	},
-
-	// Menangani navigasi dari halaman list
-	handleListBack: function (currentBook) {
-		if (currentBook === "bible") {
-			NavigationManager.handleBibleListBack();
-		} else if (currentBook === "sekolah") {
-			NavigationManager.handleSekolahBack(
-				NavigationManager.getStateSnapshot(currentBook)
-			);
-		} else {
-			showMainShelf();
-		}
-	},
-
-	// === BIBLE-SPECIFIC HANDLERS ===
-
-	// Navigasi Bible dari halaman detail
-	handleBibleBack: function (stateSnapshot) {
-		const { level, translationId, bookId } = stateSnapshot;
-
-		switch (level) {
-			case "verses":
-				BibleService.showList(translationId, bookId);
-				break;
-			case "chapters":
-				BibleService.showList(translationId);
-				break;
-			case "books":
-				BibleService.showList();
-				break;
-			default:
-				showMainShelf();
-		}
-	},
-
-	// Navigasi Bible dari halaman list
-	handleBibleListBack: function () {
-		const { level, translationId } = AppState.bible;
-
-		switch (level) {
-			case "chapters":
-				BibleService.showList(translationId);
-				break;
-			case "books":
-				BibleService.showList();
-				break;
-			default:
-				showMainShelf();
-		}
-	},
-
-	// === SEKOLAH-SPECIFIC HANDLER ===
-
-	handleSekolahBack: function (stateSnapshot) {
-		const { level } = stateSnapshot;
-
-		switch (level) {
-			case "kabkota":
-				AppState.setBookState("sekolah", { level: "provinsi", kabkota: null });
-				SekolahService.showList();
-				break;
-			case "kecamatan":
-				AppState.setBookState("sekolah", {
-					level: "kabkota",
-					provinsi: stateSnapshot.provinsi
-				});
-				SekolahService.showList();
-				break;
-			case "sekolah":
-				AppState.setBookState("sekolah", {
-					level: "kecamatan",
-					kabkota: stateSnapshot.kabkota,
-					provinsi: stateSnapshot.provinsi
-				});
-				SekolahService.showList();
-				break;
-			default:
-				showMainShelf();
-				break;
-		}
-	},
-
-	// === GENERAL BOOK HANDLER ===
-
-	handleBookBack: function (bookType) {
-		const serviceMap = {
-			quran: QuranService,
-			hadith: HadithService,
-			doa: DoaService,
-			prophet: ProphetService,
-			asmaul: AsmaulService,
-			ojk: OjkService,
-			bahasa: BahasaService,
-			volcano: VolcanoService
-		};
-
-		if (serviceMap[bookType]) {
-			AppState.reset();
-			serviceMap[bookType].showList();
-		} else {
-			showMainShelf();
-		}
-	},
-
-	// === UTILITY FUNCTIONS ===
-
-	// Membuat snapshot state untuk navigasi
-	getStateSnapshot: function (bookType) {
-		switch (bookType) {
-			case "bible":
-				return {
-					...AppState.bible,
-					level: AppState.bible.level,
-					translationId: AppState.bible.translationId,
-					bookId: AppState.bible.bookId,
-					chapterId: AppState.bible.chapterId
-				};
-			case "sekolah":
-				return {
-					...AppState.sekolah,
-					level: AppState.sekolah.level,
-					provinsi: AppState.sekolah.provinsi,
-					kabkota: AppState.sekolah.kabkota,
-					kecamatan: AppState.sekolah.kecamatan
-				};
-			default:
-				return { ...AppState[bookType] };
-		}
-	}
-};
-
 const ServiceHelper = {
-	renderBookList: async (
-		service,
-		url,
-		cacheKey,
-		extractData,
-		attrId,
-		bookDataFn,
-		onClickFn,
-		title
-	) => {
+	renderBookList: async options => {
 		try {
+			const {
+				url,
+				cacheKey,
+				extractData = data => data,
+				attrId = item => item.id,
+				bookDataFn,
+				onClickFn,
+				title
+			} = options;
 			AppState.currentData = null;
 			const data = await ApiHelper.fetchWithCache(url, cacheKey);
 
@@ -252,9 +69,9 @@ const ServiceHelper = {
 				alert("Gagal memuat data...");
 				return;
 			}
-
 			AppState.currentData = data;
 
+			if (!DomHelper.ensureElement(DOM.bookList)) return;
 			DomHelper.setHTML(DOM.bookList, "");
 			const items = extractData(data);
 			items.forEach(item => {
@@ -265,141 +82,176 @@ const ServiceHelper = {
 					},
 					html: TemplateHelper.createBookCard(bookDataFn(item))
 				});
-				DOM.bookList.appendChild(card);
+				DomHelper.ensureElement(DOM.bookList, el => el.appendChild(card));
+				card.addEventListener("click", () => onClickFn(card));
 			});
+			DomHelper.ensureElement(DOM.pageTitle, el => (el.textContent = title));
 
-			document
-				.querySelectorAll(".book-card-container")
-				.forEach(card => card.addEventListener("click", () => onClickFn(card)));
-
-			DOM.pageTitle.textContent = title;
 			showListBook();
 		} catch (error) {
-			console.error(error);
+			DomHelper.handleError(error, "ServiceHelper.renderBookList");
 		}
 	},
 
 	renderDetail: options => {
 		SearchService.clearListSearch();
-		if (options.pageTitle) {
-			DOM.pageTitle.textContent = options.pageTitle;
-		}
+
 		TemplateHelper.renderDetailWithPagination({
 			container: DOM.bookContent,
 			paginationContainer: DOM.paginationContainer,
 			...options
 		});
 
+		if (options.pageTitle) {
+			DomHelper.ensureElement(
+				DOM.pageTitle,
+				el => (el.textContent = options.pageTitle)
+			);
+		}
+
 		showDetailBook();
 	}
 };
 
-const QuranService = {
-	showList: async () => {
-		AppState.setBookState("quran", {
-			currentPage: "list"
-		});
+// ============== BASE SERVICE TEMPLATE ==============
+const BaseService = {
+	createService: config => ({
+		showList: async () => {
+			AppState.setBookState(config.bookType, { currentPage: "list" });
 
-		await ServiceHelper.renderBookList(
-			this,
-			APP_CONFIG.endpoints.quran,
-			"quran_list",
-			data => data,
-			item => item.id,
-			surah => ({
-				number: surah.number,
+			await ServiceHelper.renderBookList({
+				url: config.listUrl,
+				cacheKey: config.cacheKey,
+				extractData: config.extractData,
+				attrId: config.attrId,
+				bookDataFn: config.bookDataFn,
+				onClickFn: config.onClickFn,
+				title: config.title
+			});
+
+			if (config.afterRenderList) config.afterRenderList();
+		},
+
+		showDetail: (id, pageUrl = null) => {
+			AppState.setBookState(config.bookType, {
+				currentPage: "detail",
+				[config.idProperty]: id
+			});
+
+			const url = ApiHelper.convertToHttps(
+				pageUrl || `${config.detailUrl}/${id}${config.detailSuffix || ""}`
+			);
+
+			const renderContent = config.customRender
+				? data => config.customRender(data, id)
+				: data =>
+						config
+							.renderContent(data, id)
+							.map(item =>
+								TemplateHelper.renderDetailContentItem(item, config.renderType)
+							)
+							.join("");
+
+			ServiceHelper.renderDetail({
+				loadingMessage: config.loadingMessage,
+				fetchUrl: url,
+				renderHeader: data =>
+					TemplateHelper.renderDetailHeaderView(
+						config.renderHeader(data),
+						config.showDescription || false,
+						config.renderFilters
+					),
+				renderContent: renderContent,
+				dataObject: config.dataObject,
+				onPageChange: newPageUrl => config.onPageChange(id, newPageUrl),
+				onRenderComplete: () => {
+					DomHelper.scrollToTop();
+					if (config.afterRenderDetail) config.afterRenderDetail();
+				},
+				pageTitle: config.pageTitle ? config.pageTitle(id) : null
+			});
+		}
+	})
+};
+
+const QuranService = {
+	...BaseService.createService({
+		bookType: "quran",
+		listUrl: APP_CONFIG.endpoints.quran,
+		cacheKey: "quran_list",
+		extractData: data => data,
+		attrId: item => item.id,
+		bookDataFn: surah => ({
+			number: surah.number,
+			title: surah.name_latin,
+			subtitle: surah.name,
+			content: `${surah.number_of_verses} ayat`
+		}),
+		onClickFn: card => QuranService.showDetail(card.dataset.id),
+		title: "Al-Quran",
+		detailUrl: APP_CONFIG.endpoints.quran,
+		detailSuffix: "/verses",
+		idProperty: "surahId",
+		loadingMessage: "Memuat data ayat...",
+		renderHeader: data => {
+			const surah = data.data[0].surah;
+			AppState.quran.currentSurah = surah;
+
+			return {
 				title: surah.name_latin,
 				subtitle: surah.name,
-				content: `${surah.number_of_verses} ayat`
-			}),
-			card => QuranService.showDetail(card.dataset.id),
-			"Al-Quran"
-		);
-	},
-	showDetail: async (id, pageUrl = null) => {
-		AppState.setBookState("quran", {
-			currentPage: "detail",
-			surahId: id
-		});
-
-		const url = ApiHelper.convertToHttps(
-			pageUrl || `${APP_CONFIG.endpoints.quran}/${id}/verses`
-		);
-
-		ServiceHelper.renderDetail({
-			loadingMessage: "Memuat data ayat...",
-			fetchUrl: url,
-			renderHeader: data => {
-				const surah = data.data[0].surah;
-				AppState.quran.currentSurah = surah;
-
-				return TemplateHelper.renderDetailHeaderView(
-					{
-						title: surah.name_latin,
-						subtitle: surah.name,
-						meta: `${surah.place} - ${surah.number_of_verses} Ayat`
-					},
-					true
-				);
-			},
-			renderContent: data =>
-				data.data
-					.map(surah =>
-						TemplateHelper.renderDetailContentItem(
-							{
-								number: surah.verse_number,
-								arabic: surah.arabic_text,
-								latin: surah.latin_text,
-								translation: surah.translation,
-								audio: surah.audio
-							},
-							"verse-item"
-						)
-					)
-					.join(""),
-			onPageChange: newPageUrl => QuranService.showDetail(id, newPageUrl),
-			dataObject: data => data,
-			onRenderComplete: () => {
-				DomHelper.scrollToTop();
-				const btnDescription = document.getElementById("btn-show-description");
-				if (btnDescription) {
-					btnDescription.addEventListener("click", () => {
-						QuranService.showSurahDescription(AppState.quran.currentSurah);
-					});
-				}
+				meta: `${surah.place} - ${surah.number_of_verses} Ayat`,
+				showButton: true
+			};
+		},
+		renderContent: data =>
+			data.data.map(surah => ({
+				number: surah.verse_number,
+				arabic: surah.arabic_text,
+				latin: surah.latin_text,
+				translation: surah.translation,
+				audio: surah.audio
+			})),
+		dataObject: data => data,
+		onPageChange: (id, newPageUrl) => QuranService.showDetail(id, newPageUrl),
+		afterRenderDetail: () => {
+			const btnDescription = document.getElementById("btn-show-description");
+			if (btnDescription) {
+				btnDescription.addEventListener("click", () => {
+					QuranService.showSurahDescription(AppState.quran.currentSurah);
+				});
 			}
-		});
-	},
+		},
+		showDescription: true,
+		renderType: "verse-item"
+	}),
 
 	showSurahDescription(surah) {
-		// Sembunyikan konten utama
 		DomHelper.hide(DOM.bookContent);
 		DomHelper.hide(DOM.paginationContainer);
 
-		// Buat container untuk deskripsi jika belum ada
 		if (!DOM.descriptionContainer) {
 			DOM.descriptionContainer = document.createElement("div");
 			DOM.descriptionContainer.id = "description-container";
-			DOM.detailbook.appendChild(DOM.descriptionContainer);
+			Utils.ensureElement(DOM.detailbook, el =>
+				el.appendChild(DOM.descriptionContainer)
+			);
 		}
 
 		SearchVisibility.hideForDescription();
-
-		// Render deskripsi surah
 		DomHelper.setHTML(
 			DOM.descriptionContainer,
 			TemplateHelper.renderSurahDescription(
-				surah.description || "Deskripsi surah tidak tersedia."
+				surah.description || "Deskripsi surah tidak tersedia.",
+				JSON.parse(surah.audio_full)
 			)
 		);
 
 		DomHelper.show(DOM.descriptionContainer);
 
-		// Tambahkan event listener untuk tombol tutup
 		document
 			.getElementById("btn-close-description")
 			.addEventListener("click", () => {
-				// Sembunyikan description-container
 				DomHelper.hide(DOM.descriptionContainer);
 				SearchVisibility.showDetailSearch();
 				DomHelper.show(DOM.bookContent);
@@ -409,55 +261,433 @@ const QuranService = {
 };
 
 const HadithService = {
-	showList: async () => {
-		AppState.setBookState("hadith", {
-			currentPage: "list"
-		});
+	...BaseService.createService({
+		bookType: "hadith",
+		listUrl: APP_CONFIG.endpoints.hadith,
+		cacheKey: "hadith_list",
+		extractData: data => data,
+		attrId: item => item.id,
+		bookDataFn: book => ({
+			number: book.id,
+			title: book.name,
+			content: `${book.total_hadiths} hadith`
+		}),
+		onClickFn: card => HadithService.showDetail(card.dataset.id),
+		title: "Kitab Hadits",
+		detailUrl: APP_CONFIG.endpoints.hadith,
+		detailSuffix: "/hadiths",
+		idProperty: "bookId",
+		loadingMessage: "Memuat data hadiths...",
+		renderHeader: data => {
+			const bookId = data.id;
+			AppState.hadith.bookId = bookId;
+			return {
+				title: data.name,
+				meta: `Total ${data.total_hadiths} hadits`
+			};
+		},
+		renderContent: data => data.hadiths.data,
+		dataObject: data => data.hadiths,
+		onPageChange: (id, newPageUrl) => HadithService.showDetail(id, newPageUrl),
+		renderType: "verse-item"
+	})
+};
 
-		await ServiceHelper.renderBookList(
-			this,
-			APP_CONFIG.endpoints.hadith,
-			"hadith_list",
-			data => data,
-			item => item.id,
-			book => ({
-				number: book.id,
-				title: book.name,
-				content: `${book.total_hadiths} hadith`
-			}),
-			card => HadithService.showDetail(card.dataset.id),
-			"Kitab Hadits"
-		);
+const DoaService = {
+	...BaseService.createService({
+		bookType: "doa",
+		listUrl: `${APP_CONFIG.endpoints.doa}/sumber`,
+		cacheKey: "doa_list",
+		extractData: data => data.sumber,
+		attrId: item => item.nama,
+		bookDataFn: item => ({
+			title: item.nama,
+			content: `${item.jumlah} doa`
+		}),
+		onClickFn: card => DoaService.showDetail(card.dataset.id),
+		title: "Daftar Doa Harian",
+		detailUrl: `${APP_CONFIG.endpoints.doa}/sumber`,
+		idProperty: "sourceName",
+		loadingMessage: "Memuat doa...",
+		renderHeader: data => ({
+			title: data.sumber,
+			meta: `Total ${data.data.total}`
+		}),
+		renderContent: data =>
+			data.data.data.map(doa => ({
+				number: doa.id,
+				title: doa.judul,
+				arabic: doa.arab,
+				latin: doa.latin,
+				translation: doa.terjemahan
+			})),
+		dataObject: data => data.data,
+		onPageChange: (id, newPageUrl) => DoaService.showDetail(id, newPageUrl),
+		renderType: "verse-item"
+	})
+};
+
+const ProphetService = {
+	...BaseService.createService({
+		bookType: "prophet",
+		listUrl: APP_CONFIG.endpoints.prophet,
+		cacheKey: "prophet_list",
+		extractData: data => data.data,
+		attrId: item => item.id,
+		bookDataFn: item => ({
+			title: item.name,
+			content: DomHelper.formatProphetYear(item.birth_year, item.name).text
+		}),
+		onClickFn: card => ProphetService.showDetail(card.dataset.id),
+		title: "Cerita Nabi",
+		afterRenderList: () => SearchVisibility.hideAll(),
+		detailUrl: APP_CONFIG.endpoints.prophet,
+		idProperty: "prophetId",
+		loadingMessage: "Memuat data Nabi...",
+		renderHeader: data => ({
+			title: data.data.name,
+			subtitle: `${data.data.birth_year} (${data.data.age} age)`,
+			meta: `${data.data.place}`
+		}),
+		renderContent: data => [
+			{
+				number: data.data.birth_year,
+				translation: data.data.description
+			}
+		],
+		dataObject: data => data.data,
+		afterRenderDetail: () => SearchVisibility.hideAll()
+	})
+};
+
+const AsmaulService = {
+	...BaseService.createService({
+		bookType: "asmaul",
+		listUrl: APP_CONFIG.endpoints.asmaul,
+		cacheKey: "asmaul_husna",
+		extractData: data => data.data,
+		attrId: item => item.id,
+		bookDataFn: item => ({
+			title: item.arabic,
+			content: item.latine
+		}),
+		onClickFn: card => AsmaulService.showDetail(card.dataset.id),
+		title: "Asmaul Husna",
+		afterRenderList: () => SearchVisibility.hideAll(),
+		detailUrl: APP_CONFIG.endpoints.asmaul,
+		idProperty: "asmaulId",
+		loadingMessage: "Memuat data Asmaul Husna...",
+		renderHeader: data => ({
+			title: data.data.arabic,
+			subtitle: `${data.data.latine} (${data.data.meaning})`,
+			meta: `${data.data.description}.<br>Found: ${data.data.found}`
+		}),
+		renderContent: data =>
+			data.data.verses.map(verse => ({
+				number: verse.verse_number,
+				title: `Q.S. ${verse.surah.name_latin} (${verse.surah_number}:${verse.verse_number})`,
+				arabic: verse.arabic_text,
+				latin: verse.latin_text,
+				translation: verse.translation,
+				audio: verse.audio
+			})),
+		dataObject: data => data.data,
+		afterRenderDetail: () => SearchVisibility.hideAll(),
+		renderType: "verse-item"
+	})
+};
+
+const BahasaService = {
+	...BaseService.createService({
+		bookType: "bahasa",
+		listUrl: `${APP_CONFIG.endpoints.bahasa}/provinsi`,
+		cacheKey: "bahasa_provinsi",
+		extractData: data => data.data,
+		attrId: item => item.id,
+		bookDataFn: item => ({
+			title: item.nama || "Tidak diketahui",
+			content: `${item.jumlah_bahasa} bahasa`
+		}),
+		onClickFn: card => BahasaService.showDetail(card.dataset.id),
+		title: "Bahasa Daerah",
+		detailUrl: `${APP_CONFIG.endpoints.bahasa}/provinsi`,
+		idProperty: "provinceName",
+		loadingMessage: "Memuat data Bahasa Daerah...",
+		renderHeader: data => ({
+			title: data.data.provinsi.nama
+		}),
+		renderContent: data =>
+			data.data.bahasa_daerah.map(bahasa => ({
+				title: bahasa.nama,
+				latin: bahasa.sumber,
+				translation:
+					bahasa.deskripsi.map(d => `<p>${d}</p>`).join("<br />") ||
+					"No deskripsi"
+			})),
+		dataObject: data => data.meta,
+		onPageChange: (id, newPageUrl) => BahasaService.showDetail(id, newPageUrl),
+		renderType: "ojk-item"
+	})
+};
+
+const VolcanoService = {
+	...BaseService.createService({
+		bookType: "volcano",
+		listUrl: `${APP_CONFIG.endpoints.volcano}/bentuk`,
+		cacheKey: "volcano_bentuk",
+		extractData: data => data.data,
+		attrId: item => item.bentuk,
+		bookDataFn: item => ({
+			title: item.bentuk,
+			content: `${item.jumlah} gunung`
+		}),
+		onClickFn: card => VolcanoService.prepareShowDetail(card.dataset.id),
+		title: "Bentuk Gunung Berapi",
+		detailUrl: APP_CONFIG.endpoints.volcano,
+		idProperty: "bentuk",
+		loadingMessage: "Memuat data gunung berapi...",
+		renderHeader: data => ({
+			title: AppState.volcano.bentuk?.toUpperCase(),
+			meta: `Total ${data.data.total} gunung`
+		}),
+		renderContent: data =>
+			data.data.data.map(item => ({
+				title: item.nama,
+				latin: item.geolokasi,
+				translation: `<div>Tinggi: ${item.tinggi_numeric} <em>mdpl</em></div><div>Estimasi letusan terakhir: ${item.estimasi_letusan_terakhir}</div>                <div><a href="https://www.google.com/maps?q=&layer=c&cbll=${item.latitude},${item.longitude}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a></div>`
+			})),
+		dataObject: data => data.data,
+		onPageChange: (id, newPageUrl) =>
+			VolcanoService.prepareShowDetail(id, newPageUrl),
+		afterRenderDetail: () => {
+			TemplateHelper.initFilterForm(
+				".filter-form",
+				(min, max) => VolcanoService.applyTinggiFilter(min, max),
+				() => VolcanoService.resetTinggiFilter()
+			);
+		},
+		renderFilters: TemplateHelper.createFilterForm([
+			{
+				type: "number",
+				name: "tinggiMin",
+				label: "Tinggi Min (mdpl)",
+				placeholder: "Minimum",
+				value: AppState.volcano.filters?.tinggiMin || ""
+			},
+			{
+				type: "number",
+				name: "tinggiMax",
+				label: "Tinggi Max (mdpl)",
+				placeholder: "Maksimum",
+				value: AppState.volcano.filters?.tinggiMax || ""
+			}
+		]),
+		pageTitle: id => id.toUpperCase()
+	}),
+
+	prepareShowDetail: (nama, pageUrl = null) => {
+		const state = AppState.volcano;
+
+		let params = "";
+		if (state.filters?.tinggiMin) {
+			params += `&tinggi_min=${state.filters.tinggiMin}`;
+		}
+		if (state.filters?.tinggiMax) {
+			params += `&tinggi_max=${state.filters.tinggiMax}`;
+		}
+
+		pageUrl =
+			pageUrl ||
+			`${APP_CONFIG.endpoints.volcano}?bentuk=${nama}${params || ""}`;
+
+		VolcanoService.showDetail(nama, pageUrl);
 	},
 
-	showDetail: (id, pageUrl = null) => {
-		AppState.setBookState("hadith", {
+	applyTinggiFilter: (min, max) => {
+		const state = AppState.volcano;
+		AppState.setBookState("volcano", {
+			...AppState.volcano,
+			filters: {
+				tinggiMin: min || null,
+				tinggiMax: max || null
+			}
+		});
+		VolcanoService.prepareShowDetail(state.bentuk);
+	},
+
+	resetTinggiFilter: () => {
+		const state = AppState.volcano;
+		AppState.setBookState("volcano", {
+			filters: {
+				tinggiMin: null,
+				tinggiMax: null
+			}
+		});
+		VolcanoService.prepareShowDetail(state.bentuk);
+	}
+};
+
+const OjkService = {
+	...BaseService.createService({
+		bookType: "ojk",
+		listUrl: APP_CONFIG.endpoints.ojk,
+		cacheKey: "ojk_list",
+		extractData: data => data.data,
+		attrId: item => item.toLowerCase(),
+		bookDataFn: item => ({
+			title: item,
+			content: `Daftar ${item}`
+		}),
+		onClickFn: card => OjkService.showDetail(card.dataset.id),
+		title: "OJK Portal",
+		afterRenderList: () => SearchVisibility.hideAll(),
+		detailUrl: APP_CONFIG.endpoints.ojk,
+		idProperty: "currentType",
+		loadingMessage: "Memuat data OJK...",
+		renderHeader: data => ({
+			title: AppState.ojk.currentType?.toUpperCase(),
+			meta: `Total ${AppState.ojk.currentType?.toUpperCase()}: ${
+				data.data.total
+			} item`
+		}),
+		customRender: (data, id) =>
+			TemplateHelper.renderOjkItems(data.data.data, id),
+		dataObject: data => data.data,
+		onPageChange: (id, newPageUrl) => OjkService.showDetail(id, newPageUrl),
+		pageTitle: id => id.toUpperCase()
+	})
+};
+
+const SekolahService = {
+	levelConfigs: {
+		provinsi: {
+			url: state => `${APP_CONFIG.endpoints.sekolah}/provinsi`,
+			cacheKey: "sekolah_provinsi",
+			attrKey: "kode_prop",
+			title: "Sekolah: Daftar Provinsi",
+			nextLevel: "kabkota",
+			contentFormat: item => item.kode_prop
+		},
+		kabkota: {
+			url: state =>
+				`${APP_CONFIG.endpoints.sekolah}/kab-kota/${state.provinsi}`,
+			cacheKey: state => `sekolah_kabkota_${state.provinsi}`,
+			attrKey: "kode_kab_kota",
+			title: "Sekolah: Daftar Kabupaten Kota",
+			nextLevel: "kecamatan",
+			contentFormat: item => item.kode_kab_kota
+		},
+		kecamatan: {
+			url: state =>
+				`${APP_CONFIG.endpoints.sekolah}/kecamatan/${state.kabkota}`,
+			cacheKey: state => `sekolah_kecamatan_${state.kabkota}`,
+			attrKey: "kode_kec",
+			title: "Sekolah: Daftar Kecamatan",
+			nextLevel: "sekolah",
+			contentFormat: item => item.kode_kec
+		}
+	},
+	showList: async () => {
+		const level = AppState.sekolah.level || "provinsi";
+		const state = AppState.sekolah;
+
+		const config = SekolahService.levelConfigs[level];
+
+		if (!config) return;
+
+		await ServiceHelper.renderBookList({
+			url: config.url(state),
+			cacheKey:
+				typeof config.cacheKey === "function"
+					? config.cacheKey(state)
+					: config.cacheKey,
+			extractData: data => data.data,
+			attrId: item => item[config.attrKey],
+			bookDataFn: item => ({
+				title: item.nama,
+				content: config.contentFormat(item)
+			}),
+			onClickFn: card => {
+				const newState = {
+					...state,
+					level: config.nextLevel,
+					[level]: card.dataset.id,
+					currentPage: "list"
+				};
+
+				AppState.setBookState("sekolah", newState);
+				if (config.nextLevel === "sekolah") {
+					SekolahService.showDetail(card.dataset.id);
+				} else {
+					SekolahService.showList();
+				}
+			},
+			title: config.title
+		});
+	},
+
+	showDetail: async (kode_kec, newPageUrl = null) => {
+		AppState.setBookState("sekolah", {
+			...AppState.sekolah,
 			currentPage: "detail",
-			bookId: id
+			level: "sekolah",
+			kecamatan: kode_kec
 		});
 
-		const url = ApiHelper.convertToHttps(
-			pageUrl || `${APP_CONFIG.endpoints.hadith}/${id}/hadiths`
-		);
+		const url =
+			newPageUrl ||
+			`${APP_CONFIG.endpoints.sekolah}?kode_kec=${kode_kec}&with_wilayah=1`;
 
 		ServiceHelper.renderDetail({
-			loadingMessage: "Memuat data hadiths...",
-			fetchUrl: url,
-			renderHeader: data => {
-				return TemplateHelper.renderDetailHeaderView({
-					title: data.name,
-					meta: `Total ${data.total_hadiths} hadits`
-				});
-			},
+			loadingMessage: "Memuat data sekolah...",
+			fetchUrl: ApiHelper.convertToHttps(url),
+			renderHeader: data => "",
 			renderContent: data =>
-				data.hadiths.data
-					.map(hadith =>
-						TemplateHelper.renderDetailContentItem(hadith, "verse-item")
+				data.data.data
+					.map(
+						sekolah =>
+							`<div class="school-card" id="${
+								sekolah.id
+							}">${TemplateHelper.createSchoolCard(sekolah)}</div>`
 					)
 					.join(""),
-			dataObject: data => data.hadiths,
-			onPageChange: newPageUrl => HadithService.showDetail(id, newPageUrl),
-			onRenderComplete: () => DomHelper.scrollToTop()
+			dataObject: data => data.data,
+			onPageChange: newPageUrl =>
+				SekolahService.showDetail(kode_kec, newPageUrl),
+			pageTitle: "Daftar Sekolah"
+		});
+	}
+};
+
+const HeroService = {
+	showDetail: (pageUrl = null) => {
+		AppState.setBookState("hero", {
+			currentPage: "detail"
+		});
+		const url = pageUrl || APP_CONFIG.endpoints.heroes;
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data pahlawan...",
+			fetchUrl: ApiHelper.convertToHttps(url),
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView({
+					title: "Daftar Pahlawan Nasional",
+					meta: `Total: ${data.data.total} pahlawan`
+				}),
+			renderContent: data =>
+				data.data.data
+					.map(h =>
+						TemplateHelper.renderDetailContentItem({
+							title: h.name,
+							latin: `${h.birth_year} - ${h.death_year}`,
+							translation: `<div>${h.description}</div><br /><div><small>Diangkat sebagai pahlawan pada: <em>${h.ascension_year}</em></small></div>`
+						})
+					)
+					.join(""),
+			dataObject: data => data.data,
+			onPageChange: newPageUrl => HeroService.showDetail(newPageUrl),
+			onRenderComplete: () => DomHelper.scrollToTop(),
+			pageTitle: "Pahlawan Nasional"
 		});
 	}
 };
@@ -508,61 +738,58 @@ const BibleService = {
 
 		switch (level) {
 			case "translations":
-				await ServiceHelper.renderBookList(
-					this,
-					APP_CONFIG.endpoints.bible,
-					"bible_translation",
-					data => {
+				await ServiceHelper.renderBookList({
+					url: APP_CONFIG.endpoints.bible,
+					cacheKey: "bible_translation",
+					extractData: data => {
 						AppState.bible.translations = data.data;
 						return data.data;
 					},
-					item => item.id,
-					item => ({
+					attrId: item => item.id,
+					bookDataFn: item => ({
 						number: item.id,
 						title: item.name,
 						content: item.language
 					}),
-					card => BibleService.showList(card.dataset.id),
-					"Terjemahan Alkitab"
-				);
+					onClickFn: card => BibleService.showList(card.dataset.id),
+					title: "Terjemahan Alkitab"
+				});
 				break;
 			case "books":
-				await ServiceHelper.renderBookList(
-					this,
-					`${APP_CONFIG.endpoints.bible}/${transId}/books`,
-					`bible_books_${transId}`,
-					data => {
+				await ServiceHelper.renderBookList({
+					url: `${APP_CONFIG.endpoints.bible}/${transId}/books`,
+					cacheKey: `bible_books_${transId}`,
+					extractData: data => {
 						AppState.bible.books = data.data;
 						return data.data;
 					},
-					item => item.id,
-					item => ({
+					attrId: item => item.id,
+					bookDataFn: item => ({
 						number: item.id,
 						title: item.name,
 						content: item.book_id
 					}),
-					card => BibleService.showList(transId, card.dataset.id),
-					"Daftar Kitab"
-				);
+					onClickFn: card => BibleService.showList(transId, card.dataset.id),
+					title: "Daftar Kitab"
+				});
 				break;
 			case "chapters":
-				await ServiceHelper.renderBookList(
-					this,
-					`${APP_CONFIG.endpoints.bible}/${transId}/books/${bookId}/chapters`,
-					`bible_chapters_${transId}_${bookId}`,
-					data => {
+				await ServiceHelper.renderBookList({
+					url: `${APP_CONFIG.endpoints.bible}/${transId}/books/${bookId}/chapters`,
+					cacheKey: `bible_chapters_${transId}_${bookId}`,
+					extractData: data => {
 						AppState.bible.chapters = data.data;
 						return data.data;
 					},
-					item => item.id,
-					item => ({
+					attrId: item => item.id,
+					bookDataFn: item => ({
 						number: item.number,
 						title: `Pasal ${item.number}`,
 						content: `${item.verses_count} ayat`
 					}),
-					card => BibleService.showDetail(card.dataset.id),
-					"Daftar Pasal"
-				);
+					onClickFn: card => BibleService.showDetail(card.dataset.id),
+					title: "Daftar Pasal"
+				});
 				break;
 		}
 	},
@@ -609,602 +836,6 @@ const BibleService = {
 	}
 };
 
-const DoaService = {
-	showList: async () => {
-		AppState.setBookState("doa", {
-			currentPage: "list"
-		});
-
-		await ServiceHelper.renderBookList(
-			this,
-			`${APP_CONFIG.endpoints.doa}/sumber`,
-			"doa_list",
-			data => data.sumber,
-			item => item.nama,
-			item => ({
-				title: item.nama,
-				content: `${item.jumlah} doa`
-			}),
-			card => DoaService.showDetail(card.dataset.id),
-			"Daftar Doa Harian"
-		);
-	},
-
-	showDetail: (name, pageUrl = null) => {
-		AppState.setBookState("doa", {
-			currentPage: "detail",
-			sourceName: name
-		});
-
-		const url = ApiHelper.convertToHttps(
-			pageUrl || `${APP_CONFIG.endpoints.doa}/sumber/${name}`
-		);
-
-		ServiceHelper.renderDetail({
-			loadingMessage: "Memuat doa...",
-			fetchUrl: url,
-			renderHeader: data =>
-				TemplateHelper.renderDetailHeaderView({
-					title: data.sumber,
-					meta: `Total ${data.data.total}`
-				}),
-			renderContent: data =>
-				data.data.data
-					.map(doa =>
-						TemplateHelper.renderDetailContentItem(
-							{
-								number: doa.id,
-								title: doa.judul,
-								arabic: doa.arab,
-								latin: doa.latin,
-								translation: doa.terjemahan
-							},
-							"verse-item"
-						)
-					)
-					.join(""),
-			dataObject: data => data.data,
-			onPageChange: newPageUrl => DoaService.showDetail(name, newPageUrl),
-			onRenderComplete: () => DomHelper.scrollToTop()
-		});
-	}
-};
-
-const ProphetService = {
-	showList: async () => {
-		AppState.setBookState("prophet", {
-			currentPage: "list"
-		});
-
-		await ServiceHelper.renderBookList(
-			this,
-			APP_CONFIG.endpoints.prophet,
-			"prophet_list",
-			data => data.data,
-			item => item.id,
-			item => ({
-				title: item.name,
-				content: DomHelper.formatProphetYear(item.birth_year, item.name).text
-			}),
-			card => ProphetService.showDetail(card.dataset.id),
-			"Cerita Nabi"
-		);
-
-		SearchVisibility.hideAll();
-	},
-
-	showDetail: id => {
-		AppState.setBookState("prophet", {
-			currentPage: "detail",
-			prophetId: id
-		});
-
-		const url = ApiHelper.convertToHttps(
-			`${APP_CONFIG.endpoints.prophet}/${id}`
-		);
-
-		ServiceHelper.renderDetail({
-			loadingMessage: "Memuat data nabi...",
-			fetchUrl: url,
-			renderHeader: data =>
-				TemplateHelper.renderDetailHeaderView({
-					title: data.data.name,
-					subtitle: `${data.data.birth_year} (${data.data.age} age)`,
-					meta: `${data.data.place}`
-				}),
-			renderContent: data =>
-				TemplateHelper.renderDetailContentItem({
-					number: data.data.birth_year,
-					translation: data.data.description
-				}),
-			dataObject: data => data.data,
-			onRenderComplete: () => {
-				DomHelper.scrollToTop();
-				SearchVisibility.hideAll();
-			}
-		});
-	}
-};
-
-const AsmaulService = {
-	showList: async () => {
-		AppState.setBookState("asmaul", {
-			currentPage: "list"
-		});
-
-		await ServiceHelper.renderBookList(
-			this,
-			APP_CONFIG.endpoints.asmaul,
-			"asmaul_husna",
-			data => data.data,
-			item => item.id,
-			item => ({
-				title: item.arabic,
-				content: item.latine
-			}),
-			card => AsmaulService.showDetail(card.dataset.id),
-			"Asmaul Husna"
-		);
-
-		SearchVisibility.hideAll();
-	},
-
-	showDetail: id => {
-		AppState.setBookState("asmaul", {
-			currentPage: "detail",
-			asmaulId: id
-		});
-
-		const url = ApiHelper.convertToHttps(
-			`${APP_CONFIG.endpoints.asmaul}/${id}`
-		);
-
-		ServiceHelper.renderDetail({
-			loadingMessage: "Memuat data asmaul husna...",
-			fetchUrl: url,
-			renderHeader: data =>
-				TemplateHelper.renderDetailHeaderView({
-					title: data.data.arabic,
-					subtitle: `${data.data.latine} (${data.data.meaning})`,
-					meta: `${data.data.description}.<br>Found: ${data.data.found}`
-				}),
-			renderContent: data =>
-				data.data.verses
-					.map(verse =>
-						TemplateHelper.renderDetailContentItem(
-							{
-								number: verse.verse_number,
-								title: `Q.S. ${verse.surah.name_latin} (${verse.surah_number}:${verse.verse_number})`,
-								arabic: verse.arabic_text,
-								latin: verse.latin_text,
-								translation: verse.translation,
-								audio: verse.audio
-							},
-							"verse-item"
-						)
-					)
-					.join(""),
-			dataObject: data => data.data,
-			onRenderComplete: () => {
-				DomHelper.scrollToTop();
-				SearchVisibility.hideAll();
-			}
-		});
-	}
-};
-
-const OjkService = {
-	showList: async () => {
-		AppState.setBookState("ojk", {
-			currentPage: "list"
-		});
-
-		await ServiceHelper.renderBookList(
-			this,
-			APP_CONFIG.endpoints.ojk,
-			"ojk_list",
-			data => data.data,
-			item => item.toLowerCase(),
-			item => ({
-				title: item,
-				content: `Daftar ${item}`
-			}),
-			card => OjkService.showDetail(card.dataset.id),
-			"OJK Portal"
-		);
-
-		SearchVisibility.hideAll();
-	},
-
-	showDetail: (type, pageUrl = null) => {
-		AppState.setBookState("ojk", {
-			currentPage: "detail",
-			currentType: type
-		});
-
-		const url = ApiHelper.convertToHttps(
-			pageUrl || `${APP_CONFIG.endpoints.ojk}/${type}`
-		);
-
-		let dataObjectFn;
-
-		switch (type) {
-			case "apps":
-				dataObjectFn = data => data.data;
-
-				break;
-			case "illegals":
-				dataObjectFn = data => data.data;
-
-				break;
-			case "products":
-				dataObjectFn = data => data.data;
-
-				break;
-		}
-
-		ServiceHelper.renderDetail({
-			loadingMessage: "Memuat data ojk...",
-			fetchUrl: url,
-			renderHeader: data =>
-				TemplateHelper.renderDetailHeaderView({
-					title: type.toUpperCase(),
-					meta: `Total ${type.toUpperCase()}: ${data.data.total} item`
-				}),
-			renderContent: data =>
-				TemplateHelper.renderOjkItems(data.data.data, type),
-			dataObject: dataObjectFn,
-			onPageChange: newPageUrl => OjkService.showDetail(type, newPageUrl),
-			pageTitle: type.toUpperCase()
-		});
-	}
-};
-
-const SekolahService = {
-	levelConfigs: {
-		provinsi: {
-			url: state => `${APP_CONFIG.endpoints.sekolah}/provinsi`,
-			cacheKey: "sekolah_provinsi",
-			attrKey: "kode_prop",
-			title: "Sekolah: Daftar Provinsi",
-			nextLevel: "kabkota",
-			contentFormat: item => item.kode_prop
-		},
-		kabkota: {
-			url: state =>
-				`${APP_CONFIG.endpoints.sekolah}/kab-kota/${state.provinsi}`,
-			cacheKey: state => `sekolah_kabkota_${state.provinsi}`,
-			attrKey: "kode_kab_kota",
-			title: "Sekolah: Daftar Kabupaten Kota",
-			nextLevel: "kecamatan",
-			contentFormat: item => item.kode_kab_kota
-		},
-		kecamatan: {
-			url: state =>
-				`${APP_CONFIG.endpoints.sekolah}/kecamatan/${state.kabkota}`,
-			cacheKey: state => `sekolah_kecamatan_${state.kabkota}`,
-			attrKey: "kode_kec",
-			title: "Sekolah: Daftar Kecamatan",
-			nextLevel: "sekolah",
-			contentFormat: item => item.kode_kec
-		}
-	},
-	showList: async () => {
-		const level = AppState.sekolah.level || "provinsi";
-		const state = AppState.sekolah;
-
-		const config = SekolahService.levelConfigs[level];
-
-		if (!config) return;
-
-		await ServiceHelper.renderBookList(
-			this,
-			config.url(state),
-			typeof config.cacheKey === "function"
-				? config.cacheKey(state)
-				: config.cacheKey,
-			data => data.data,
-			item => item[config.attrKey],
-			item => ({
-				title: item.nama,
-				content: config.contentFormat(item)
-			}),
-			card => {
-				const newState = {
-					...state,
-					level: config.nextLevel,
-					[level]: card.dataset.id,
-					currentPage: "list"
-				};
-
-				AppState.setBookState("sekolah", newState);
-				if (config.nextLevel === "sekolah") {
-					SekolahService.showDetail(card.dataset.id);
-				} else {
-					SekolahService.showList();
-				}
-			},
-			config.title
-		);
-	},
-
-	showDetail: async (kode_kec, newPageUrl = null) => {
-		AppState.setBookState("sekolah", {
-			...AppState.sekolah,
-			currentPage: "detail",
-			level: "sekolah",
-			kecamatan: kode_kec
-		});
-
-		const url =
-			newPageUrl ||
-			`${APP_CONFIG.endpoints.sekolah}?kode_kec=${kode_kec}&with_wilayah=1`;
-
-		ServiceHelper.renderDetail({
-			loadingMessage: "Memuat data sekolah...",
-			fetchUrl: ApiHelper.convertToHttps(url),
-			renderHeader: data => "",
-			renderContent: data =>
-				data.data.data
-					.map(
-						sekolah =>
-							`<div class="school-card" id="${
-								sekolah.id
-							}">${TemplateHelper.createSchoolCard(sekolah)}</div>`
-					)
-					.join(""),
-			dataObject: data => data.data,
-			onPageChange: newPageUrl =>
-				SekolahService.showDetail(kode_kec, newPageUrl),
-			pageTitle: "Daftar Sekolah"
-		});
-	},
-
-	renderSekolahLevel: async config => {
-		const { level, url, cacheKey, attrKey, title, nextLevel } = config;
-
-		return ServiceHelper.renderBookList(
-			this,
-			url,
-			cacheKey,
-			data => data.data,
-			item => item[attrKey],
-			item => ({
-				title: item.nama,
-				content: `Kode ${level}: ${item[attrKey]}`
-			}),
-			card => {
-				const stateUpdate = { level: nextLevel };
-				stateUpdate[level] = card.dataset.id;
-				stateUpdate = {
-					...AppState.sekolah
-				};
-
-				AppState.setBookState("sekolah", stateUpdate);
-				SekolahService.showList();
-			},
-			title
-		);
-	}
-};
-
-const BahasaService = {
-	showList: async () => {
-		AppState.setBookState("bahasa", {
-			currentPage: "list"
-		});
-
-		await ServiceHelper.renderBookList(
-			this,
-			`${APP_CONFIG.endpoints.bahasa}/provinsi`,
-			"bahasa_provinsi",
-			data => data.data,
-			item => item.id,
-			item => ({
-				title: item.nama || "Tidak diketahui",
-				content: `${item.jumlah_bahasa} bahasa`
-			}),
-			card => BahasaService.showDetail(card.dataset.id),
-			"Bahasa Daerah"
-		);
-	},
-	showDetail: (id, pageUrl = null) => {
-		AppState.setBookState("bahasa", {
-			currentPage: "detail",
-			provinceName: id
-		});
-
-		const url = pageUrl || `${APP_CONFIG.endpoints.bahasa}/provinsi/${id}`;
-
-		ServiceHelper.renderDetail({
-			loadingMessage: "Memuat data bahasa daerah...",
-			fetchUrl: ApiHelper.convertToHttps(url),
-			renderHeader: data =>
-				TemplateHelper.renderDetailHeaderView({
-					title: data.data.provinsi.nama
-				}),
-			renderContent: data =>
-				'<h1 style="margin-bottom:2rem;">Daftar Bahasa Daerah:</h1>' +
-				data.data.bahasa_daerah
-					.map(bahasa =>
-						TemplateHelper.renderDetailContentItem(
-							{
-								title: bahasa.nama,
-								latin: bahasa.sumber,
-								translation:
-									bahasa.deskripsi.map(d => `<p>${d}</p>`).join("<br />") ||
-									"No deskripsi"
-							},
-							"ojk-item"
-						)
-					)
-					.join(""),
-			dataObject: data => data.meta,
-			onPageChange: newPageUrl => BahasaService.showDetail(id, newPageUrl),
-			onRenderComplete: () => DomHelper.scrollToTop()
-		});
-	}
-};
-
-const HeroService = {
-	showDetail: (pageUrl = null) => {
-		AppState.setBookState("hero", {
-			currentPage: "detail"
-		});
-		const url = pageUrl || APP_CONFIG.endpoints.heroes;
-
-		ServiceHelper.renderDetail({
-			loadingMessage: "Memuat data pahlawan...",
-			fetchUrl: ApiHelper.convertToHttps(url),
-			renderHeader: data =>
-				TemplateHelper.renderDetailHeaderView({
-					title: "Daftar Pahlawan Nasional",
-					meta: `Total: ${data.data.total} pahlawan`
-				}),
-			renderContent: data =>
-				data.data.data
-					.map(h =>
-						TemplateHelper.renderDetailContentItem({
-							title: h.name,
-							latin: `${h.birth_year} - ${h.death_year}`,
-							translation: `<div>${h.description}</div><br /><div><small>Diangkat sebagai pahlawan pada: <em>${h.ascension_year}</em></small></div>`
-						})
-					)
-					.join(""),
-			dataObject: data => data.data,
-			onPageChange: newPageUrl => HeroService.showDetail(newPageUrl),
-			onRenderComplete: () => DomHelper.scrollToTop(),
-			pageTitle: "Pahlawan Nasional"
-		});
-	}
-};
-
-const VolcanoService = {
-	showList: async () => {
-		AppState.setBookState("volcano", {
-			currentPage: "list",
-			bentuk: null,
-			filters: AppState.volcano.filters
-		});
-
-		await ServiceHelper.renderBookList(
-			this,
-			`${APP_CONFIG.endpoints.volcano}/bentuk`,
-			"volcano_bentuk",
-			data => data.data,
-			item => item.bentuk,
-			item => ({
-				title: item.bentuk,
-				content: `${item.jumlah} gunung`
-			}),
-			card => VolcanoService.showDetail(card.dataset.id),
-			"Bentuk Gunung berapi"
-		);
-	},
-
-	showDetail: (nama, pageUrl = null) => {
-		AppState.setBookState("volcano", {
-			...AppState.volcano,
-			currentPage: "detail",
-			bentuk: nama
-		});
-		const state = AppState.volcano;
-
-		let params = "";
-		if (state.filters?.tinggiMin) {
-			params += `&tinggi_min=${state.filters.tinggiMin}`;
-		}
-		if (state.filters?.tinggiMax) {
-			params += `&tinggi_max=${state.filters.tinggiMax}`;
-		}
-
-		let url =
-			pageUrl ||
-			`${APP_CONFIG.endpoints.volcano}?bentuk=${nama}${params || ""}`;
-		console.log(url);
-
-		ServiceHelper.renderDetail({
-			loadingMessage: "Memuat data gunung berapi...",
-			fetchUrl: ApiHelper.convertToHttps(url),
-			renderHeader: data =>
-				TemplateHelper.renderDetailHeaderView(
-					{
-						title: nama.toUpperCase(),
-						meta: `Total ${data.data.total} gunung`
-					},
-					false,
-					TemplateHelper.createFilterForm([
-						{
-							type: "number",
-							name: "tinggiMin",
-							label: "Tinggi Min (mdpl)",
-							placeholder: "Minimum",
-							value: state.filters?.tinggiMin || ""
-						},
-						{
-							type: "number",
-							name: "tinggiMax",
-							label: "Tinggi Max (mdpl)",
-							placeholder: "Maksimum",
-							value: state.filters?.tinggiMax || ""
-						}
-					])
-				),
-			renderContent: data =>
-				data.data.data
-					.map(item =>
-						TemplateHelper.renderDetailContentItem({
-							title: item.nama,
-							latin: item.geolokasi,
-							translation: `<div>Tinggi: ${item.tinggi_numeric} <em>mdpl</em></div><div>Estimasi letusan terakhir: ${item.estimasi_letusan_terakhir}</div>                <div><a href="https://www.google.com/maps?q=&layer=c&cbll=${item.latitude},${item.longitude}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a></div>`
-						})
-					)
-					.join(""),
-			dataObject: data => data.data,
-			onPageChange: newPageUrl => VolcanoService.showDetail(nama, newPageUrl),
-			onRenderComplete: () => {
-				DomHelper.scrollToTop();
-
-				TemplateHelper.initFilterForm(
-					".filter-form",
-					(min, max) => VolcanoService.applyTinggiFilter(min, max),
-					() => VolcanoService.resetTinggiFilter()
-				);
-			},
-			pageTitle: nama.toUpperCase()
-		});
-	},
-
-	applyTinggiFilter: (min, max) => {
-		const state = AppState.volcano;
-
-		AppState.setBookState("volcano", {
-			...AppState.volcano,
-			filters: {
-				tinggiMin: min || null,
-				tinggiMax: max || null
-			}
-		});
-
-		// Reload data dengan filter baru
-		VolcanoService.showDetail(state.bentuk);
-	},
-
-	resetTinggiFilter: () => {
-		const state = AppState.volcano;
-
-		AppState.setBookState("volcano", {
-			filters: {
-				tinggiMin: null,
-				tinggiMax: null
-			}
-		});
-
-		// Reload data tanpa filter
-		VolcanoService.showDetail(state.bentuk);
-	}
-};
-
 const KbbiService = {
 	showDetail: (pageUrl = null) => {
 		AppState.setBookState("kbbi", {
@@ -1234,6 +865,142 @@ const KbbiService = {
 			onPageChange: newPageUrl => KbbiService.showDetail(newPageUrl),
 			pageTitle: "KBBI"
 		});
+	}
+};
+
+// ========== SERVICE REGISTRY ============
+const ServiceRegistry = {
+	quran: { service: QuranService, needsInit: false },
+	hadith: { service: HadithService, needsInit: false },
+	bible: { service: BibleService, needsInit: false },
+	doa: { service: DoaService, needsInit: false },
+	prophet: { service: ProphetService, needsInit: false },
+	asmaul: { service: AsmaulService, needsInit: false },
+	ojk: { service: OjkService, needsInit: false },
+	sekolah: {
+		service: SekolahService,
+		needsInit: true,
+		init: () => AppState.setBookState("sekolah", { level: "provinsi" })
+	},
+	bahasa: { service: BahasaService, needsInit: false },
+	hero: { service: HeroService, needsInit: false, useShowDetail: true },
+	volcano: { service: VolcanoService, needsInit: false },
+	kbbi: { service: KbbiService, needsInit: false, useShowDetail: true }
+};
+
+// ============== NAVIGATION MANAGER ==============
+const NavigationManager = {
+	backStrategies: {
+		default: {
+			detail: (state, bookType) => {
+				const service = ServiceRegistry[bookType]?.service;
+				if (service && service.showList) {
+					AppState.reset();
+					service.showList();
+				} else {
+					showMainShelf();
+				}
+			},
+			list: () => showMainShelf()
+		},
+		bible: {
+			detail: state => {
+				const { level, translationId, bookId } = state;
+				const actions = {
+					verses: () => BibleService.showList(translationId, bookId),
+					chapters: () => BibleService.showList(translationId),
+					books: () => BibleService.showList(),
+					default: () => showMainShelf()
+				};
+				(actions[level] || actions.default)();
+			},
+			list: state => {
+				const { level, translationId } = state;
+				const actions = {
+					chapters: () => BibleService.showList(translationId),
+					books: () => BibleService.showList(),
+					default: () => showMainShelf()
+				};
+				(actions[level] || actions.default)();
+			}
+		},
+		sekolah: {
+			detail: state => {
+				const { level } = state;
+				const actions = {
+					kabkota: () => {
+						AppState.setBookState("sekolah", {
+							level: "provinsi",
+							kabkota: null
+						});
+						SekolahService.showList();
+					},
+					kecamatan: () => {
+						AppState.setBookState("sekolah", {
+							level: "kabkota",
+							provinsi: state.provinsi
+						});
+						SekolahService.showList();
+					},
+					sekolah: () => {
+						AppState.setBookState("sekolah", {
+							level: "kecamatan",
+							kabkota: state.kabkota,
+							provinsi: state.provinsi
+						});
+						SekolahService.showList();
+					},
+					default: () => showMainShelf()
+				};
+				(actions[level] || actions.default)();
+			},
+			list: state => NavigationManager.backStrategies.sekolah.detail(state)
+		}
+	},
+
+	// Menangani semua logika navigasi kembali
+	handleBack: function () {
+		DomHelper.scrollToTop();
+		SearchService.clearAllInputs();
+
+		// 1. Tangani penutupan deskripsi jika terbuka
+		if (NavigationManager.handleDescriptionClose()) return;
+
+		const currentBook = AppState.currentBook;
+		const state = AppState[currentBook];
+		const viewType =
+			DomHelper.ensureElement(DOM.detailbook) &&
+			DOM.detailbook.style.display === "block"
+				? "detail"
+				: "list";
+		const strategy =
+			NavigationManager.backStrategies[currentBook] ||
+			NavigationManager.backStrategies.default;
+		const handler =
+			strategy[viewType] || NavigationManager.backStrategies.default[viewType];
+		handler(state, currentBook);
+	},
+
+	// Menangani penutupan deskripsi surah
+	handleDescriptionClose: function () {
+		if (
+			DomHelper.ensureElement(DOM.descriptionContainer) &&
+			DOM.descriptionContainer.style.display === "block"
+		) {
+			DomHelper.show(DOM.bookContent);
+			DomHelper.hide(DOM.descriptionContainer);
+
+			if (
+				DomHelper.ensureElement(DOM.paginationContainer) &&
+				DOM.paginationContainer.children.length > 0
+			) {
+				DomHelper.show(DOM.paginationContainer);
+			}
+
+			SearchVisibility.showDetailSearch();
+			return true;
+		}
+		return false;
 	}
 };
 
@@ -1323,7 +1090,7 @@ const SearchService = {
 
 	resultRenderers: {
 		quran: (verses, query) =>
-			verses.quran.data
+			verses.data
 				.map(verse =>
 					TemplateHelper.renderDetailContentItem(
 						{
@@ -1340,7 +1107,7 @@ const SearchService = {
 				.join(""),
 
 		hadith: (hadiths, query) =>
-			hadiths.hadith.data
+			hadiths.data
 				.map(hadith =>
 					TemplateHelper.renderDetailContentItem(
 						{
@@ -1356,7 +1123,7 @@ const SearchService = {
 				.join(""),
 
 		bible: (verses, query) =>
-			verses.bible.data
+			verses.data
 				.map(verse =>
 					TemplateHelper.renderDetailContentItem(
 						{
@@ -1373,7 +1140,7 @@ const SearchService = {
 				.join(""),
 
 		doa: (doas, query) =>
-			doas.doa.data
+			doas.data
 				.map(doa =>
 					TemplateHelper.renderDetailContentItem(
 						{
@@ -1387,7 +1154,7 @@ const SearchService = {
 				)
 				.join(""),
 		sekolah: (data, query) =>
-			data.sekolah.data
+			data.data
 				.map(
 					sekolah =>
 						`<div class="school-card" id="${
@@ -1397,7 +1164,7 @@ const SearchService = {
 				.join(""),
 
 		bahasa: (data, query) =>
-			data.bahasa.data
+			data.data
 				.map(bahasa =>
 					TemplateHelper.renderDetailContentItem(
 						{
@@ -1417,14 +1184,10 @@ const SearchService = {
 				.join(""),
 
 		ojk: (data, query) =>
-			TemplateHelper.renderOjkItems(
-				data.ojk.data,
-				AppState.ojk.currentType,
-				query
-			),
+			TemplateHelper.renderOjkItems(data.data, AppState.ojk.currentType, query),
 
 		hero: (data, query) =>
-			data.hero.data
+			data.data
 				.map(h =>
 					TemplateHelper.renderDetailContentItem({
 						title: DomHelper.highlightMatches(h.name, query),
@@ -1443,7 +1206,7 @@ const SearchService = {
 				)
 				.join(""),
 		volcano: (data, query) =>
-			data.volcano.data
+			data.data
 				.map(v =>
 					TemplateHelper.renderDetailContentItem({
 						title: v.bentuk,
@@ -1464,7 +1227,7 @@ const SearchService = {
 				.join(""),
 
 		kbbi: (data, query) =>
-			data.kbbi.data
+			data.data
 				.map(k =>
 					TemplateHelper.renderDetailContentItem({
 						title: DomHelper.highlightMatches(k.word, query),
@@ -1495,6 +1258,33 @@ const SearchService = {
 				.join("")
 	},
 
+	getSearchContext: (bookType, state) => {
+		const contextGetters = {
+			bible: () => {
+				const viewType = state.level || "list";
+				return {
+					translations: () => ({ type: "bible", search_type: "translations" }),
+					books: () => ({ type: "bible", translation_id: state.translationId }),
+					chapters: () => ({
+						type: "bible",
+						translation_id: state.translationId,
+						book_id: state.bookId
+					}),
+					verses: () => ({
+						type: "bible",
+						translation_id: state.translationId,
+						book_id: state.bookId,
+						chapter_id: state.chapterId
+					})
+				}[viewType]();
+			},
+			// Konteks untuk service lainnya
+			default: () => ({ type: bookType })
+		};
+
+		return (contextGetters[bookType] || contextGetters.default)();
+	},
+
 	performSearch: async (query, pageUrl = null) => {
 		if (!query) return;
 
@@ -1503,39 +1293,18 @@ const SearchService = {
 
 			// 1. Dapatkan parameter pencarian
 			const bookType = AppState.currentBook;
-			let viewType = AppState[bookType].currentPage || "list";
+			const state = AppState[bookType] || {};
+			const viewType = SearchService.getViewType(bookType, state);
 
-			if (bookType === "bible") {
-				viewType = AppState.bible.level || viewType;
-			} else if (bookType === "sekolah") {
-				viewType = AppState.sekolah.level || viewType;
-			} else if (bookType === "ojk") {
-				if (viewType !== "detail") {
-					alert("Pencarian OJK hanya tersedia di halaman detail.");
-					return;
-				}
-
-				if (!AppState.ojk.currentType) {
-					alert(
-						"Jenis OJK tidak ditemukan. Silakan pilih jenis terlebih dahulu"
-					);
-					return;
-				}
+			if (bookType === "ojk" && viewType !== "detail") {
+				alert("Pencarian OJK hanya tersedia di halaman detail.");
+				return;
 			}
 
 			// 2. Dapatkan fungsi parameter
-			let paramsGetter;
-			if (SearchService.contextParams[bookType]?.[viewType]) {
-				paramsGetter = SearchService.contextParams[bookType][viewType];
-			} else if (SearchService.contextParams[bookType]) {
-				paramsGetter =
-					SearchService.contextParams[bookType].list ||
-					SearchService.contextParams.default;
-			} else {
-				paramsGetter = SearchService.contextParams.default;
-			}
+			const paramsGetter = SearchService.getParamsGetter(bookType, viewType);
 
-			const params = paramsGetter(AppState[bookType]);
+			const params = paramsGetter(state);
 
 			const renderer =
 				SearchService.resultRenderers[params.type] ||
@@ -1553,15 +1322,16 @@ const SearchService = {
 							data[params.type]?.total || 0
 						} hasil untuk pencarian "${query}"`
 					}),
-				renderContent: data => renderer(data, query),
-				dataObject: data => data[params.type],
+				renderContent: data =>
+					renderer(DomHelper.safeAccess(data, params.type, {}), query),
+				dataObject: data => DomHelper.safeAccess(data, params.type, {}),
 				onPageChange: newPageUrl =>
 					SearchService.performSearch(query, newPageUrl),
 				onRenderComplete: () => DomHelper.scrollToTop(),
 				pageTitle: `Pencarian ${query}`
 			});
 		} catch (error) {
-			console.error("Search error:", error);
+			DomHelper.handleError(error, "SearchService.performSearch");
 			alert("Pencarian gagal, Silakan coba lagi!");
 		} finally {
 			DomHelper.hideLoading();
@@ -1574,9 +1344,27 @@ const SearchService = {
 		Object.entries(params).forEach(([key, value]) => {
 			if (value) urlSearch.searchParams.append(key, value);
 		});
-		console.log(urlSearch.toString());
 
 		return urlSearch.toString();
+	},
+
+	getParamsGetter: (bookType, viewType) => {
+		if (!SearchService.contextParams[bookType])
+			return SearchService.contextParams.default;
+
+		return (
+			SearchService.contextParams[bookType][viewType] ||
+			SearchService.contextParams[bookType].list ||
+			SearchService.contextParams.default
+		);
+	},
+
+	getViewType: (bookType, state) => {
+		let viewType = state.currentPage || "list";
+		if (bookType === "bible" || bookType === "sekolah")
+			viewType = state.level || viewType;
+
+		return viewType;
 	},
 
 	clearAllInputs: () => {
@@ -1588,33 +1376,18 @@ const SearchService = {
 
 	clearListSearch: () => {
 		// Bersihkan input pencarian di halaman list
-		const listSearchInput = DOM.listSearch.querySelector(".search-input");
+		const listSearchInput = DOM.listSearch?.querySelector(".search-input");
 		if (listSearchInput) listSearchInput.value = "";
 	},
 
 	clearDetailSearch: () => {
 		// Bersihkan input pencarian di halaman detail
-		const detailSearchInput = DOM.detailSearch.querySelector(".search-input");
+		const detailSearchInput = DOM.detailSearch?.querySelector(".search-input");
 		if (detailSearchInput) detailSearchInput.value = "";
 	}
 };
 
 const ThemeManager = {
-	async init() {
-		try {
-			const savedTheme = await CacheManager.getItem("themePreferences");
-
-			if (savedTheme === "light") {
-				DOM.body.classList.add("light-mode");
-				ThemeManager.updateThemeButton(true);
-			} else {
-				ThemeManager.updateThemeButton(false);
-			}
-		} catch (error) {
-			console.error(error);
-		}
-	},
-
 	async toggle() {
 		try {
 			const isLight = DOM.body.classList.toggle("light-mode");
@@ -1625,48 +1398,17 @@ const ThemeManager = {
 				60 * 60 * 1000
 			);
 		} catch (error) {
-			console.erro(error);
+			DomHelper.handleError(error, "ThemeManager.toggle");
 		}
 	},
 
 	updateThemeButton(isLight) {
-		DOM.btnTheme.innerHTML = isLight
-			? '<i class="fas fa-sun"></i><span class="text">Mode Terang</span>'
-			: '<i class="fas fa-moon"></i><span class="text">Mode Gelap</span>';
+		DomHelper.ensureElement(DOM.btnTheme, btn => {
+			btn.innerHTML = isLight
+				? '<i class="fas fa-sun"></i><span class="text">Mode Terang</span>'
+				: '<i class="fas fa-moon"></i><span class="text">Mode Gelap</span>';
+		});
 	}
-};
-
-// Fungsi untuk menginisialisasi rak buku utama
-const initMainShelf = () => {
-	let shelvesHTML = "";
-
-	// Membuat rak untuk setiap kategori
-	for (const category in APP_CONFIG.bookshelves) {
-		const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
-		shelvesHTML += TemplateHelper.createBookshelf(
-			categoryName,
-			APP_CONFIG.bookshelves[category]
-		);
-	}
-
-	DomHelper.setHTML(DOM.mainshelfSection, shelvesHTML);
-
-	// Menambahkan event listener untuk buku di main shelf
-	document.querySelectorAll(".book-cover").forEach(cover => {
-		cover.style.setProperty("--book-color", APP_CONFIG.primaryBookColor.main);
-		cover.style.setProperty(
-			"--book-color-dark",
-			APP_CONFIG.primaryBookColor.dark
-		);
-	});
-
-	document
-		.querySelectorAll(".book")
-		.forEach(book =>
-			book.addEventListener("click", () =>
-				handleListAction(book.getAttribute("data-type"))
-			)
-		);
 };
 
 // Fungsi untuk menampilkan main shelf
@@ -1678,7 +1420,10 @@ function showMainShelf() {
 		DomHelper.hide(DOM.listbookSection);
 		DomHelper.hide(DOM.detailbook);
 		DomHelper.hide(DOM.btnBack);
-		DOM.pageTitle.textContent = "Perpustakaan Digital";
+		DomHelper.ensureElement(
+			DOM.pageTitle,
+			el => (el.textContent = "Perpustakaan Digital")
+		);
 	});
 
 	SearchVisibility.hideAll();
@@ -1710,84 +1455,101 @@ function showDetailBook() {
 
 function handleListAction(bookType, transId = null, bookId = null) {
 	DomHelper.scrollToTop();
-	switch (bookType) {
-		case "quran":
-			QuranService.showList();
-			break;
-		case "hadith":
-			HadithService.showList();
-			break;
-		case "bible":
-			BibleService.showList(transId, bookId);
-			break;
-		case "doa":
-			DoaService.showList();
-			break;
-		case "nabi":
-			ProphetService.showList();
-			break;
-		case "asmaul":
-			AsmaulService.showList();
-			break;
-		case "ojk":
-			OjkService.showList();
-			break;
-		case "sekolah":
-			SekolahService.showList();
-			AppState.setBookState("sekolah", { level: "provinsi" });
-			break;
-		case "bahasadaerah":
-			BahasaService.showList();
-			break;
-		case "hero":
-			HeroService.showDetail();
-			break;
-		case "volcano":
-			VolcanoService.showList();
-			break;
-		case "kbbi":
-			KbbiService.showDetail();
-			break;
+	const serviceConfig = ServiceRegistry[bookType];
+	if (!serviceConfig)
+		return console.warn(`Service tidak ditemukan untuk: ${bookType}`);
+	const { service, needsInit, init, useShowDetail } = serviceConfig;
+
+	if (bookType === "bible") service.showList(transId, bookId);
+	else if (useShowDetail) {
+		service.showDetail();
+	} else {
+		service.showList();
+		if (needsInit && init) init();
 	}
 }
 
-// ============== EVENT LISTENERS ==============
-function setupEventListeners() {
-	// Toggle tema
-	DOM.btnTheme.addEventListener("click", () => ThemeManager.toggle());
+// ========== APP INITIALIZER ============
+const App = {
+	async init() {
+		try {
+			await this.initTheme();
+			this.initMainShelf();
+			this.setupEventListeners();
+			showMainShelf();
+		} catch (error) {
+			DomHelper.handleError(error, "initApp");
+			alert("Aplikasi gagal dimulai: " + error.message);
+		}
+	},
 
-	// Tombol kembali
-	DOM.btnBack.addEventListener("click", () => NavigationManager.handleBack());
+	async initTheme() {
+		try {
+			const savedTheme = await CacheManager.getItem("themePreferences");
+			DOM.body.classList.toggle("light-mode", savedTheme === "light");
+			ThemeManager.updateThemeButton(savedTheme === "light");
+		} catch (error) {
+			DomHelper.handleError(error, "ThemeManager.init");
+		}
+	},
 
-	// Pencarian
-	DOM.searchInputs.forEach(input =>
-		input.addEventListener("keyup", function (e) {
-			if (e.key === "Enter") {
-				SearchService.performSearch(this.value.trim());
-			}
-		})
-	);
+	initMainShelf() {
+		if (!DomHelper.ensureElement(DOM.mainshelfSection)) return;
 
-	DOM.searchButtons.forEach(btn =>
-		btn.addEventListener("click", function () {
-			const input = this.previousElementSibling;
-			SearchService.performSearch(input.value.trim());
-		})
-	);
-}
+		const shelvesHTML = Object.entries(APP_CONFIG.bookshelves)
+			.map(([category, books]) => {
+				const categoryName =
+					category.charAt(0).toUpperCase() + category.slice(1);
+				return TemplateHelper.createBookshelf(categoryName, books);
+			})
+			.join("");
 
-// Inisialisasi aplikasi
-const initApp = async () => {
-	try {
-		initMainShelf();
-		setupEventListeners();
-		showMainShelf();
-		await ThemeManager.init();
-	} catch (error) {
-		console.error(error);
-		alert(error);
+		DomHelper.setHTML(DOM.mainshelfSection, shelvesHTML);
+
+		// Menambahkan event listener untuk buku di main shelf
+		document.querySelectorAll(".book-cover").forEach(cover => {
+			cover.style.setProperty("--book-color", APP_CONFIG.primaryBookColor.main);
+			cover.style.setProperty(
+				"--book-color-dark",
+				APP_CONFIG.primaryBookColor.dark
+			);
+		});
+
+		document
+			.querySelectorAll(".book")
+			.forEach(book =>
+				book.addEventListener("click", () =>
+					handleListAction(book.getAttribute("data-type"))
+				)
+			);
+	},
+
+	setupEventListeners() {
+		// Toggle tema
+		DomHelper.ensureElement(DOM.btnTheme, el =>
+			el.addEventListener("click", () => ThemeManager.toggle())
+		);
+
+		// Tombol kembali
+		DomHelper.ensureElement(DOM.btnBack, el =>
+			el.addEventListener("click", () => NavigationManager.handleBack())
+		);
+
+		// Pencarian
+		DOM.searchInputs.forEach(input =>
+			input.addEventListener("keyup", function (e) {
+				if (e.key === "Enter") SearchService.performSearch(this.value.trim());
+			})
+		);
+
+		DOM.searchButtons.forEach(btn =>
+			btn.addEventListener("click", function () {
+				const input = this.previousElementSibling;
+				SearchService.performSearch(input.value.trim());
+			})
+		);
 	}
 };
 
 // Jalankan inisialisasi saat dokumen siap
-document.addEventListener("DOMContentLoaded", () => initApp());
+document.addEventListener("DOMContentLoaded", () => App.init());

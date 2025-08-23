@@ -38,7 +38,7 @@ const APP_CONFIG = {
 				id: "kisah-nabi",
 				title: "Kisah Nabi",
 				subtitle: "25 Kisah Nabi",
-				type: "nabi"
+				type: "prophet"
 			},
 			{
 				id: "asmaulhusna",
@@ -58,7 +58,7 @@ const APP_CONFIG = {
 				id: "bahasadaerah",
 				title: "Bahasa Daerah",
 				subtitle: "Bahasa Daerah di Indonesia",
-				type: "bahasadaerah"
+				type: "bahasa"
 			},
 			{
 				id: "hero",
@@ -177,43 +177,44 @@ const AppState = {
 		this.currentPage = null;
 
 		// Reset semua state buku
-		this.quran = { surahId: null, currentSurah: null };
-		this.hadith = { bookId: null };
-		this.bible = {
-			level: null,
-			translationId: null,
-			bookId: null,
-			chapterId: null,
-			translations: null,
-			books: null,
-			chapters: null
+		const bookStates = {
+			quran: { surahId: null, currentSurah: null },
+			hadith: { bookId: null },
+			bible: {
+				level: null,
+				translationId: null,
+				bookId: null,
+				chapterId: null,
+				translations: null,
+				books: null,
+				chapters: null
+			},
+			doa: { sourceName: null },
+			prophet: { prophetId: null },
+			asmaul: { asmaulId: null },
+			ojk: { currentType: null },
+			sekolah: {
+				level: null,
+				provinsi: null,
+				kabkota: null,
+				kecamatan: null
+			},
+			bahasa: { provinceName: null },
+			volcano: { bentuk: null, filters: { tinggiMin: null, tinggiMax: null } }
 		};
-		this.doa = { sourceName: null };
-		this.prophet = { prophetId: null };
-		this.asmaul = { asmaulId: null };
-		this.ojk = { currentType: null };
-		this.sekolah = {};
-		this.bahasa = { provinceName: null };
-		this.volcano = {
-			bentuk: null,
-			filters: {
-				tinggiMin: null,
-				tinggiMax: null
-			}
-		};
+
+		// Reset semua state buku
+		Object.keys(bookStates).forEach(key => {
+			this[key] = { ...this[key], ...bookStates[key] };
+		});
 	},
 
 	// Set state untuk buku tertentu
 	setBookState(bookType, state) {
 		this.reset();
 		this.currentBook = bookType;
-		if (bookType === "bible") {
-			this.bible = { ...this.bible, ...state };
-		} else if (bookType === "sekolah") {
-			this.sekolah = { ...this.sekolah, ...state };
-		} else {
-			Object.assign(this[bookType], state);
-		}
+
+		this[bookType] = bookType in this ? { ...this[bookType], ...state } : state;
 	}
 };
 
@@ -229,6 +230,7 @@ const DomHelper = {
 	 *                                      Jika tidak ditentukan, akan menggunakan nilai asli yang tersimpan.
 	 */
 	show(element, displayType = null) {
+		if (!element) return;
 		if (displayType) {
 			element.style.display = displayType;
 		} else {
@@ -244,6 +246,7 @@ const DomHelper = {
 	 * @param {HTMLElement} element - Elemen target
 	 */
 	hide(element) {
+		if (!element) return;
 		if (element.style.display && element.style.display !== "none") {
 			element.dataset.originalDisplay = element.style.display;
 		}
@@ -256,7 +259,7 @@ const DomHelper = {
 	 * @param {string} html - String HTML yang akan di-set
 	 */
 	setHTML(element, html) {
-		element.innerHTML = html;
+		if (element) element.innerHTML = html;
 	},
 
 	/**
@@ -278,53 +281,39 @@ const DomHelper = {
 	createElement(tag, options = {}) {
 		const el = document.createElement(tag);
 
-		// Set ID
-		if (options.id) el.id = options.id;
+		const configMap = [
+			{ key: "id", action: val => (el.id = val) },
+			{ key: "className", action: val => (el.className = val) },
+			{
+				key: "attributes",
+				action: val =>
+					Object.entries(val).forEach(([k, v]) => el.setAttribute(k, v))
+			},
+			{
+				key: "dataset",
+				action: val =>
+					Object.entries(val).forEach(([k, v]) => (el.dataset[k] = v))
+			},
+			{ key: "styles", action: val => Object.assign(el.style, val) },
+			{
+				key: "events",
+				action: val =>
+					Object.entries(val).forEach(([e, h]) => el.addEventListener(e, h))
+			},
+			{ key: "text", action: val => (el.textContent = val) },
+			{ key: "html", action: val => (el.innerHTML = val) }
+		];
 
-		// Set kelas
-		if (options.className) el.className = options.className;
-
-		// Set atribut
-		if (options.attributes) {
-			for (const [key, value] of Object.entries(options.attributes)) {
-				el.setAttribute(key, value);
-			}
-		}
-
-		// Set data atribut
-		if (options.dataset) {
-			for (const [key, value] of Object.entries(options.dataset)) {
-				el.dataset[key] = value;
-			}
-		}
-
-		// Set style
-		if (options.styles) {
-			for (const [property, value] of Object.entries(options.styles)) {
-				el.style[property] = value;
-			}
-		}
-
-		// Set event listeners
-		if (options.events) {
-			for (const [event, handler] of Object.entries(options.events)) {
-				el.addEventListener(event, handler);
-			}
-		}
-
-		// Set konten
-		if (options.text) {
-			el.textContent = options.text;
-		} else if (options.html) {
-			el.innerHTML = options.html;
-		}
+		configMap.forEach(({ key, action }) => {
+			if (options[key]) action(options[key]);
+		});
 
 		// Tambahkan anak elemen
 		if (options.children) {
 			options.children.forEach(child => {
 				if (typeof child === "string") {
 					el.appendChild(document.createTextNode(child));
-				} else {
+				} else if (child instanceof Node) {
 					el.appendChild(child);
 				}
 			});
@@ -343,18 +332,26 @@ const DomHelper = {
 	 * @param {Function} valueFn - Fungsi untuk mengambil nilai dari objek opsi
 	 * @returns {HTMLElement} Div berisi label dan dropdown
 	 */
-	createDropdown(id, label, options, selectedValue, onChange, valueFn) {
-		const optionsEl = options.map(opt =>
-			DomHelper.createElement("option", {
+	createDropdown(
+		id,
+		label,
+		options,
+		selectedValue,
+		onChange,
+		valueFn = opt => opt.id
+	) {
+		const optionsEl = options.map(opt => {
+			const value = valueFn(opt);
+			return DomHelper.createElement("option", {
 				attributes: {
-					value: valueFn(opt)
+					value
 				},
 				text: opt.nama,
-				...(selectedValue === opt.id && {
+				...(selectedValue == value && {
 					attributes: { selected: true }
 				})
-			})
-		);
+			});
+		});
 
 		return DomHelper.createElement("div", {
 			className: "filter-group",
@@ -391,10 +388,10 @@ const DomHelper = {
 						attributes: {
 							value: ""
 						},
-						text: `Pilih ${select.previousElementSibling.textContent.replace(
-							":",
-							""
-						)}`
+						text: `Pilih ${
+							select.previousElementSibling?.textContent?.replace(":", "") ||
+							"item"
+						}`
 					})
 				);
 			}
@@ -405,30 +402,38 @@ const DomHelper = {
 	 * Menampilkan indikator loading global
 	 */
 	showLoading() {
+		DomHelper.hideLoading();
+
 		// Tampilkan indikator loading
-		const loadingIndicator = document.createElement("div");
-		loadingIndicator.id = "loading-indicator";
-		loadingIndicator.style.position = "fixed";
-		loadingIndicator.style.top = "0";
-		loadingIndicator.style.left = "0";
-		loadingIndicator.style.width = "100%";
-		loadingIndicator.style.height = "4px";
-		loadingIndicator.style.backgroundColor = "#8D6E63";
-		loadingIndicator.style.zIndex = "1000";
-		loadingIndicator.style.animation = "loading 2s infinite";
+		const loadingIndicator = DomHelper.createElement("div", {
+			id: "loading-indicator",
+			styles: {
+				position: "fixed",
+				top: "0",
+				left: "0",
+				width: "100%",
+				height: "4px",
+				backgroundColor: "#8D6E63",
+				zIndex: "1000",
+				animation: "loading 2s infinite"
+			}
+		});
 
 		document.body.appendChild(loadingIndicator);
 
 		// Animasi loading
-		const style = document.createElement("style");
-		style.innerHTML = `
-        @keyframes loading {
+		if (!document.getElementById("loading-animation-style")) {
+			const style = DomHelper.createElement("style", {
+				id: "loading-animation-style",
+				html: `
+			  @keyframes loading {
             0% { width: 0%; background-color: #6D4C41; }
             50% { width: 70%; background-color: #8D6E63; }
             100% { width: 100%; background-color: #6D4C41; }
-        }
-    `;
-		document.head.appendChild(style);
+        }`
+			});
+			document.head.appendChild(style);
+		}
 	},
 
 	/**
@@ -446,11 +451,9 @@ const DomHelper = {
 	 * @param {Function} callback - Fungsi yang dipanggil setelah animasi keluar selesai
 	 */
 	animateSectionChange(callback) {
-		const sections = [
-			document.getElementById("mainshelf"),
-			document.getElementById("listbook"),
-			document.getElementById("detailbook")
-		];
+		const sections = ["mainshelf", "listbook", "detailbook"]
+			.map(id => document.getElementById(id))
+			.filter(Boolean);
 		sections.forEach(section => {
 			section.style.opacity = "0";
 			section.style.transform = "translateY(20px)";
@@ -461,7 +464,7 @@ const DomHelper = {
 
 			// Re-trigger animasi
 			setTimeout(() => {
-				const visibleSection = sections.find(s => s.style.display === "block");
+				const visibleSection = sections.find(s => s.style.display !== "none");
 				if (visibleSection) {
 					visibleSection.style.opacity = "1";
 					visibleSection.style.transform = "translateY(0)";
@@ -474,9 +477,8 @@ const DomHelper = {
 	 * Scroll ke bagian atas halaman dengan offset header
 	 */
 	scrollToTop() {
-		const headerHeight = document.querySelector("header")
-			? document.querySelector("header").offsetHeight - 70
-			: 70;
+		const header = document.querySelector("header");
+		const headerHeight = header ? header.offsetHeight - 70 : 70;
 		window.scrollTo({
 			top: headerHeight,
 			behavior: "smooth"
@@ -511,6 +513,25 @@ const DomHelper = {
 		const regex = new RegExp(`(${escapedQuery})`, "gi");
 
 		return text.toString().replace(regex, "<mark>$1</mark>");
+	},
+
+	// Memastikan elemen tersedia sebelum manipulasi
+	ensureElement: (element, action = () => {}) => {
+		return element ? action(element) || true : false;
+	},
+
+	// Safe property access dengan default value
+	safeAccess: (obj, path, defaultValue = null) => {
+		return (
+			path.split(".").reduce((acc, part) => acc && acc[part], obj) ||
+			defaultValue
+		);
+	},
+
+	// Error handler terpusat
+	handleError: (error, context = "") => {
+		console.error(`Error in ${context}:`, error);
+		return null;
 	}
 };
 
@@ -524,10 +545,10 @@ const ApiHelper = {
 	 * @param {string} url - The URL to fetch data from
 	 * @returns {Promise<Object|null>} Parsed JSON response or null on error
 	 */
-	async fetchData(url) {
+	async fetchData(url, options = {}) {
 		try {
 			DomHelper.showLoading();
-			const response = await fetch(url);
+			const response = await fetch(url, options);
 			if (!response.ok)
 				throw new Error(`HTTP error! status: ${response.status}`);
 			return await response.json();
@@ -551,17 +572,16 @@ const ApiHelper = {
 	async fetchWithCache(url, cacheKey, ttl = 24 * 60 * 60 * 1000) {
 		try {
 			const cacheData = await CacheManager.getItem(cacheKey);
-
 			if (cacheData) return cacheData;
 
 			const data = await ApiHelper.fetchData(url);
 
-			if (data) {
-				await CacheManager.setItem(cacheKey, data, ttl);
-			}
+			if (data) await CacheManager.setItem(cacheKey, data, ttl);
+
 			return data;
 		} catch (error) {
-			throw error;
+			DomHelper.handleError(error, "ApiHelper.fetchWithCache");
+			return await ApiHelper.fetchData(url);
 		}
 	},
 
@@ -571,6 +591,7 @@ const ApiHelper = {
 	 * @returns {string} Secure HTTPS URL
 	 */
 	convertToHttps(url) {
+		if (!url) return url;
 		try {
 			const urlObj = new URL(url);
 			if (urlObj.protocol === "http:") {
@@ -605,7 +626,9 @@ const TemplateHelper = {
       <h2 class="shelf-title animated">${category}</h2>
       <div class="bookshelf-container animated">
         <div class="bookshelf">
-          ${books.map(book => this.createBookItem(book, category)).join("")}
+          ${books
+						.map(book => TemplateHelper.createBookItem(book, category))
+						.join("")}
         </div>
       </div>
     `;
@@ -682,46 +705,31 @@ const TemplateHelper = {
 	 * @returns {string} HTML kartu sekolah
 	 */
 	createSchoolCard(sekolah, query = "") {
-		return `
-            <div class="school-header">
-                <div class="school-name">${DomHelper.highlightMatches(
-									sekolah.nama,
-									query
-								)}</div>
-                <div class="school-type">${sekolah.bentuk}</div>
+		const highlight = text => DomHelper.highlightMatches(text, query);
+		return `<div class="school-header">
+              <div class="school-name">${highlight(sekolah.nama)}</div>
+              <div class="school-type">${sekolah.bentuk}</div>
             </div>
             <div class="school-address">
-                <i class="fas fa-map-marker-alt"></i> ${DomHelper.highlightMatches(
-									sekolah.alamat,
-									query
-								)}
+              <i class="fas fa-map-marker-alt"></i> ${highlight(sekolah.alamat)}
             </div>
             <div class="school-details">
-                <div><strong>Status:</strong> ${
-									sekolah.status === "S" ? "Swasta" : "Negeri"
-								}</div>
-                <div><strong>NPSN:</strong> ${DomHelper.highlightMatches(
-									sekolah.npsn,
-									query
-								)}</div>
-                <div>${DomHelper.highlightMatches(
-									sekolah.kecamatan.nama,
-									query
-								)} • ${DomHelper.highlightMatches(
-									sekolah.kecamatan.kabupaten_kota.nama,
-									query
-								)}</div>
-                <div>${DomHelper.highlightMatches(
-									sekolah.kecamatan.kabupaten_kota.provinsi.nama,
-									query
-								)}</div>
-                <div><a href="https://www.google.com/maps?q=&layer=c&cbll=${
-									sekolah.lintang
-								},${
-									sekolah.bujur
-								}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a></div>
-            </div>
-        `;
+              <div><strong>Status:</strong> ${
+								sekolah.status === "S" ? "Swasta" : "Negeri"
+							}</div>
+              <div><strong>NPSN:</strong> ${highlight(sekolah.npsn)}</div>
+              <div>${highlight(sekolah.kecamatan.nama)} • ${highlight(
+								sekolah.kecamatan.kabupaten_kota.nama
+							)}</div>
+              <div>${highlight(
+								sekolah.kecamatan.kabupaten_kota.provinsi.nama
+							)}</div>
+              <div><a href="https://www.google.com/maps?q=&layer=c&cbll=${
+								sekolah.lintang
+							},${
+								sekolah.bujur
+							}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a></div>
+            </div>`;
 	},
 
 	/**
@@ -767,10 +775,11 @@ const TemplateHelper = {
 			DomHelper.setHTML(container, renderHeader(data) + renderContent(data));
 
 			// Handle paginasi
-			if (dataObject(data).last_page > 1) {
+			const paginationData = dataObject(data);
+			if (paginationData.last_page > 1) {
 				paginationModule.render(
 					DOM.paginationContainer,
-					dataObject(data),
+					paginationData,
 					newPageUrl => {
 						DomHelper.scrollToTop();
 						onPageChange(newPageUrl);
@@ -782,8 +791,11 @@ const TemplateHelper = {
 			onRenderComplete?.();
 			// Panggil callback jika ada
 		} catch (error) {
-			console.error("Error:", error);
-			throw error;
+			DomHelper.handleError(error, "TemplateHelper.renderDetailWithPagination");
+			DomHelper.setHTML(
+				container,
+				`<div class="error">Gagal memuat data: ${error.message}</div>`
+			);
 		}
 	},
 
@@ -851,9 +863,9 @@ const TemplateHelper = {
 	 * @param {string} [customClass] - Kelas CSS tambahan
 	 * @returns {string} HTML item konten
 	 */
-	renderDetailContentItem(data, customClass = "") {
+	renderDetailContentItem(data, customClass = null) {
 		const audioKeys = data.audio ? Object.keys(data.audio) : [];
-		const audioUrl = audioKeys.length ? data.audio[audioKeys[5]] : "";
+		const audioUrl = audioKeys.length ? data.audio["05"] : "";
 
 		const content = `		  <div class="content-header">${
 			data.number ? `<div class="content-number">${data.number}</div>` : ""
@@ -865,7 +877,7 @@ const TemplateHelper = {
 				: ""
 		}
 		  </div>
-		  <div class="content-body ${customClass}">
+		  <div class="content-body ${customClass || ""}">
 		    ${data.arabic ? `<div class="content-arabic">${data.arabic}</div>` : ""}
 		    ${data.latin ? `<div class="content-latin">${data.latin}</div>` : ""}
 				${
@@ -894,70 +906,70 @@ const TemplateHelper = {
 	 * @param {string} description - Deskripsi format HTML
 	 * @returns {string} HTML panel deskripsi
 	 */
-	renderSurahDescription(description) {
-		return `
-            <div class="surah-description">
-                <h2 class="description-title">Deskripsi Surah</h2>
+	renderSurahDescription(description, audioFull) {
+		return `<div class="surah-description">
+		          <h2 class="description-title">Deskripsi Surah</h2>
                 <div class="description-content">${description}</div>
                 <button id="btn-close-description" class="btn-close">
                   <i class="fas fa-times"></i>
                   <span class="close-text">Tutup</span>
                 </button>
-            </div>
-        `;
+            </div>${
+							audioFull
+								? `<div class="content-audio">
+				  <audio controls>
+				    <source src="${audioFull["05"]}" type="audio/mpeg">
+				    Browser anda tidak mendukunh audio.
+				  </audio>
+				</div>`
+								: ""
+						}`;
 	},
 
 	renderOjkItems(items, type, query = "") {
+		const highlight = text => DomHelper.highlightMatches(text, query);
+		const renderers = {
+			apps: item =>
+				TemplateHelper.renderDetailContentItem(
+					{
+						number: item.id,
+						title: highlight(item.name),
+						latin: item.url,
+						translation: highlight(item.owner)
+					},
+					"ojk-item"
+				),
+			illegals: item =>
+				TemplateHelper.renderDetailContentItem(
+					{
+						number: item.id,
+						title: item.entity_type,
+						arabic: highlight(item.name),
+						latin: `Web: ${item.web.join(", ") || "-"}<br>Email: ${highlight(
+							item.email.join(", ") || "-"
+						)}`,
+						translation: `<strong>${item.activity_type}</strong><br>Address: ${
+							item.address.join(", ") || "-"
+						}<br>Phone: ${item.phone.join(", ") || "-"}<br>Input date: ${
+							item.input_date || "-"
+						}<br>${item.description}`
+					},
+					"ojk-item"
+				),
+			products: item =>
+				TemplateHelper.renderDetailContentItem(
+					{
+						number: item.id,
+						title: highlight(item.management),
+						arabic: highlight(item.name),
+						latin: highlight(item.type),
+						translation: item.custodian
+					},
+					"ojk-item"
+				)
+		};
 		return items
-			.map(item => {
-				switch (type) {
-					case "apps":
-						return TemplateHelper.renderDetailContentItem(
-							{
-								number: item.id,
-								title: DomHelper.highlightMatches(item.name, query),
-								latin: item.url,
-								translation: DomHelper.highlightMatches(item.owner, query)
-							},
-							"ojk-item"
-						);
-					case "illegals":
-						return TemplateHelper.renderDetailContentItem(
-							{
-								number: item.id,
-								title: item.entity_type,
-								arabic: DomHelper.highlightMatches(item.name, query),
-								latin: `Web: ${
-									item.web.join(", ") || "-"
-								}<br>Email: ${DomHelper.highlightMatches(
-									item.email.join(", ") || "-",
-									query
-								)}`,
-								translation: `<strong>${
-									item.activity_type
-								}</strong><br>Address: ${
-									item.address.join(", ") || "-"
-								}<br>Phone: ${item.phone.join(", ") || "-"}<br>Input date: ${
-									item.input_date || "-"
-								}<br>${item.description}`
-							},
-							"ojk-item"
-						);
-					case "products":
-						return TemplateHelper.renderDetailContentItem(
-							{
-								number: item.id,
-								title: DomHelper.highlightMatches(item.management, query),
-								arabic: DomHelper.highlightMatches(item.name, query),
-								latin: DomHelper.highlightMatches(item.type, query),
-								translation: item.custodian
-							},
-							"ojk-item"
-						);
-					default:
-						return "";
-				}
-			})
+			.map(item => (renderers[type] ? renderers[type](item) : ""))
 			.join("");
 	},
 
@@ -1011,12 +1023,11 @@ const TemplateHelper = {
 			})
 			.join("");
 
-		return `<div class="filter-form">
-                ${fieldsHtml}
-                <div class="filter-buttons">
-                    <button type="button" class="btn-apply-filter">Terapkan</button>
-                    <button type="button" class="btn-reset-filter">Reset</button>
-                </div>
+		return `<div class="filter-form">${fieldsHtml}
+		          <div class="filter-buttons">
+                <button type="button" class="btn-apply-filter">Terapkan</button>
+                <button type="button" class="btn-reset-filter">Reset</button>
+              </div>
             </div>`;
 	},
 
@@ -1031,20 +1042,26 @@ const TemplateHelper = {
 		if (!form) return;
 
 		// Handler terapkan filter
-		form.querySelector(".btn-apply-filter").addEventListener("click", () => {
-			const tinggiMin = form.querySelector('[name="tinggiMin"]').value;
-			const tinggiMax = form.querySelector('[name="tinggiMax"]').value;
-			onApply(tinggiMin, tinggiMax);
-		});
+		const applyBtn = form.querySelector(".btn-apply-filter");
+		if (applyBtn) {
+			applyBtn.addEventListener("click", () => {
+				const tinggiMin = form.querySelector('[name="tinggiMin"]').value;
+				const tinggiMax = form.querySelector('[name="tinggiMax"]').value;
+				onApply(tinggiMin, tinggiMax);
+			});
+		}
 
 		// Handler reset filter
-		form.querySelector(".btn-reset-filter").addEventListener("click", () => {
-			form.querySelectorAll(".filter-input").forEach(input => {
-				input.value = "";
-				if (input.tagName === "SELECT") input.selectedIndex = 0;
+		const resetBtn = form.querySelector(".btn-reset-filter");
+		if (resetBtn) {
+			resetBtn.addEventListener("click", () => {
+				form.querySelectorAll(".filter-input").forEach(input => {
+					input.value = "";
+					if (input.tagName === "SELECT") input.selectedIndex = 0;
+				});
+				onReset();
 			});
-			onReset();
-		});
+		}
 	}
 };
 
