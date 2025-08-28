@@ -12,6 +12,7 @@ const APP_CONFIG = {
 		heroes: "https://vickyserver.my.id/server/api/books/heroes",
 		volcano: "https://vickyserver.my.id/server/api/books/volcanoes",
 		kbbi: "https://vickyserver.my.id/server/api/books/kbbi",
+		book: "https://vickyserver.my.id/server/api/books/book",
 		search: "https://vickyserver.my.id/server/api/search"
 	},
 	bookshelves: {
@@ -94,12 +95,22 @@ const APP_CONFIG = {
 				subtitle: "Informasi Lembaga Jasa Keuangan",
 				type: "ojk"
 			}
+		],
+		misc: [
+			{
+				id: "book",
+				title: "Buku",
+				subtitle: "Buku Acak",
+				type: "book"
+			}
 		]
 	},
 	primaryBookColor: {
 		main: "#8D6E63",
 		dark: "#6D4C41"
 	},
+	defaultBookCover:
+		"https://via.placeholder.com/300x400/f5f5f5/cccccc?text=Cover+Tidak+Tersedia",
 	libraries: {
 		LZString: {
 			urls: [
@@ -170,6 +181,10 @@ const AppState = {
 
 	kbbi: {},
 
+	book: {
+		categoryId: null
+	},
+
 	// Fungsi untuk reset state
 	reset() {
 		this.currentCategory = "";
@@ -200,7 +215,12 @@ const AppState = {
 				kecamatan: null
 			},
 			bahasa: { provinceName: null },
-			volcano: { bentuk: null, filters: { tinggiMin: null, tinggiMax: null } }
+			volcano: { bentuk: null, filters: { tinggiMin: null, tinggiMax: null } },
+			hero: {},
+			kbbi: {},
+			book: {
+				categoryId: null
+			}
 		};
 
 		// Reset semua state buku
@@ -836,16 +856,16 @@ const TemplateHelper = {
     `
 			: "";
 
-		return `<div class="book-header">
-	    <h1>${headerData.title}</h1>
+		return `<div class="book-detail-header">
+	    <h1 class="detail-title">${headerData.title}</h1>
 	    ${
 				headerData.subtitle
-					? `<div class="book-header-subtitle">${headerData.subtitle}</div>`
+					? `<div class="detail-subtitle">${headerData.subtitle}</div>`
 					: ""
 			}
 			${
 				headerData.meta
-					? `<div class="book-header-meta">${headerData.meta}</div>`
+					? `<div class="detail-meta">${headerData.meta}</div>`
 					: ""
 			}<div class="header-actions">${descriptionButton}${filterToggle}</div>
 	  </div>`;
@@ -863,42 +883,240 @@ const TemplateHelper = {
 	 * @param {string} [customClass] - Kelas CSS tambahan
 	 * @returns {string} HTML item konten
 	 */
-	renderDetailContentItem(data, customClass = null) {
+	renderDetailContentItem(data, type = "default", query = "") {
 		const audioKeys = data.audio ? Object.keys(data.audio) : [];
 		const audioUrl = audioKeys.length ? data.audio["05"] : "";
 
-		const content = `		  <div class="content-header">${
-			data.number ? `<div class="content-number">${data.number}</div>` : ""
-		}${
-			data.title || data.book_id
-				? `<div class="content-title">${
-						data.title || `HR. ${data.book_id.replace("-", " ").toUpperCase()}`
-				  }</div>`
-				: ""
-		}
-		  </div>
-		  <div class="content-body ${customClass || ""}">
-		    ${data.arabic ? `<div class="content-arabic">${data.arabic}</div>` : ""}
-		    ${data.latin ? `<div class="content-latin">${data.latin}</div>` : ""}
-				${
-					data.translation
-						? `<div class="content-translation">${data.translation}</div>`
-						: ""
-				}${
-					audioUrl
-						? `<div class="content-audio">
-				  <audio controls>
-				    <source src="${audioUrl}" type="audio/mpeg">
-				    Browser anda tidak mendukunh audio.
-				  </audio>
-				</div>`
+		const highlight = text => DomHelper.highlightMatches(text, query);
+
+		const contentHtml = {
+			"verse-item": `<div class="book-detail-content">
+			  ${data.arabic ? `<div class="verse-arabic">${data.arabic}</div>` : ""}
+			  ${
+					data.latin
+						? `<div class="content-latin">${highlight(data.latin)}</div>`
 						: ""
 				}
-		  </div>`;
+			  ${
+					data.translation
+						? `<div class="content-translation">${highlight(
+								data.translation
+						  )}</div>`
+						: ""
+				}
+				${
+					audioUrl
+						? `<div class="content-audio"><audio controls class="audio-player"><source src="${audioUrl}" type="audio/mpeg">Browser anda tidak mendukung audio.</audio></div>`
+						: ""
+				}
+			</div>`,
+			"ojk-item": `<div class="book-detail-content">
+			${data.arabic ? `<div class="verse-arabic ojk">${data.arabic}</div>` : ""}
+			${data.latin ? `<div class="content-latin">${data.latin}</div>` : ""}
+			${
+				data.translation
+					? `<div class="book-details"><div class="detail-grid">${data.translation}</div></div>`
+					: ""
+			}
+			</div>`,
+			"book-item": `<div class="book-detail-content">
+        <!-- Bagian kiri: Cover buku dan tombol aksi -->
+        <div class="book-cover-section">
+          ${
+						data.cover_image
+							? `
+            <div class="book-cover-image">
+              <img src="${data.cover_image}" alt="${data.title}" onerror="this.src='${APP_CONFIG.defaultBookCover}'">
+              <div class="book-cover-effect"></div>
+            </div>
+          `
+							: ""
+					}
+          
+          ${
+						data.book_link
+							? `
+            <a href="${data.book_link}" class="btn-download-book" target="_blank">
+              <i class="fas fa-download"></i> Unduh Buku
+            </a>
+          `
+							: ""
+					}
+        </div>
+        
+        <!-- Bagian kanan: Informasi detail buku -->
+        <div class="book-info-section">
+          <!-- Summary -->
+          ${
+						data.summary
+							? `
+            <div class="book-summary">
+              <h3>Sinopsis</h3>
+              <p>${highlight(data.summary)}</p>
+            </div>
+          `
+							: ""
+					}
+          
+          <!-- Author dan Publisher -->
+          <div class="book-meta-info">
+            ${
+							data.author
+								? `
+              <div class="book-author">
+                <strong>Penulis:</strong> 
+                ${
+									data.author.url
+										? `
+                  <a href="${data.author.url}" target="_blank">${highlight(
+										data.author.name
+									)}</a>
+                `
+										: highlight(data.author.name)
+								}
+              </div>
+            `
+								: ""
+						}
+            
+            ${
+							data.publisher
+								? `
+              <div class="book-publisher">
+                <strong>Penerbit:</strong> ${highlight(data.publisher.name)}
+              </div>
+            `
+								: ""
+						}
+          </div>
+          
+          <!-- Detail buku -->
+          ${
+						data.detail
+							? `
+            <div class="book-details">
+              <h3>Detail Buku</h3>
+              <div class="detail-grid">
+                ${
+									data.detail.no_gm
+										? `<div><strong>No. GM:</strong> ${highlight(
+												data.detail.no_gm
+										  )}</div>`
+										: ""
+								}
+                ${
+									data.detail.isbn
+										? `<div><strong>ISBN:</strong> ${highlight(
+												data.detail.isbn
+										  )}</div>`
+										: ""
+								}
+                ${
+									data.detail.price
+										? `<div><strong>Harga:</strong> ${highlight(
+												data.detail.price
+										  )}</div>`
+										: ""
+								}
+                ${
+									data.detail.total_pages
+										? `<div><strong>Halaman:</strong> ${highlight(
+												data.detail.total_pages
+										  )}</div>`
+										: ""
+								}
+                ${
+									data.detail.size
+										? `<div><strong>Ukuran:</strong> ${data.detail.size}</div>`
+										: ""
+								}
+                ${
+									data.detail.published_date
+										? `<div><strong>Tanggal Terbit:</strong> ${highlight(
+												data.detail.published_date
+										  )}</div>`
+										: ""
+								}
+                ${
+									data.detail.format
+										? `<div><strong>Format:</strong> ${data.detail.format}</div>`
+										: ""
+								}
+              </div>
+            </div>
+          `
+							: ""
+					}
+          
+          <!-- Tags -->
+          ${
+						data.tags && data.tags.length > 0
+							? `
+            <div class="book-tags">
+              <h3>Tag</h3>
+              <div class="tags-container">
+                ${data.tags
+									.map(
+										tag => `
+                  <a href="${tag.url}" class="tag" target="_blank">${highlight(
+										tag.name
+									)}</a>
+                `
+									)
+									.join("")}
+              </div>
+            </div>
+          `
+							: ""
+					}
+          
+          <!-- Buy Links -->
+          ${
+						data.buy_links && data.buy_links.length > 0
+							? `
+            <div class="book-buy-links">
+              <h3>Tempat Pembelian</h3>
+              <div class="buy-links">
+                ${data.buy_links
+									.map(
+										link => `
+                  <a href="${link.url}" class="btn-buy" target="_blank">
+                    <i class="fas fa-shopping-cart"></i> ${link.store}
+                  </a>
+                `
+									)
+									.join("")}
+              </div>
+            </div>
+          `
+							: ""
+					}
+        </div>
+      </div>`,
+			default: `<div class="book-detail-content">
+			${data.arabic ? `<div class="verse-arabic">${data.arabic}</div>` : ""}
+			${data.latin ? `<div class="content-latin">${data.latin}</div>` : ""}
+			${
+				data.translation
+					? `<div class="content-translation">${data.translation}</div>`
+					: ""
+			}
+			</div>`
+		};
 
-		return customClass
-			? `<div class="book-content-item ${customClass}">${content}</div>`
-			: content;
+		return `<div class="book-detail-item animated ${type}">
+		  <div class="list-item-header">
+		    ${data.number ? `<div class="list-item-number">${data.number}</div>` : ""}
+		    ${
+					data.title
+						? `<div class="list-item-title"><h1>${highlight(
+								data.title
+						  )}</h1></div>`
+						: ""
+				}
+		  </div>
+		  ${contentHtml[type] || contentHtml.default}
+		</div>`;
 	},
 
 	/**
@@ -948,11 +1166,15 @@ const TemplateHelper = {
 						latin: `Web: ${item.web.join(", ") || "-"}<br>Email: ${highlight(
 							item.email.join(", ") || "-"
 						)}`,
-						translation: `<strong>${item.activity_type}</strong><br>Address: ${
+						translation: `<div><strong>Activity: </strong>${
+							item.activity_type
+						}</div><div><strong>Address:</strong> <span>${
 							item.address.join(", ") || "-"
-						}<br>Phone: ${item.phone.join(", ") || "-"}<br>Input date: ${
+						}</span></div><div><strong>Phone:</strong> ${
+							item.phone.join(", ") || "-"
+						}</div><div><strong>Input date:</strong> ${
 							item.input_date || "-"
-						}<br>${item.description}`
+						}</div><div><strong>Description:</strong> ${item.description}</div>`
 					},
 					"ojk-item"
 				),

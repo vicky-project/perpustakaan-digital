@@ -356,7 +356,8 @@ const ProphetService = {
 			}
 		],
 		dataObject: data => data.data,
-		afterRenderDetail: () => SearchVisibility.hideAll()
+		afterRenderDetail: () => SearchVisibility.hideAll(),
+		renderType: "verse-item"
 	})
 };
 
@@ -555,6 +556,46 @@ const OjkService = {
 		dataObject: data => data.data,
 		onPageChange: (id, newPageUrl) => OjkService.showDetail(id, newPageUrl),
 		pageTitle: id => id.toUpperCase()
+	})
+};
+
+const BookService = {
+	...BaseService.createService({
+		bookType: "book",
+		listUrl: `${APP_CONFIG.endpoints.book}/categories`,
+		cacheKey: "books_list",
+		extractData: data => data.data,
+		attrId: item => item.id,
+		bookDataFn: item => ({
+			title: item.name,
+			content: `${item.books_count} buku`
+		}),
+		onClickFn: card => BookService.showDetail(card.dataset.id),
+		title: "Categories",
+		detailUrl: `${APP_CONFIG.endpoints.book}`,
+		detailSuffix: "/books",
+		idProperty: "categoryId",
+		loadingMessage: "Memuat data Buku...",
+		renderHeader: data => ({
+			title: data.data.category.name,
+			meta: `Total ${data.data.books.total} buku`
+		}),
+		renderContent: data =>
+			data.data.books.data.map(book => ({
+				title: book.title,
+				cover_image: book.cover_image,
+				summary: book.summary,
+				book_link: book.book_link,
+				author: book.author,
+				publisher: book.publisher,
+				detail: book.detail,
+				tags: book.tags,
+				buy_links: book.buy_links
+			})),
+		dataObject: data => data.data.books,
+		onPageChange: (id, newPageUrl) => BookService.showDetail(id, newPageUrl),
+		pageTitle: id => "Buku Item",
+		renderType: "book-item"
 	})
 };
 
@@ -885,7 +926,8 @@ const ServiceRegistry = {
 	bahasa: { service: BahasaService, needsInit: false },
 	hero: { service: HeroService, needsInit: false, useShowDetail: true },
 	volcano: { service: VolcanoService, needsInit: false },
-	kbbi: { service: KbbiService, needsInit: false, useShowDetail: true }
+	kbbi: { service: KbbiService, needsInit: false, useShowDetail: true },
+	book: { service: BookService, needsInit: false }
 };
 
 // ============== NAVIGATION MANAGER ==============
@@ -1085,6 +1127,10 @@ const SearchService = {
 		kbbi: {
 			detail: state => ({ type: "kbbi" })
 		},
+		book: {
+			list: state => ({ type: "book" }),
+			detail: state => ({ type: "boon", categoryId: state.categoryId })
+		},
 		default: () => ({ type: AppState.currentBook })
 	},
 
@@ -1235,6 +1281,10 @@ const SearchService = {
 					})
 				)
 				.join(""),
+		book: (data, query) =>
+			data.data.map(book =>
+				TemplateHelper.renderDetailContentItem(book, "book-item", query)
+			),
 
 		default: items =>
 			items
@@ -1344,6 +1394,7 @@ const SearchService = {
 		Object.entries(params).forEach(([key, value]) => {
 			if (value) urlSearch.searchParams.append(key, value);
 		});
+		console.log(urlSearch.toString());
 
 		return urlSearch.toString();
 	},
