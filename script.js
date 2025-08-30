@@ -539,7 +539,7 @@ const VolcanoService = {
 
 		pageUrl =
 			pageUrl ||
-			`${APP_CONFIG.endpoints.volcano}?bentuk=${nama}${params || ""}`;
+			`${APP_CONFIG.endpoints.server}/volcanoes?bentuk=${nama}${params || ""}`;
 
 		VolcanoService.showDetail(nama, pageUrl);
 	},
