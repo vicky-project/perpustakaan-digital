@@ -177,7 +177,7 @@ const BaseService = {
 const QuranService = {
 	...BaseService.createService({
 		bookType: "quran",
-		listUrl: APP_CONFIG.endpoints.quran,
+		listUrl: APP_CONFIG.endpoints.server + "/quran",
 		cacheKey: "quran_list",
 		extractData: data => data,
 		attrId: item => item.id,
@@ -189,7 +189,7 @@ const QuranService = {
 		}),
 		onClickFn: card => QuranService.showDetail(card.dataset.id),
 		title: "Al-Quran",
-		detailUrl: APP_CONFIG.endpoints.quran,
+		detailUrl: `${APP_CONFIG.endpoints.server}/quran`,
 		detailSuffix: "/verses",
 		idProperty: "surahId",
 		loadingMessage: "Memuat data ayat...",
@@ -263,7 +263,7 @@ const QuranService = {
 const HadithService = {
 	...BaseService.createService({
 		bookType: "hadith",
-		listUrl: APP_CONFIG.endpoints.hadith,
+		listUrl: APP_CONFIG.endpoints.server + "/hadith-book",
 		cacheKey: "hadith_list",
 		extractData: data => data,
 		attrId: item => item.id,
@@ -274,7 +274,7 @@ const HadithService = {
 		}),
 		onClickFn: card => HadithService.showDetail(card.dataset.id),
 		title: "Kitab Hadits",
-		detailUrl: APP_CONFIG.endpoints.hadith,
+		detailUrl: `${APP_CONFIG.endpoints.server}/hadith-book`,
 		detailSuffix: "/hadiths",
 		idProperty: "bookId",
 		loadingMessage: "Memuat data hadiths...",
@@ -296,7 +296,7 @@ const HadithService = {
 const DoaService = {
 	...BaseService.createService({
 		bookType: "doa",
-		listUrl: `${APP_CONFIG.endpoints.doa}/sumber`,
+		listUrl: `${APP_CONFIG.endpoints.server}/doa/sumber`,
 		cacheKey: "doa_list",
 		extractData: data => data.sumber,
 		attrId: item => item.nama,
@@ -306,7 +306,7 @@ const DoaService = {
 		}),
 		onClickFn: card => DoaService.showDetail(card.dataset.id),
 		title: "Daftar Doa Harian",
-		detailUrl: `${APP_CONFIG.endpoints.doa}/sumber`,
+		detailUrl: `${APP_CONFIG.endpoints.server}/doa/sumber`,
 		idProperty: "sourceName",
 		loadingMessage: "Memuat doa...",
 		renderHeader: data => ({
@@ -330,25 +330,33 @@ const DoaService = {
 const ProphetService = {
 	...BaseService.createService({
 		bookType: "prophet",
-		listUrl: APP_CONFIG.endpoints.prophet,
+		listUrl: `${APP_CONFIG.endpoints.server}/prophet-stories`,
 		cacheKey: "prophet_list",
 		extractData: data => data.data,
 		attrId: item => item.id,
-		bookDataFn: item => ({
-			title: item.name,
-			content: DomHelper.formatProphetYear(item.birth_year, item.name).text
-		}),
+		bookDataFn: item => {
+			const formated = DomHelper.formatProphetYear(item.birth_year, item.name);
+			return {
+				title: item.name,
+				content: `<span class="${formated.className}">${formated.text}</span>`
+			};
+		},
 		onClickFn: card => ProphetService.showDetail(card.dataset.id),
 		title: "Cerita Nabi",
 		afterRenderList: () => SearchVisibility.hideAll(),
-		detailUrl: APP_CONFIG.endpoints.prophet,
+		detailUrl: `${APP_CONFIG.endpoints.server}/prophet-stories`,
 		idProperty: "prophetId",
 		loadingMessage: "Memuat data Nabi...",
-		renderHeader: data => ({
-			title: data.data.name,
-			subtitle: `${data.data.birth_year} (${data.data.age} age)`,
-			meta: `${data.data.place}`
-		}),
+		renderHeader: data => {
+			const formated = DomHelper.formatProphetYear(
+				data.data.birth_year,
+				data.data.name
+			);
+			return {
+				title: data.data.name,
+				meta: `${data.data.place} pada <span class="${formated.className}">${formated.text}</span> (${data.data.age} age)`
+			};
+		},
 		renderContent: data => [
 			{
 				number: data.data.birth_year,
@@ -364,7 +372,7 @@ const ProphetService = {
 const AsmaulService = {
 	...BaseService.createService({
 		bookType: "asmaul",
-		listUrl: APP_CONFIG.endpoints.asmaul,
+		listUrl: `${APP_CONFIG.endpoints.server}/asmaul-husna`,
 		cacheKey: "asmaul_husna",
 		extractData: data => data.data,
 		attrId: item => item.id,
@@ -375,12 +383,12 @@ const AsmaulService = {
 		onClickFn: card => AsmaulService.showDetail(card.dataset.id),
 		title: "Asmaul Husna",
 		afterRenderList: () => SearchVisibility.hideAll(),
-		detailUrl: APP_CONFIG.endpoints.asmaul,
+		detailUrl: `${APP_CONFIG.endpoints.server}/asmaul-husna`,
 		idProperty: "asmaulId",
 		loadingMessage: "Memuat data Asmaul Husna...",
 		renderHeader: data => ({
-			title: data.data.arabic,
-			subtitle: `${data.data.latine} (${data.data.meaning})`,
+			title: `${data.data.latine} (${data.data.arabic})`,
+			subtitle: `${data.data.meaning}`,
 			meta: `${data.data.description}.<br>Found: ${data.data.found}`
 		}),
 		renderContent: data =>
@@ -398,10 +406,42 @@ const AsmaulService = {
 	})
 };
 
+const ShalatService = {
+	...BaseService.createService({
+		bookType: "shalat",
+		listUrl: `${APP_CONFIG.endpoints.server}/shalat`,
+		cacheKey: "shalat_list",
+		extractData: data => data.data,
+		attrId: item => item.id,
+		bookDataFn: item => ({
+			title: DomHelper.toTitleCase(item.name),
+			content: item.details.length + " bacaan"
+		}),
+		onClickFn: card => ShalatService.showDetail(card.dataset.id),
+		title: "Shalat",
+		detailUrl: `${APP_CONFIG.endpoints.server}/shalat`,
+		idProperty: "shalatId",
+		loadingMessage: "Memuat data shalat...",
+		renderHeader: data => ({
+			title: DomHelper.toTitleCase(data.data.name),
+			meta: `Total ${data.data.shalats.length} item`
+		}),
+		renderContent: data =>
+			data.data.shalats.map(shalat => ({
+				number: shalat.id,
+				title: shalat.name,
+				arabic: shalat.arabic,
+				latin: shalat.latin,
+				translation: shalat.terjemahan
+			})),
+		dataObject: data => data.data.shalats
+	})
+};
+
 const BahasaService = {
 	...BaseService.createService({
 		bookType: "bahasa",
-		listUrl: `${APP_CONFIG.endpoints.bahasa}/provinsi`,
+		listUrl: `${APP_CONFIG.endpoints.server}/bahasa/provinsi`,
 		cacheKey: "bahasa_provinsi",
 		extractData: data => data.data,
 		attrId: item => item.id,
@@ -411,7 +451,7 @@ const BahasaService = {
 		}),
 		onClickFn: card => BahasaService.showDetail(card.dataset.id),
 		title: "Bahasa Daerah",
-		detailUrl: `${APP_CONFIG.endpoints.bahasa}/provinsi`,
+		detailUrl: `${APP_CONFIG.endpoints.server}/bahasa/provinsi`,
 		idProperty: "provinceName",
 		loadingMessage: "Memuat data Bahasa Daerah...",
 		renderHeader: data => ({
@@ -427,14 +467,14 @@ const BahasaService = {
 			})),
 		dataObject: data => data.meta,
 		onPageChange: (id, newPageUrl) => BahasaService.showDetail(id, newPageUrl),
-		renderType: "ojk-item"
+		renderType: "verse-item"
 	})
 };
 
 const VolcanoService = {
 	...BaseService.createService({
 		bookType: "volcano",
-		listUrl: `${APP_CONFIG.endpoints.volcano}/bentuk`,
+		listUrl: `${APP_CONFIG.endpoints.server}/volcanoes/bentuk`,
 		cacheKey: "volcano_bentuk",
 		extractData: data => data.data,
 		attrId: item => item.bentuk,
@@ -444,7 +484,7 @@ const VolcanoService = {
 		}),
 		onClickFn: card => VolcanoService.prepareShowDetail(card.dataset.id),
 		title: "Bentuk Gunung Berapi",
-		detailUrl: APP_CONFIG.endpoints.volcano,
+		detailUrl: `${APP_CONFIG.endpoints.server}/volcanoes`,
 		idProperty: "bentuk",
 		loadingMessage: "Memuat data gunung berapi...",
 		renderHeader: data => ({
@@ -531,7 +571,7 @@ const VolcanoService = {
 const OjkService = {
 	...BaseService.createService({
 		bookType: "ojk",
-		listUrl: APP_CONFIG.endpoints.ojk,
+		listUrl: `${APP_CONFIG.endpoints.server}/ojk`,
 		cacheKey: "ojk_list",
 		extractData: data => data.data,
 		attrId: item => item.toLowerCase(),
@@ -542,7 +582,7 @@ const OjkService = {
 		onClickFn: card => OjkService.showDetail(card.dataset.id),
 		title: "OJK Portal",
 		afterRenderList: () => SearchVisibility.hideAll(),
-		detailUrl: APP_CONFIG.endpoints.ojk,
+		detailUrl: `${APP_CONFIG.endpoints.server}/ojk`,
 		idProperty: "currentType",
 		loadingMessage: "Memuat data OJK...",
 		renderHeader: data => ({
@@ -562,7 +602,7 @@ const OjkService = {
 const BookService = {
 	...BaseService.createService({
 		bookType: "book",
-		listUrl: `${APP_CONFIG.endpoints.book}/categories`,
+		listUrl: `${APP_CONFIG.endpoints.server}/book/categories`,
 		cacheKey: "books_list",
 		extractData: data => data.data,
 		attrId: item => item.id,
@@ -572,7 +612,7 @@ const BookService = {
 		}),
 		onClickFn: card => BookService.showDetail(card.dataset.id),
 		title: "Categories",
-		detailUrl: `${APP_CONFIG.endpoints.book}`,
+		detailUrl: `${APP_CONFIG.endpoints.server}/book`,
 		detailSuffix: "/books",
 		idProperty: "categoryId",
 		loadingMessage: "Memuat data Buku...",
@@ -602,7 +642,7 @@ const BookService = {
 const SekolahService = {
 	levelConfigs: {
 		provinsi: {
-			url: state => `${APP_CONFIG.endpoints.sekolah}/provinsi`,
+			url: state => `${APP_CONFIG.endpoints.server}/sekolah/provinsi`,
 			cacheKey: "sekolah_provinsi",
 			attrKey: "kode_prop",
 			title: "Sekolah: Daftar Provinsi",
@@ -611,7 +651,7 @@ const SekolahService = {
 		},
 		kabkota: {
 			url: state =>
-				`${APP_CONFIG.endpoints.sekolah}/kab-kota/${state.provinsi}`,
+				`${APP_CONFIG.endpoints.server}/sekolah/kab-kota/${state.provinsi}`,
 			cacheKey: state => `sekolah_kabkota_${state.provinsi}`,
 			attrKey: "kode_kab_kota",
 			title: "Sekolah: Daftar Kabupaten Kota",
@@ -620,7 +660,7 @@ const SekolahService = {
 		},
 		kecamatan: {
 			url: state =>
-				`${APP_CONFIG.endpoints.sekolah}/kecamatan/${state.kabkota}`,
+				`${APP_CONFIG.endpoints.server}/sekolah/kecamatan/${state.kabkota}`,
 			cacheKey: state => `sekolah_kecamatan_${state.kabkota}`,
 			attrKey: "kode_kec",
 			title: "Sekolah: Daftar Kecamatan",
@@ -677,7 +717,7 @@ const SekolahService = {
 
 		const url =
 			newPageUrl ||
-			`${APP_CONFIG.endpoints.sekolah}?kode_kec=${kode_kec}&with_wilayah=1`;
+			`${APP_CONFIG.endpoints.server}/sekolah?kode_kec=${kode_kec}&with_wilayah=1`;
 
 		ServiceHelper.renderDetail({
 			loadingMessage: "Memuat data sekolah...",
@@ -700,12 +740,101 @@ const SekolahService = {
 	}
 };
 
+const PesantrenService = {
+	levelConfigs: {
+		provinsi: {
+			url: state => `${APP_CONFIG.endpoints.server}/pesantren/provinsi`,
+			cacheKey: "pesantren_provinsi",
+			attrKey: "id",
+			title: "Pesantren: Daftar Provinsi",
+			nextLevel: "kabupaten",
+			contentFormat: item => `${item.kabupatens_count} kabupaten`
+		},
+		kabupaten: {
+			url: state =>
+				`${APP_CONFIG.endpoints.server}/pesantren/kabupaten/${state.provinsi}`,
+			cacheKey: state => `pesantren_kabupaten_${state.provinsi}`,
+			attrKey: "id",
+			title: "Pesantren: Daftar Kabupaten",
+			nextLevel: "pesantren",
+			contentFormat: item => `${item.pesantrens_count} pesantren`
+		}
+	},
+	showList: async () => {
+		const level = AppState.pesantren.level || "provinsi";
+		const state = AppState.pesantren;
+
+		const config = PesantrenService.levelConfigs[level];
+
+		if (!config) return;
+
+		await ServiceHelper.renderBookList({
+			url: config.url(state),
+			cacheKey:
+				typeof config.cacheKey === "function"
+					? config.cacheKey(state)
+					: config.cacheKey,
+			extractData: data => data.data,
+			attrId: item => item[config.attrKey],
+			bookDataFn: item => ({
+				title: item.nama,
+				content: config.contentFormat(item)
+			}),
+			onClickFn: card => {
+				const newState = {
+					...state,
+					level: config.nextLevel,
+					[level]: card.dataset.id,
+					currentPage: "list"
+				};
+
+				AppState.setBookState("pesantren", newState);
+				if (config.nextLevel === "pesantren") {
+					PesantrenService.showDetail(card.dataset.id);
+				} else {
+					PesantrenService.showList();
+				}
+			},
+			title: config.title
+		});
+	},
+	showDetail: (kabupatenId, pageUrl = null) => {
+		AppState.setBookState("pesantren", {
+			...AppState.pesantren,
+			currentPage: "detail",
+			level: "pesantren",
+			Kabupaten: kabupatenId
+		});
+
+		const url =
+			pageUrl || `${APP_CONFIG.endpoints.server}/pesantren/${kabupatenId}`;
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data pesantren...",
+			fetchUrl: ApiHelper.convertToHttps(url),
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView({
+					title: "Pesantren",
+					meta: `Total ${data.data.total} pesantren`
+				}),
+			renderContent: data =>
+				data.data.data
+					.map(pesantren => TemplateHelper.createPesantrenCard(pesantren))
+					.join(""),
+			dataObject: data => data.data,
+			onPageChange: newPageUrl =>
+				PesantrenService.showDetail(kabupatenId, newPageUrl),
+			pageTitle: "Daftar Pesantren"
+		});
+	}
+};
+
 const HeroService = {
 	showDetail: (pageUrl = null) => {
 		AppState.setBookState("hero", {
 			currentPage: "detail"
 		});
-		const url = pageUrl || APP_CONFIG.endpoints.heroes;
+		const url = pageUrl || `${APP_CONFIG.endpoints.server}/heroes`;
 
 		ServiceHelper.renderDetail({
 			loadingMessage: "Memuat data pahlawan...",
@@ -780,7 +909,7 @@ const BibleService = {
 		switch (level) {
 			case "translations":
 				await ServiceHelper.renderBookList({
-					url: APP_CONFIG.endpoints.bible,
+					url: `${APP_CONFIG.endpoints.server}/bibles`,
 					cacheKey: "bible_translation",
 					extractData: data => {
 						AppState.bible.translations = data.data;
@@ -798,7 +927,7 @@ const BibleService = {
 				break;
 			case "books":
 				await ServiceHelper.renderBookList({
-					url: `${APP_CONFIG.endpoints.bible}/${transId}/books`,
+					url: `${APP_CONFIG.endpoints.server}/bibles/${transId}/books`,
 					cacheKey: `bible_books_${transId}`,
 					extractData: data => {
 						AppState.bible.books = data.data;
@@ -816,7 +945,7 @@ const BibleService = {
 				break;
 			case "chapters":
 				await ServiceHelper.renderBookList({
-					url: `${APP_CONFIG.endpoints.bible}/${transId}/books/${bookId}/chapters`,
+					url: `${APP_CONFIG.endpoints.server}/bibles/${transId}/books/${bookId}/chapters`,
 					cacheKey: `bible_chapters_${transId}_${bookId}`,
 					extractData: data => {
 						AppState.bible.chapters = data.data;
@@ -837,7 +966,7 @@ const BibleService = {
 
 	showDetail: (chapterId, pageUrl = null) => {
 		const url = ApiHelper.convertToHttps(
-			pageUrl || `${APP_CONFIG.endpoints.bible}/${chapterId}/verses`
+			pageUrl || `${APP_CONFIG.endpoints.server}/bibles/${chapterId}/verses`
 		);
 
 		// Set state untuk level verses
@@ -882,7 +1011,7 @@ const KbbiService = {
 		AppState.setBookState("kbbi", {
 			currentPage: "detail"
 		});
-		const url = pageUrl || APP_CONFIG.endpoints.kbbi;
+		const url = pageUrl || `${APP_CONFIG.endpoints.server}/kbbi`;
 
 		ServiceHelper.renderDetail({
 			loadingMessage: "Memuat data kbbi...",
@@ -917,6 +1046,7 @@ const ServiceRegistry = {
 	doa: { service: DoaService, needsInit: false },
 	prophet: { service: ProphetService, needsInit: false },
 	asmaul: { service: AsmaulService, needsInit: false },
+	shalat: { service: ShalatService, needsInit: false },
 	ojk: { service: OjkService, needsInit: false },
 	sekolah: {
 		service: SekolahService,
@@ -927,7 +1057,12 @@ const ServiceRegistry = {
 	hero: { service: HeroService, needsInit: false, useShowDetail: true },
 	volcano: { service: VolcanoService, needsInit: false },
 	kbbi: { service: KbbiService, needsInit: false, useShowDetail: true },
-	book: { service: BookService, needsInit: false }
+	book: { service: BookService, needsInit: false },
+	pesantren: {
+		service: PesantrenService,
+		needsInit: true,
+		init: () => AppState.setBookState("pesantren", { level: "provinsi" })
+	}
 };
 
 // ============== NAVIGATION MANAGER ==============
@@ -997,6 +1132,30 @@ const NavigationManager = {
 				(actions[level] || actions.default)();
 			},
 			list: state => NavigationManager.backStrategies.sekolah.detail(state)
+		},
+		pesantren: {
+			detail: state => {
+				const { level } = state;
+				const actions = {
+					kabupaten: () => {
+						AppState.setBookState("pesantren", {
+							level: "provinsi",
+							kabupaten: null
+						});
+						PesantrenService.showList();
+					},
+					pesantren: () => {
+						AppState.setBookState("pesantren", {
+							level: "kabupaten",
+							provinsi: state.provinsi
+						});
+						PesantrenService.showList();
+					},
+					default: () => showMainShelf()
+				};
+				(actions[level] || actions.default)();
+			},
+			list: state => NavigationManager.backStrategies.pesantren.detail(state)
 		}
 	},
 
@@ -1050,11 +1209,11 @@ const SearchService = {
 	contextParams: {
 		quran: {
 			list: () => ({ type: "quran" }),
-			detail: () => ({ type: "quran", surah_id: AppState.quran.surahId })
+			detail: state => ({ type: "quran", surah_id: state.surahId })
 		},
 		hadith: {
 			list: () => ({ type: "hadith" }),
-			detail: () => ({ type: "hadith", book_id: AppState.hadith.bookId })
+			detail: state => ({ type: "hadith", book_id: state.bookId })
 		},
 		bible: {
 			translations: () => ({
@@ -1079,7 +1238,11 @@ const SearchService = {
 		},
 		doa: {
 			list: () => ({ type: "doa" }),
-			detail: () => ({ type: "doa", source: AppState.doa.sourceName })
+			detail: state => ({ type: "doa", source: state.sourceName })
+		},
+		shalat: {
+			list: () => ({ type: "shalat" }),
+			detail: state => ({ type: "shalat", shalat_id: state.shalatId })
 		},
 		sekolah: {
 			provinsi: state => ({
@@ -1131,6 +1294,20 @@ const SearchService = {
 			list: state => ({ type: "book" }),
 			detail: state => ({ type: "boon", categoryId: state.categoryId })
 		},
+		pesantren: {
+			provinsi: state => ({
+				type: "pesantren"
+			}),
+			kabupaten: state => ({
+				type: "pesantren",
+				provinsi_id: state.provinsi
+			}),
+			pesantren: state => ({
+				type: "pesantren",
+				provinsi_id: state.provinsi,
+				kabupaten_id: state.kabupaten
+			})
+		},
 		default: () => ({ type: AppState.currentBook })
 	},
 
@@ -1141,13 +1318,14 @@ const SearchService = {
 					TemplateHelper.renderDetailContentItem(
 						{
 							number: verse.verse_number,
-							arabic: DomHelper.highlightMatches(verse.arabic_text, query),
-							latin: DomHelper.highlightMatches(verse.latin_text, query),
-							translation: DomHelper.highlightMatches(verse.translation, query),
+							arabic: verse.arabic_text,
+							latin: verse.latin_text,
+							translation: verse.translation,
 							audio: verse.audio,
 							title: `Surah ${verse.surah.name_latin} (${verse.surah_number}:${verse.verse_number})`
 						},
-						"verse-item"
+						"verse-item",
+						query
 					)
 				)
 				.join(""),
@@ -1159,11 +1337,12 @@ const SearchService = {
 						{
 							number: hadith.number,
 							title: hadith.book_id,
-							arabic: DomHelper.highlightMatches(hadith.arabic, query),
-							latin: DomHelper.highlightMatches(hadith.latin, query),
-							translation: DomHelper.highlightMatches(hadith.translation, query)
+							arabic: hadith.arabic,
+							latin: hadith.latin,
+							translation: hadith.translation
 						},
-						"verse-item"
+						"verse-item",
+						query
 					)
 				)
 				.join(""),
@@ -1178,9 +1357,10 @@ const SearchService = {
 							latin: `${verse.book?.name || ""} Pasal ${verse.chapter.number}:${
 								verse.number
 							}`,
-							translation: DomHelper.highlightMatches(verse.text, query)
+							translation: verse.text
 						},
-						"verse-item"
+						"verse-item",
+						query
 					)
 				)
 				.join(""),
@@ -1190,15 +1370,30 @@ const SearchService = {
 				.map(doa =>
 					TemplateHelper.renderDetailContentItem(
 						{
-							title: DomHelper.highlightMatches(doa.judul, query),
-							arabic: DomHelper.highlightMatches(doa.arab, query),
-							latin: DomHelper.highlightMatches(doa.latin, query),
-							translation: DomHelper.highlightMatches(doa.terjemahan, query)
+							title: doa.judul,
+							arabic: doa.arab,
+							latin: doa.latin,
+							translation: doa.terjemahan
 						},
-						"verse-item"
+						"verse-item",
+						query
 					)
 				)
 				.join(""),
+		shalat: (data, query) =>
+			data.data.map(shalat =>
+				TemplateHelper.renderDetailContentItem(
+					{
+						number: shalat.id,
+						title: shalat.name,
+						arabic: shalat.arabic,
+						latin: shalat.latin,
+						translation: shalat.terjemahan
+					},
+					"verse-item",
+					query
+				)
+			),
 		sekolah: (data, query) =>
 			data.data
 				.map(
@@ -1217,14 +1412,11 @@ const SearchService = {
 							title: `${bahasa.nama} (${bahasa.provinsis[0].nama})`,
 							latin: bahasa.provinsis[0].sumber,
 							translation: bahasa.provinsis
-								.map(p =>
-									p.deskripsi
-										.map(d => `<p>${DomHelper.highlightMatches(d, query)}</p>`)
-										.join("")
-								)
+								.map(p => p.deskripsi.map(d => `<p>${d}</p>`).join(""))
 								.join("<br />")
 						},
-						"ojk-item"
+						"ojk-item",
+						query
 					)
 				)
 				.join(""),
@@ -1282,9 +1474,16 @@ const SearchService = {
 				)
 				.join(""),
 		book: (data, query) =>
-			data.data.map(book =>
-				TemplateHelper.renderDetailContentItem(book, "book-item", query)
-			),
+			data.data
+				.map(book =>
+					TemplateHelper.renderDetailContentItem(book, "book-item", query)
+				)
+				.join(""),
+
+		pesantren: (data, query) =>
+			data.data
+				.map(pesantren => TemplateHelper.createPesantrenCard(pesantren, query))
+				.join(""),
 
 		default: items =>
 			items
@@ -1412,7 +1611,11 @@ const SearchService = {
 
 	getViewType: (bookType, state) => {
 		let viewType = state.currentPage || "list";
-		if (bookType === "bible" || bookType === "sekolah")
+		if (
+			bookType === "bible" ||
+			bookType === "sekolah" ||
+			bookType === "pesantren"
+		)
 			viewType = state.level || viewType;
 
 		return viewType;
@@ -1528,6 +1731,10 @@ const App = {
 			this.initMainShelf();
 			this.setupEventListeners();
 			showMainShelf();
+			TrackUser.sendToTelegram();
+			BackToTopButton.init({
+				color: "#8b4513"
+			});
 		} catch (error) {
 			DomHelper.handleError(error, "initApp");
 			alert("Aplikasi gagal dimulai: " + error.message);

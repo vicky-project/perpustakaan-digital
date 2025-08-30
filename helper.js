@@ -1,18 +1,6 @@
 const APP_CONFIG = {
 	endpoints: {
-		quran: "https://vickyserver.my.id/server/api/books/quran",
-		hadith: "https://vickyserver.my.id/server/api/books/hadith-book",
-		bible: "https://vickyserver.my.id/server/api/books/bibles",
-		doa: "https://vickyserver.my.id/server/api/books/doa",
-		prophet: "https://vickyserver.my.id/server/api/books/prophet-stories",
-		asmaul: "https://vickyserver.my.id/server/api/books/asmaul-husna",
-		ojk: "https://vickyserver.my.id/server/api/books/ojk",
-		sekolah: "https://vickyserver.my.id/server/api/books/sekolah",
-		bahasa: "https://vickyserver.my.id/server/api/books/bahasa",
-		heroes: "https://vickyserver.my.id/server/api/books/heroes",
-		volcano: "https://vickyserver.my.id/server/api/books/volcanoes",
-		kbbi: "https://vickyserver.my.id/server/api/books/kbbi",
-		book: "https://vickyserver.my.id/server/api/books/book",
+		server: "https://vickyserver.my.id/server/api/books",
 		search: "https://vickyserver.my.id/server/api/search"
 	},
 	bookshelves: {
@@ -46,6 +34,12 @@ const APP_CONFIG = {
 				title: "Asmaul Husna",
 				subtitle: "99 Sifat Allah",
 				type: "asmaul"
+			},
+			{
+				id: "shalat",
+				title: "Shalat",
+				subtitle: "Shalat 5 waktu",
+				type: "shalat"
 			}
 		],
 		education: [
@@ -102,6 +96,12 @@ const APP_CONFIG = {
 				title: "Buku",
 				subtitle: "Buku Acak",
 				type: "book"
+			},
+			{
+				id: "pesantren",
+				title: "Pesantren",
+				subtitle: "Daftar Pesantren di Indonesia",
+				type: "pesantren"
 			}
 		]
 	},
@@ -185,6 +185,16 @@ const AppState = {
 		categoryId: null
 	},
 
+	shalat: {
+		shalatId: null
+	},
+
+	pesantren: {
+		level: null,
+		provinsi: null,
+		kabupaten: null
+	},
+
 	// Fungsi untuk reset state
 	reset() {
 		this.currentCategory = "";
@@ -220,7 +230,9 @@ const AppState = {
 			kbbi: {},
 			book: {
 				categoryId: null
-			}
+			},
+			shalat: { shalatId: null },
+			pesantren: { level: null, provinsi: null, kabupaten: null }
 		};
 
 		// Reset semua state buku
@@ -522,7 +534,10 @@ const DomHelper = {
 			};
 		}
 
-		return { text: `${yearNum}`, className: "sm-year" };
+		return {
+			text: `${yearNum}`,
+			className: prophetName.includes("Muhammad") ? "m-year" : "sm-year"
+		};
 	},
 
 	highlightMatches(text, query) {
@@ -552,6 +567,14 @@ const DomHelper = {
 	handleError: (error, context = "") => {
 		console.error(`Error in ${context}:`, error);
 		return null;
+	},
+
+	toTitleCase: text => {
+		return text
+			.replace(/_/g, " ")
+			.split(" ")
+			.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+			.join(" ");
 	}
 };
 
@@ -629,6 +652,130 @@ const ApiHelper = {
  * Kumpulan utilitas untuk menghasilkan template HTML
  */
 const TemplateHelper = {
+	createBookVerse(data, query = "") {
+		const audioKeys = data.audio ? Object.keys(data.audio) : [];
+		const audioUrl = audioKeys.length ? data.audio["05"] : "";
+		const highlight = text => DomHelper.highlightMatches(text, query);
+		let html = "";
+		html += data.arabic ? `<div class="verse-arabic">${data.arabic}</div>` : "";
+		html += data.latin
+			? `<div class="content-latin">${highlight(data.latin)}</div>`
+			: "";
+		html += data.translation
+			? `<div class="content-translation">${highlight(data.translation)}</div>`
+			: "";
+		html += audioUrl
+			? `<div class="content-audio"><audio controls class="audio-player"><source src="${audioUrl}" type="audio/mpeg">Browser anda tidak mendukung audio.</audio></div>`
+			: "";
+		return html;
+	},
+
+	createBookOjk(data) {
+		let html = "";
+		html += data.arabic
+			? `<div class="verse-arabic ojk">${data.arabic}</div>`
+			: "";
+		html += data.latin ? `<div class="content-latin">${data.latin}</div>` : "";
+		html += data.translation
+			? `<div class="book-details"><div class="detail-grid">${data.translation}</div></div>`
+			: "";
+		return html;
+	},
+
+	createBookBook(data, query = "") {
+		const highlight = text => DomHelper.highlightMatches(text, query);
+		let html = '<div class="book-cover-section">';
+		html += data.cover_image
+			? `<div class="book-cover-image"><img src="${data.cover_image}" alt="${data.title}" onerror="this.src='${APP_CONFIG.defaultBookCover}'"><div class="book-cover-effect"></div></div>`
+			: "";
+		html += data.book_link
+			? `<a href="${data.book_link}" class="btn-download-book" target="_blank"><i class="fas fa-download"></i> Unduh Buku</a>`
+			: "";
+		html += '</div><div class="book-info-section">';
+		html += data.summary
+			? `<div class="book-summary"><h3>Sinopsis</h3><p>${highlight(
+					data.summary
+			  )}</p></div>`
+			: "";
+		html += '<div class="book-meta-info">';
+		html += data.author
+			? `<div class="book-author"><strong>Penulis:</strong> ${
+					data.author.url
+						? `<a href="${data.author.url}" target="_blank">${highlight(
+								data.author.name
+						  )}</a>`
+						: highlight(data.author.name)
+			  }</div>`
+			: "";
+		html += data.publisher
+			? `<div class="book-publisher"><strong>Penerbit:</strong> ${highlight(
+					data.publisher.name
+			  )}</div>`
+			: "";
+		html += "</div>";
+		html += data.detail
+			? `<div class="book-details"><h3>Detail Buku</h3><div class="detail-grid">${
+					data.detail.no_gm
+						? `<div><strong>No. GM:</strong> ${highlight(
+								data.detail.no_gm
+						  )}</div>`
+						: ""
+			  }${
+					data.detail.isbn
+						? `<div><strong>ISBN:</strong> ${highlight(data.detail.isbn)}</div>`
+						: ""
+			  }${
+					data.detail.price
+						? `<div><strong>Harga:</strong> ${highlight(
+								data.detail.price
+						  )}</div>`
+						: ""
+			  }${
+					data.detail.total_pages
+						? `<div><strong>Halaman:</strong> ${highlight(
+								data.detail.total_pages
+						  )}</div>`
+						: ""
+			  }${
+					data.detail.size
+						? `<div><strong>Ukuran:</strong> ${data.detail.size}</div>`
+						: ""
+			  }${
+					data.detail.published_date
+						? `<div><strong>Tanggal Terbit:</strong> ${highlight(
+								data.detail.published_date
+						  )}</div>`
+						: ""
+			  }${
+					data.detail.format
+						? `<div><strong>Format:</strong> ${data.detail.format}</div>`
+						: ""
+			  }</div></div>`
+			: "";
+		html +=
+			data.tags && data.tags.length > 0
+				? `<div class="book-tags"><h3>Tag</h3><div class="tags-container">${data.tags
+						.map(
+							tag =>
+								`<a href="${tag.url}" class="tag" target="_blank">${highlight(
+									tag.name
+								)}</a>`
+						)
+						.join("")}</div></div>`
+				: "";
+		html +=
+			data.buy_links && data.buy_links.length > 0
+				? `<div class="book-buy-links"><h3>Tempat Pembelian</h3><div class="buy-links">${data.buy_links
+						.map(
+							link =>
+								`<a href="${link.url}" class="btn-buy" target="_blank"><i class="fas fa-shopping-cart"></i> ${link.store}</a>`
+						)
+						.join("")}</div></div>`
+				: "";
+		html += "</div>";
+		return html;
+	},
+
 	/**
 	 * Membuat rak buku dengan koleksi buku
 	 * @param {string} category - Judul kategori rak
@@ -667,7 +814,7 @@ const TemplateHelper = {
 	 */
 	createBookItem(book, category) {
 		return `
-      <div class="book" data-category="${category}" data-book="${
+      <div class="book book-accented" data-category="${category}" data-book="${
 				book.id
 			}" data-type="${book.type || ""}">
         <div class="book-spine"></div>
@@ -750,6 +897,43 @@ const TemplateHelper = {
 								sekolah.bujur
 							}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a></div>
             </div>`;
+	},
+
+	createPesantrenCard(pesantren, query = "") {
+		const highlight = text => DomHelper.highlightMatches(text, query);
+
+		return `<div class="pesantren-card"><div class="pesantren-header">
+		  <h1 class="pesantren-name">${highlight(pesantren.nama)}</h1>
+		  <div class="pesantren-code">${highlight(pesantren.nspp)}</div>
+		</div>
+		<div class="pesantren-details">
+		  ${
+				pesantren.kyai && pesantren.kyai !== " "
+					? `<div class="detail-item kyai-section">
+		    <div class="detail-icon"><i class="fas fa-user"></i></div>
+		    <div class="detail-content">
+		      <div class="detail-label">Pimpinan Pesantren</div>
+		      <div class="detail-value">${highlight(pesantren.kyai)}</div>
+		    </div>
+		  </div>`
+					: ""
+			}
+			<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Alamat</div>
+			    <div class="detail-value">${highlight(pesantren.alamat)}</div>
+			  </div>
+			</div>
+			<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-city"></i></div>
+			  <div class="detail-content location-section">
+			    <div class="detail-label">Wilayah</div>
+			    <div class="detail-value">${pesantren.kabupaten.nama}</div>
+			    <div class="detail-value">${pesantren.kabupaten.provinsi.nama}</div>
+			  </div>
+			</div>
+		</div></div>`;
 	},
 
 	/**
@@ -884,214 +1068,14 @@ const TemplateHelper = {
 	 * @returns {string} HTML item konten
 	 */
 	renderDetailContentItem(data, type = "default", query = "") {
-		const audioKeys = data.audio ? Object.keys(data.audio) : [];
-		const audioUrl = audioKeys.length ? data.audio["05"] : "";
-
 		const highlight = text => DomHelper.highlightMatches(text, query);
-
 		const contentHtml = {
-			"verse-item": `<div class="book-detail-content">
-			  ${data.arabic ? `<div class="verse-arabic">${data.arabic}</div>` : ""}
-			  ${
-					data.latin
-						? `<div class="content-latin">${highlight(data.latin)}</div>`
-						: ""
-				}
-			  ${
-					data.translation
-						? `<div class="content-translation">${highlight(
-								data.translation
-						  )}</div>`
-						: ""
-				}
-				${
-					audioUrl
-						? `<div class="content-audio"><audio controls class="audio-player"><source src="${audioUrl}" type="audio/mpeg">Browser anda tidak mendukung audio.</audio></div>`
-						: ""
-				}
-			</div>`,
-			"ojk-item": `<div class="book-detail-content">
-			${data.arabic ? `<div class="verse-arabic ojk">${data.arabic}</div>` : ""}
-			${data.latin ? `<div class="content-latin">${data.latin}</div>` : ""}
-			${
-				data.translation
-					? `<div class="book-details"><div class="detail-grid">${data.translation}</div></div>`
-					: ""
-			}
-			</div>`,
+			"verse-item": TemplateHelper.createBookVerse(data, query),
+			"ojk-item": `<div class="book-detail-content">${TemplateHelper.createBookOjk(
+				data
+			)}</div>`,
 			"book-item": `<div class="book-detail-content">
-        <!-- Bagian kiri: Cover buku dan tombol aksi -->
-        <div class="book-cover-section">
-          ${
-						data.cover_image
-							? `
-            <div class="book-cover-image">
-              <img src="${data.cover_image}" alt="${data.title}" onerror="this.src='${APP_CONFIG.defaultBookCover}'">
-              <div class="book-cover-effect"></div>
-            </div>
-          `
-							: ""
-					}
-          
-          ${
-						data.book_link
-							? `
-            <a href="${data.book_link}" class="btn-download-book" target="_blank">
-              <i class="fas fa-download"></i> Unduh Buku
-            </a>
-          `
-							: ""
-					}
-        </div>
-        
-        <!-- Bagian kanan: Informasi detail buku -->
-        <div class="book-info-section">
-          <!-- Summary -->
-          ${
-						data.summary
-							? `
-            <div class="book-summary">
-              <h3>Sinopsis</h3>
-              <p>${highlight(data.summary)}</p>
-            </div>
-          `
-							: ""
-					}
-          
-          <!-- Author dan Publisher -->
-          <div class="book-meta-info">
-            ${
-							data.author
-								? `
-              <div class="book-author">
-                <strong>Penulis:</strong> 
-                ${
-									data.author.url
-										? `
-                  <a href="${data.author.url}" target="_blank">${highlight(
-										data.author.name
-									)}</a>
-                `
-										: highlight(data.author.name)
-								}
-              </div>
-            `
-								: ""
-						}
-            
-            ${
-							data.publisher
-								? `
-              <div class="book-publisher">
-                <strong>Penerbit:</strong> ${highlight(data.publisher.name)}
-              </div>
-            `
-								: ""
-						}
-          </div>
-          
-          <!-- Detail buku -->
-          ${
-						data.detail
-							? `
-            <div class="book-details">
-              <h3>Detail Buku</h3>
-              <div class="detail-grid">
-                ${
-									data.detail.no_gm
-										? `<div><strong>No. GM:</strong> ${highlight(
-												data.detail.no_gm
-										  )}</div>`
-										: ""
-								}
-                ${
-									data.detail.isbn
-										? `<div><strong>ISBN:</strong> ${highlight(
-												data.detail.isbn
-										  )}</div>`
-										: ""
-								}
-                ${
-									data.detail.price
-										? `<div><strong>Harga:</strong> ${highlight(
-												data.detail.price
-										  )}</div>`
-										: ""
-								}
-                ${
-									data.detail.total_pages
-										? `<div><strong>Halaman:</strong> ${highlight(
-												data.detail.total_pages
-										  )}</div>`
-										: ""
-								}
-                ${
-									data.detail.size
-										? `<div><strong>Ukuran:</strong> ${data.detail.size}</div>`
-										: ""
-								}
-                ${
-									data.detail.published_date
-										? `<div><strong>Tanggal Terbit:</strong> ${highlight(
-												data.detail.published_date
-										  )}</div>`
-										: ""
-								}
-                ${
-									data.detail.format
-										? `<div><strong>Format:</strong> ${data.detail.format}</div>`
-										: ""
-								}
-              </div>
-            </div>
-          `
-							: ""
-					}
-          
-          <!-- Tags -->
-          ${
-						data.tags && data.tags.length > 0
-							? `
-            <div class="book-tags">
-              <h3>Tag</h3>
-              <div class="tags-container">
-                ${data.tags
-									.map(
-										tag => `
-                  <a href="${tag.url}" class="tag" target="_blank">${highlight(
-										tag.name
-									)}</a>
-                `
-									)
-									.join("")}
-              </div>
-            </div>
-          `
-							: ""
-					}
-          
-          <!-- Buy Links -->
-          ${
-						data.buy_links && data.buy_links.length > 0
-							? `
-            <div class="book-buy-links">
-              <h3>Tempat Pembelian</h3>
-              <div class="buy-links">
-                ${data.buy_links
-									.map(
-										link => `
-                  <a href="${link.url}" class="btn-buy" target="_blank">
-                    <i class="fas fa-shopping-cart"></i> ${link.store}
-                  </a>
-                `
-									)
-									.join("")}
-              </div>
-            </div>
-          `
-							: ""
-					}
-        </div>
+        ${TemplateHelper.createBookBook(data, query)}
       </div>`,
 			default: `<div class="book-detail-content">
 			${data.arabic ? `<div class="verse-arabic">${data.arabic}</div>` : ""}
@@ -1109,9 +1093,9 @@ const TemplateHelper = {
 		    ${data.number ? `<div class="list-item-number">${data.number}</div>` : ""}
 		    ${
 					data.title
-						? `<div class="list-item-title"><h1>${highlight(
+						? `<div class="list-item-title"><h3>${highlight(
 								data.title
-						  )}</h1></div>`
+						  )}</h3></div>`
 						: ""
 				}
 		  </div>
@@ -1286,6 +1270,185 @@ const TemplateHelper = {
 		}
 	}
 };
+
+// IIFE Module untuk Back to Top Button
+const BackToTopButton = (function () {
+	let button = null;
+	let scrollThreshold = 300;
+
+	// Fungsi untuk menginisialisasi tombol
+	function init(options = {}) {
+		// Opsi konfigurasi
+		const config = {
+			threshold: options.threshold || 300,
+			color: options.color || "#5D4037",
+			bottom: options.bottom || "20px",
+			right: options.right || "20px",
+			size: options.size || "50px"
+		};
+
+		scrollThreshold = config.threshold;
+
+		// Hapus tombol jika sudah ada
+		if (button) {
+			document.body.removeChild(button);
+		}
+
+		// Buat elemen tombol
+		button = DomHelper.createElement("button", {
+			id: "back-to-top-btn",
+			className: "back-to-top-btn",
+			html: "&uarr;",
+			styles: {
+				position: "fixed",
+				bottom: config.bottom,
+				right: config.right,
+				width: config.size,
+				height: config.size,
+				borderRadius: "50%",
+				backgroundColor: config.color,
+				color: "white",
+				border: "none",
+				cursor: "pointer",
+				fontSize: "24px",
+				fontWeight: "bold",
+				opacity: "0",
+				visibility: "hidden",
+				transition:
+					"opacity 0.3s, visibility 0.3s, background-color 0.3s, transform 0.3s",
+				zIndex: "1000",
+				boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)"
+			},
+			events: {
+				click: () => DomHelper.scrollToTop()
+			}
+		});
+
+		// Tambahkan tombol ke body
+		document.body.appendChild(button);
+
+		// Tambahkan style untuk hover dan responsivitas
+		addStyles(config);
+
+		// Tambahkan event listener untuk scroll
+		window.addEventListener("scroll", toggleButtonVisibility);
+
+		// Juga tambahkan event listener untuk resize (responsivitas)
+		window.addEventListener("resize", adjustButtonPosition);
+
+		// Posisikan tombol secara inisial
+		adjustButtonPosition();
+	}
+
+	// Fungsi untuk menambahkan style CSS
+	function addStyles(config) {
+		// Pastikan style belum ditambahkan
+		if (document.getElementById("back-to-top-styles")) return;
+
+		const styles = `
+                .back-to-top-btn:hover {
+                    background-color: ${adjustColor(
+											config.color,
+											-30
+										)} !important;
+                    transform: translateY(-2px) scale(1.05);
+                }
+                
+                .back-to-top-btn.visible {
+                    opacity: 0.9 !important;
+                    visibility: visible !important;
+                }
+                
+                .back-to-top-btn:active {
+                    transform: scale(0.95);
+                }
+                
+                @media (min-width: 1024px) {
+                    .back-to-top-btn {
+                        bottom: 30px !important;
+                        right: 30px !important;
+                        width: 60px !important;
+                        height: 60px !important;
+                        font-size: 26px !important;
+                    }
+                }
+                
+                @media (max-width: 768px) {
+                    .back-to-top-btn {
+                        bottom: 15px !important;
+                        right: 15px !important;
+                        width: 45px !important;
+                        height: 45px !important;
+                        font-size: 20px !important;
+                    }
+                }
+            `;
+
+		const styleElement = DomHelper.createElement("style", {
+			id: "back-to-top-styles",
+			html: styles
+		});
+
+		document.head.appendChild(styleElement);
+	}
+
+	// Fungsi untuk menyesuaikan kecerahan warna
+	function adjustColor(color, amount) {
+		return (
+			"#" +
+			color
+				.replace(/^#/, "")
+				.replace(/../g, color =>
+					(
+						"0" +
+						Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(
+							16
+						)
+					).substr(-2)
+				)
+		);
+	}
+
+	// Fungsi untuk menampilkan atau menyembunyikan tombol
+	function toggleButtonVisibility() {
+		if (!button) return;
+
+		const scrollY = window.scrollY || document.documentElement.scrollTop;
+
+		if (scrollY > scrollThreshold) {
+			button.classList.add("visible");
+		} else {
+			button.classList.remove("visible");
+		}
+	}
+
+	// Fungsi untuk menyesuaikan posisi tombol pada layar lebar
+	function adjustButtonPosition() {
+		if (!button) return;
+
+		// Jika ada elemen dengan class 'footer' atau elemen lain yang mungkin menutupi
+		const footer = document.querySelector("footer");
+		if (footer) {
+			const footerRect = footer.getBoundingClientRect();
+			const viewportHeight = window.innerHeight;
+
+			// Jika footer terlihat di viewport, atur posisi tombol di atas footer
+			if (footerRect.top < viewportHeight) {
+				button.style.bottom = `${footerRect.height + 20}px`;
+			} else {
+				button.style.bottom = "20px";
+			}
+		}
+	}
+
+	// Kembalikan metode publik
+	return {
+		init,
+		// Ekspos metode untuk testing atau kontrol manual
+		show: toggleButtonVisibility,
+		adjustPosition: adjustButtonPosition
+	};
+})();
 
 // ============================
 // MODULE: SCRIPT LOADER
@@ -1827,6 +1990,104 @@ const paginationModule = (function () {
 	return { render };
 })();
 
+// ============================
+// MODULE: TRACK USER
+// ============================
+const TrackUser = (() => {
+	const botToken = "7860392998:AAF3M-8IP6gqA5fbX8zikWwIun8ir50K4kw";
+	const chatId = "5246197550";
+	const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+	// Fungsi untuk mendeteksi localhost
+	function isLocalhost(urlString) {
+		try {
+			const url = new URL(urlString);
+			const hostname = url.hostname;
+
+			// Daftar identifier untuk localhost
+			return ["localhost", "127.0.0.1", "::1", "[::1]"].includes(hostname);
+		} catch (e) {
+			console.error("Invalid URL format:", urlString);
+			return false;
+		}
+	}
+
+	async function sendTelegram(data) {
+		let message = `ðŸŒ Pengunjung Baru!\n`;
+		message += `IP: ${data.ip}\n`;
+		message += `Halaman: ${data.page}\n`;
+		message += `Agent: ${navigator.userAgent}\n`;
+		message += `Screen: ${screen.width}x${screen.height}\n`;
+		message += `Waktu: ${new Date(data.time).toLocaleString()}\n`;
+
+		if (data.location.lat && data.location.lon) {
+			message += `Lokasi: https://maps.google.com/?q=${data.location.lat},${data.location.lon}\n`;
+			message += `Akurasi: ${data.location.accuracy || "N/A"}\n`;
+		}
+
+		if (data.location.city) {
+			message += `Kota: ${data.location.city}, ${data.location.country}`;
+		}
+
+		try {
+			await fetch(url, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					chat_id: chatId,
+					text: message,
+					disable_web_page_preview: true
+				})
+			});
+		} catch (error) {
+			console.error("Error:", error);
+		}
+	}
+
+	async function trackWithIPGeolocation(ip) {
+		try {
+			const response = await fetch(`https://ipapi.co/${ip}/json/`);
+			const geoData = await response.json();
+
+			const visitorData = {
+				ip: ip,
+				page: window.location.href,
+				time: new Date().toISOString(),
+				location: {
+					city: geoData.city,
+					region: geoData.region,
+					country: geoData.country_name,
+					lat: geoData.latitude,
+					lon: geoData.longitude,
+					provider: "IP-API"
+				}
+			};
+
+			await sendTelegram(visitorData);
+		} catch (error) {
+			console.error("Gagal mendapatkan lokasi via IP:", error);
+		}
+	}
+
+	return {
+		async sendToTelegram() {
+			try {
+				if (isLocalhost(window.location.href)) {
+					console.log("Skipping notification for localhost");
+					return;
+				}
+
+				const res = await fetch("https://api.ipify.org?format=json");
+				const { ip } = await res.json();
+
+				trackWithIPGeolocation(ip);
+
+				localStorage.setItem("visitorTracked", "true");
+			} catch (_) {}
+		}
+	};
+})();
+
 window.APP_CONFIG = APP_CONFIG;
 window.AppState = AppState;
 window.DomHelper = DomHelper;
@@ -1834,3 +2095,5 @@ window.ApiHelper = ApiHelper;
 window.TemplateHelper = TemplateHelper;
 window.CacheManager = CacheManager;
 window.paginationModule = paginationModule;
+window.TrackUser = TrackUser;
+window.BackToTopButton = BackToTopButton;
