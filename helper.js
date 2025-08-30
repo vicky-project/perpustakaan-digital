@@ -1,7 +1,8 @@
 const APP_CONFIG = {
 	endpoints: {
 		server: "https://vickyserver.my.id/server/api/books",
-		search: "https://vickyserver.my.id/server/api/search"
+		search: "https://vickyserver.my.id/server/api/search",
+		telegram: "https://vickyserver.my.id/telegram/send"
 	},
 	bookshelves: {
 		islami: [
@@ -1994,10 +1995,6 @@ const paginationModule = (function () {
 // MODULE: TRACK USER
 // ============================
 const TrackUser = (() => {
-	const botToken = "7860392998:AAF3M-8IP6gqA5fbX8zikWwIun8ir50K4kw";
-	const chatId = "5246197550";
-	const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
 	// Fungsi untuk mendeteksi localhost
 	function isLocalhost(urlString) {
 		try {
@@ -2013,31 +2010,11 @@ const TrackUser = (() => {
 	}
 
 	async function sendTelegram(data) {
-		let message = `ðŸŒ Pengunjung Baru!\n`;
-		message += `IP: ${data.ip}\n`;
-		message += `Halaman: ${data.page}\n`;
-		message += `Agent: ${navigator.userAgent}\n`;
-		message += `Screen: ${screen.width}x${screen.height}\n`;
-		message += `Waktu: ${new Date(data.time).toLocaleString()}\n`;
-
-		if (data.location.lat && data.location.lon) {
-			message += `Lokasi: https://maps.google.com/?q=${data.location.lat},${data.location.lon}\n`;
-			message += `Akurasi: ${data.location.accuracy || "N/A"}\n`;
-		}
-
-		if (data.location.city) {
-			message += `Kota: ${data.location.city}, ${data.location.country}`;
-		}
-
 		try {
-			await fetch(url, {
+			await fetch(APP_CONFIG.endpoints.telegram, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					chat_id: chatId,
-					text: message,
-					disable_web_page_preview: true
-				})
+				body: JSON.stringify(data)
 			});
 		} catch (error) {
 			console.error("Error:", error);
@@ -2053,6 +2030,8 @@ const TrackUser = (() => {
 				ip: ip,
 				page: window.location.href,
 				time: new Date().toISOString(),
+				agent: navigator.userAgent,
+				screen: `${screen.width}x${screen.height}`,
 				location: {
 					city: geoData.city,
 					region: geoData.region,
@@ -2060,7 +2039,8 @@ const TrackUser = (() => {
 					lat: geoData.latitude,
 					lon: geoData.longitude,
 					provider: "IP-API"
-				}
+				},
+				mapUrl: `https://maps.google.com/?q=${geoData.latitude},${geoData.longitude}`
 			};
 
 			await sendTelegram(visitorData);
