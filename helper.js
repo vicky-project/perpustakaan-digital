@@ -2,7 +2,7 @@ const APP_CONFIG = {
 	endpoints: {
 		server: "https://vickyserver.my.id/server/api/books",
 		search: "https://vickyserver.my.id/server/api/search",
-		telegram: "https://vickyserver.my.id/telegram/send"
+		telegram: "https://vickyserver.my.id/server/api/telegram/send"
 	},
 	bookshelves: {
 		islami: [
@@ -2014,7 +2014,7 @@ const TrackUser = (() => {
 			await fetch(APP_CONFIG.endpoints.telegram, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(data)
+				body: JSON.stringify({ message: JSON.stringify(data) })
 			});
 		} catch (error) {
 			console.error("Error:", error);
