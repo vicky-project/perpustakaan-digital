@@ -592,7 +592,9 @@ const OjkService = {
 			} item`
 		}),
 		customRender: (data, id) =>
-			TemplateHelper.renderOjkItems(data.data.data, id),
+			data.data.data
+				.map(item => TemplateHelper.createBookCards(item, "ojk"))
+				.join(""),
 		dataObject: data => data.data,
 		onPageChange: (id, newPageUrl) => OjkService.showDetail(id, newPageUrl),
 		pageTitle: id => id.toUpperCase()
@@ -725,12 +727,7 @@ const SekolahService = {
 			renderHeader: data => "",
 			renderContent: data =>
 				data.data.data
-					.map(
-						sekolah =>
-							`<div class="school-card" id="${
-								sekolah.id
-							}">${TemplateHelper.createSchoolCard(sekolah)}</div>`
-					)
+					.map(sekolah => TemplateHelper.createBookCards(sekolah, "sekolah"))
 					.join(""),
 			dataObject: data => data.data,
 			onPageChange: newPageUrl =>
@@ -819,12 +816,102 @@ const PesantrenService = {
 				}),
 			renderContent: data =>
 				data.data.data
-					.map(pesantren => TemplateHelper.createPesantrenCard(pesantren))
+					.map(pesantren =>
+						TemplateHelper.createBookCards(pesantren, "pesantren")
+					)
 					.join(""),
 			dataObject: data => data.data,
 			onPageChange: newPageUrl =>
 				PesantrenService.showDetail(kabupatenId, newPageUrl),
 			pageTitle: "Daftar Pesantren"
+		});
+	}
+};
+
+const SwiftService = {
+	levelConfigs: {
+		country: {
+			url: state => `${APP_CONFIG.endpoints.server}/swift/country`,
+			cacheKey: "swift_country",
+			attrKey: "code",
+			title: "Daftar Negara",
+			nextLevel: "city",
+			contentFormat: item => `${item.cities_count} kota`
+		},
+		city: {
+			url: state =>
+				`${APP_CONFIG.endpoints.server}/swift/${state.country}/city`,
+			cacheKey: state => `swift_city_${state.country}`,
+			attrKey: "id",
+			title: "Daftar Kota",
+			nextLevel: "bank",
+			contentFormat: item => `${item.banks_count} Bank`
+		}
+	},
+	showList: async () => {
+		const level = AppState.swift.level || "country";
+		const state = AppState.swift;
+
+		const config = SwiftService.levelConfigs[level];
+
+		if (!config) return;
+
+		await ServiceHelper.renderBookList({
+			url: config.url(state),
+			cacheKey:
+				typeof config.cacheKey === "function"
+					? config.cacheKey(state)
+					: config.cacheKey,
+			extractData: data => data.data,
+			attrId: item => item[config.attrKey],
+			bookDataFn: item => ({
+				title: item.name,
+				content: config.contentFormat(item)
+			}),
+			onClickFn: card => {
+				const newState = {
+					...state,
+					level: config.nextLevel,
+					[level]: card.dataset.id,
+					currentPage: "list"
+				};
+
+				AppState.setBookState("swift", newState);
+				if (config.nextLevel === "bank") {
+					SwiftService.showDetail(card.dataset.id);
+				} else {
+					SwiftService.showList();
+				}
+			},
+			title: config.title
+		});
+	},
+	showDetail: (cityId, pageUrl = null) => {
+		AppState.setBookState("swift", {
+			...AppState.swift,
+			currentPage: "detail",
+			level: "bank",
+			city: cityId
+		});
+
+		const url =
+			pageUrl || `${APP_CONFIG.endpoints.server}/swift/${cityId}/bank`;
+
+		ServiceHelper.renderDetail({
+			loadingMessage: "Memuat data bank...",
+			fetchUrl: ApiHelper.convertToHttps(url),
+			renderHeader: data =>
+				TemplateHelper.renderDetailHeaderView({
+					title: "Swift Bank",
+					meta: `Total ${data.data.total} bank`
+				}),
+			renderContent: data =>
+				data.data.data
+					.map(code => TemplateHelper.createBookCards(code, "bank"))
+					.join(""),
+			dataObject: data => data.data,
+			onPageChange: newPageUrl => SwiftService.showDetail(cityId, newPageUrl),
+			pageTitle: "Daftar Swift Bank"
 		});
 	}
 };
@@ -1062,6 +1149,11 @@ const ServiceRegistry = {
 		service: PesantrenService,
 		needsInit: true,
 		init: () => AppState.setBookState("pesantren", { level: "provinsi" })
+	},
+	swift: {
+		service: SwiftService,
+		needsInit: true,
+		init: () => AppState.setBookState("swift", { level: "country" })
 	}
 };
 
@@ -1156,6 +1248,30 @@ const NavigationManager = {
 				(actions[level] || actions.default)();
 			},
 			list: state => NavigationManager.backStrategies.pesantren.detail(state)
+		},
+		swift: {
+			detail: state => {
+				const { level } = state;
+				const actions = {
+					city: () => {
+						AppState.setBookState("swift", {
+							level: "country",
+							city: null
+						});
+						SwiftService.showList();
+					},
+					bank: () => {
+						AppState.setBookState("swift", {
+							level: "city",
+							country: state.country
+						});
+						SwiftService.showList();
+					},
+					default: () => showMainShelf()
+				};
+				(actions[level] || actions.default)();
+			},
+			list: state => NavigationManager.backStrategies.swift.detail(state)
 		}
 	},
 
@@ -1308,6 +1424,20 @@ const SearchService = {
 				kabupaten_id: state.kabupaten
 			})
 		},
+		swift: {
+			country: state => ({
+				type: "swift"
+			}),
+			city: state => ({
+				type: "swift",
+				country_id: state.country
+			}),
+			bank: state => ({
+				type: "swift",
+				country_id: state.country,
+				city_id: state.city
+			})
+		},
 		default: () => ({ type: AppState.currentBook })
 	},
 
@@ -1396,11 +1526,8 @@ const SearchService = {
 			),
 		sekolah: (data, query) =>
 			data.data
-				.map(
-					sekolah =>
-						`<div class="school-card" id="${
-							sekolah.id
-						}">${TemplateHelper.createSchoolCard(sekolah, query)}</div>`
+				.map(sekolah =>
+					TemplateHelper.createBookCards(sekolay, "sekolah", query)
 				)
 				.join(""),
 
@@ -1422,8 +1549,9 @@ const SearchService = {
 				.join(""),
 
 		ojk: (data, query) =>
-			TemplateHelper.renderOjkItems(data.data, AppState.ojk.currentType, query),
-
+			data.data
+				.map(item => TemplateHelper.createBookCards(item, "ojk", query))
+				.join(""),
 		hero: (data, query) =>
 			data.data
 				.map(h =>
@@ -1482,8 +1610,13 @@ const SearchService = {
 
 		pesantren: (data, query) =>
 			data.data
-				.map(pesantren => TemplateHelper.createPesantrenCard(pesantren, query))
+				.map(pesantren =>
+					TemplateHelper.createBookCards(pesantren, "pesantren", query)
+				)
 				.join(""),
+
+		swift: (data, query) =>
+			data.data.map(bank => TemplateHelper.createBookCards(data, "bank")),
 
 		default: items =>
 			items

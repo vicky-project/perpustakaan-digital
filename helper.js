@@ -89,6 +89,12 @@ const APP_CONFIG = {
 				title: "Otoritas Jasa Keuangan",
 				subtitle: "Informasi Lembaga Jasa Keuangan",
 				type: "ojk"
+			},
+			{
+				id: "swift",
+				title: "Bank Swift Code",
+				subtitle: " Daftar kode swift bank di seluruh dunia",
+				type: "swift"
 			}
 		],
 		misc: [
@@ -196,6 +202,12 @@ const AppState = {
 		kabupaten: null
 	},
 
+	swift: {
+		level: null,
+		country: null,
+		city: null
+	},
+
 	// Fungsi untuk reset state
 	reset() {
 		this.currentCategory = "";
@@ -233,7 +245,8 @@ const AppState = {
 				categoryId: null
 			},
 			shalat: { shalatId: null },
-			pesantren: { level: null, provinsi: null, kabupaten: null }
+			pesantren: { level: null, provinsi: null, kabupaten: null },
+			swift: { level: null, country: null, city: null }
 		};
 
 		// Reset semua state buku
@@ -576,6 +589,34 @@ const DomHelper = {
 			.split(" ")
 			.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
 			.join(" ");
+	},
+	copyCode: (button, code) => {
+		const textArea = document.createElement("textarea");
+		textArea.value = code;
+		document.body.appendChild(textArea);
+
+		// Select dan copy teks
+		textArea.select();
+		document.execCommand("copy");
+
+		// Hapus elemen textarea
+		document.body.removeChild(textArea);
+
+		// Tampilkan tooltip yang menandakan teks telah disalin
+		const tooltip = button.parentElement;
+		tooltip.classList.add("show");
+
+		// Ganti teks tooltip
+		const tooltipText = tooltip.querySelector(".tooltiptext");
+		tooltipText.textContent = "Tersalin!";
+
+		// Kembalikan tooltip ke keadaan semula setelah 2 detik
+		setTimeout(() => {
+			tooltip.classList.remove("show");
+			setTimeout(() => {
+				tooltipText.textContent = "Salin kode";
+			}, 300);
+		}, 2000);
 	}
 };
 
@@ -667,18 +708,6 @@ const TemplateHelper = {
 			: "";
 		html += audioUrl
 			? `<div class="content-audio"><audio controls class="audio-player"><source src="${audioUrl}" type="audio/mpeg">Browser anda tidak mendukung audio.</audio></div>`
-			: "";
-		return html;
-	},
-
-	createBookOjk(data) {
-		let html = "";
-		html += data.arabic
-			? `<div class="verse-arabic ojk">${data.arabic}</div>`
-			: "";
-		html += data.latin ? `<div class="content-latin">${data.latin}</div>` : "";
-		html += data.translation
-			? `<div class="book-details"><div class="detail-grid">${data.translation}</div></div>`
 			: "";
 		return html;
 	},
@@ -777,6 +806,224 @@ const TemplateHelper = {
 		return html;
 	},
 
+	createBookCards(data, type = "default", query = "") {
+		const highlight = text => DomHelper.highlightMatches(text, query);
+
+		const headerMap = {
+			pesantren: `<div class="card-header">
+		  <h1 class="card-name">${highlight(data.nama)}</h1>
+		  <div class="card-code">${highlight(data.nspp)}</div>
+		</div>`,
+			bank: `<div class="card-header">
+		  <h1 class="card-name">${highlight(data.name)}</h1>
+		  <div class="code-container">
+		    <div class="card-code">${highlight(data.swift_code)}</div>
+		    <div class="tooltip">
+		      <button type="button" class="copy-btn" onclick="DomHelper.copyCode(this, '${
+						data.swift_code
+					}')"><i class="fas fa-copy"></i></button>
+					<span class="tooltiptext">Salin Kode</span>
+		    </div>
+		  </div>
+		</div>`,
+			sekolah: `<div class="card-header">
+		  <h1 class="card-name">${highlight(data.nama)}</h1>
+		  <div class="card-code">${highlight(data.npsn)}</div>
+		</div>`,
+			ojk: `<div class="card-header">
+			  <h1 class="card-name">${highlight(data.name)}</h1>
+			  <div class="card-code">${highlight(data.type || data.entity_type || "")}</div>
+			</div>`,
+			default: `<div class="card-header">
+		  <h1 class="card-name">${highlight(data.nama)}</h1>
+		  <div class="card-code">${highlight(data.content)}</div>
+		</div>`
+		};
+
+		const bodyMap = {
+			pesantren: `${
+				data.kyai && data.kyai !== " "
+					? `<div class="detail-item kyai-section">
+		    <div class="detail-icon"><i class="fas fa-user"></i></div>
+		    <div class="detail-content">
+		      <div class="detail-label">Pimpinan Pesantren</div>
+		      <div class="detail-value">${highlight(data.kyai)}</div>
+		    </div>
+		  </div>`
+					: ""
+			}
+			<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Alamat</div>
+			    <div class="detail-value">${highlight(data.alamat)}</div>
+			  </div>
+			</div>
+			<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-city"></i></div>
+			  <div class="detail-content location-section">
+			    <div class="detail-label">Wilayah</div>
+			    <div class="detail-value">${data.kabupaten?.nama}</div>
+			    <div class="detail-value">${data.kabupaten?.provinsi?.nama}</div>
+			  </div>
+			</div>`,
+			bank: `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-building"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Cabang</div>
+			    <div class="detail-value">${highlight(data.branch)}</div>
+			  </div>
+			</div>
+			<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
+			  <div class="detail-content location-section">
+			    <div class="detail-label">Wilayah</div>
+			    <div class="detail-value">${data.city?.name}</div>
+			    <div class="detail-value">${data.city?.country?.name}</div>
+			  </div>
+			</div>`,
+			sekolah: `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-university"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Bentuk</div>
+			    <div class="detail-value">${data.bentuk} - ${
+						data.status === "S" ? "Swasta" : "Negeri"
+					}</div>
+			  </div>
+			</div>
+			<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
+			  <div class="detail-content location-section">
+			    <div class="detail-label">Alamat</div>
+			    <div class="detail-value">${highlight(data.alamat)}</div>
+			    <div class="detail-value">${highlight(data.kecamatan?.nama)}</div>
+			    <div class="detail-value">${highlight(
+						data.kecamatan?.kabupaten_kota?.nama
+					)}</div>
+					<div class="detail-value">${highlight(
+						data.kecamatan?.kabupaten_kota?.provinsi?.nama
+					)}</div>
+			  </div>
+			</div>
+			<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-map-marker"></i></div>
+			  <div class="detail-content location-section">
+			    <div class="detail-label">Peta</div>
+			    <div class="detail-value">
+			      <a href="https://www.google.com/maps?q=&layer=c&cbll=${data.lintang},${
+							data.bujur
+						}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a>
+			    </div>
+			  </div>
+			 </div>`,
+			ojk: `${
+				data.url || data.web
+					? `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-globe"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Link</div>
+			    <div class="detail-value">${data.url || data.web.join(", ") || "-"}</div>
+			  </div>
+			</div>`
+					: ""
+			}${
+				data.management || data.owner
+					? `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-users"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">${
+						data.management ? "Management" : data.owner ? "Owner" : "-"
+					}</div>
+			    <div class="detail-value">${highlight(data.management || data.owner)}</div>
+			  </div>
+			</div>`
+					: ""
+			}${
+				data.custodian
+					? `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-building"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Custodian</div>
+			    <div class="detail-value">${highlight(data.custodian)}</div>
+			  </div>
+			</div>`
+					: ""
+			}${
+				data.email
+					? `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-envelope"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Email</div>
+			    <div class="detail-value">${highlight(data.email.join(", ") || "-")}</div>
+			  </div>
+			</div>`
+					: ""
+			}${
+				data.phone
+					? `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-phone"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Phone</div>
+			    <div class="detail-value">${highlight(data.phone.join(", ") || "-")}</div>
+			  </div>
+			</div>`
+					: ""
+			}${
+				data.activity_type
+					? `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-tasks"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Activity</div>
+			    <div class="detail-value">${highlight(data.activity_type)}</div>
+			  </div>
+			</div>`
+					: ""
+			}${
+				data.address
+					? `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-map"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Alamat</div>
+			    <div class="detail-value">${highlight(data.address.join(", ") || "-")}</div>
+			  </div>
+			</div>`
+					: ""
+			}${
+				data.input_date
+					? `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-calendar"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Input Date</div>
+			    <div class="detail-value">${highlight(data.input_date || "-")}</div>
+			  </div>
+			</div>`
+					: ""
+			}${
+				data.description
+					? `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-file-text"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Description</div>
+			    <div class="detail-value">${highlight(data.description) || "-"}</div>
+			  </div>
+			</div>`
+					: ""
+			}`,
+			default: `<div class="detail-item">
+			  <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
+			  <div class="detail-content">
+			    <div class="detail-label">Alamat</div>
+			    <div class="detail-value">${highlight(data.details)}</div>
+			  </div>
+			</div>`
+		};
+
+		return `<div class="card">${headerMap[type]}
+		<div class="card-details">
+		 ${bodyMap[type]}
+		</div></div>`;
+	},
+
 	/**
 	 * Membuat rak buku dengan koleksi buku
 	 * @param {string} category - Judul kategori rak
@@ -859,82 +1106,6 @@ const TemplateHelper = {
         </div>
       </div>
     `;
-	},
-
-	/**
-	 * Membuat kartu informasi sekolah
-	 * @param {Object} sekolah - Data sekolah
-	 * @param {string} sekolah.nama - Nama sekolah
-	 * @param {string} sekolah.bentuk - Jenis sekolah
-	 * @param {string} sekolah.alamat - Alamat lengkap
-	 * @param {'S'|'N'} sekolah.status - Status (S=Swasta, N=Negeri)
-	 * @param {string} sekolah.npsn - Nomor Pokok Sekolah Nasional
-	 * @param {Object} sekolah.kecamatan - Data kecamatan
-	 * @returns {string} HTML kartu sekolah
-	 */
-	createSchoolCard(sekolah, query = "") {
-		const highlight = text => DomHelper.highlightMatches(text, query);
-		return `<div class="school-header">
-              <div class="school-name">${highlight(sekolah.nama)}</div>
-              <div class="school-type">${sekolah.bentuk}</div>
-            </div>
-            <div class="school-address">
-              <i class="fas fa-map-marker-alt"></i> ${highlight(sekolah.alamat)}
-            </div>
-            <div class="school-details">
-              <div><strong>Status:</strong> ${
-								sekolah.status === "S" ? "Swasta" : "Negeri"
-							}</div>
-              <div><strong>NPSN:</strong> ${highlight(sekolah.npsn)}</div>
-              <div>${highlight(sekolah.kecamatan.nama)} • ${highlight(
-								sekolah.kecamatan.kabupaten_kota.nama
-							)}</div>
-              <div>${highlight(
-								sekolah.kecamatan.kabupaten_kota.provinsi.nama
-							)}</div>
-              <div><a href="https://www.google.com/maps?q=&layer=c&cbll=${
-								sekolah.lintang
-							},${
-								sekolah.bujur
-							}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a></div>
-            </div>`;
-	},
-
-	createPesantrenCard(pesantren, query = "") {
-		const highlight = text => DomHelper.highlightMatches(text, query);
-
-		return `<div class="pesantren-card"><div class="pesantren-header">
-		  <h1 class="pesantren-name">${highlight(pesantren.nama)}</h1>
-		  <div class="pesantren-code">${highlight(pesantren.nspp)}</div>
-		</div>
-		<div class="pesantren-details">
-		  ${
-				pesantren.kyai && pesantren.kyai !== " "
-					? `<div class="detail-item kyai-section">
-		    <div class="detail-icon"><i class="fas fa-user"></i></div>
-		    <div class="detail-content">
-		      <div class="detail-label">Pimpinan Pesantren</div>
-		      <div class="detail-value">${highlight(pesantren.kyai)}</div>
-		    </div>
-		  </div>`
-					: ""
-			}
-			<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Alamat</div>
-			    <div class="detail-value">${highlight(pesantren.alamat)}</div>
-			  </div>
-			</div>
-			<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-city"></i></div>
-			  <div class="detail-content location-section">
-			    <div class="detail-label">Wilayah</div>
-			    <div class="detail-value">${pesantren.kabupaten.nama}</div>
-			    <div class="detail-value">${pesantren.kabupaten.provinsi.nama}</div>
-			  </div>
-			</div>
-		</div></div>`;
 	},
 
 	/**
@@ -1072,9 +1243,6 @@ const TemplateHelper = {
 		const highlight = text => DomHelper.highlightMatches(text, query);
 		const contentHtml = {
 			"verse-item": TemplateHelper.createBookVerse(data, query),
-			"ojk-item": `<div class="book-detail-content">${TemplateHelper.createBookOjk(
-				data
-			)}</div>`,
 			"book-item": `<div class="book-detail-content">
         ${TemplateHelper.createBookBook(data, query)}
       </div>`,
@@ -1127,57 +1295,6 @@ const TemplateHelper = {
 				</div>`
 								: ""
 						}`;
-	},
-
-	renderOjkItems(items, type, query = "") {
-		const highlight = text => DomHelper.highlightMatches(text, query);
-		const renderers = {
-			apps: item =>
-				TemplateHelper.renderDetailContentItem(
-					{
-						number: item.id,
-						title: highlight(item.name),
-						latin: item.url,
-						translation: highlight(item.owner)
-					},
-					"ojk-item"
-				),
-			illegals: item =>
-				TemplateHelper.renderDetailContentItem(
-					{
-						number: item.id,
-						title: item.entity_type,
-						arabic: highlight(item.name),
-						latin: `Web: ${item.web.join(", ") || "-"}<br>Email: ${highlight(
-							item.email.join(", ") || "-"
-						)}`,
-						translation: `<div><strong>Activity: </strong>${
-							item.activity_type
-						}</div><div><strong>Address:</strong> <span>${
-							item.address.join(", ") || "-"
-						}</span></div><div><strong>Phone:</strong> ${
-							item.phone.join(", ") || "-"
-						}</div><div><strong>Input date:</strong> ${
-							item.input_date || "-"
-						}</div><div><strong>Description:</strong> ${item.description}</div>`
-					},
-					"ojk-item"
-				),
-			products: item =>
-				TemplateHelper.renderDetailContentItem(
-					{
-						number: item.id,
-						title: highlight(item.management),
-						arabic: highlight(item.name),
-						latin: highlight(item.type),
-						translation: item.custodian
-					},
-					"ojk-item"
-				)
-		};
-		return items
-			.map(item => (renderers[type] ? renderers[type](item) : ""))
-			.join("");
 	},
 
 	/**

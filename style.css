@@ -1011,7 +1011,7 @@ header {
 }
 
 /* Kartu Pesantren - Styling Mobile First */
-.pesantren-card {
+.card {
 	background: var(--bg-color);
 	border-radius: 12px;
 	padding: 1.5rem;
@@ -1023,9 +1023,11 @@ header {
 	background-blend-mode: overlay;
 	margin-bottom: 1.5rem;
 	animation: fadeIn 0.5s ease-out forwards;
+	max-width: 400px;
+	width: 100%;
 }
 
-.pesantren-card::before {
+.card::before {
 	content: "";
 	position: absolute;
 	top: 0;
@@ -1040,14 +1042,14 @@ header {
 	);
 }
 
-.pesantren-header {
+.card-header {
 	text-align: center;
 	margin-bottom: 1.5rem;
 	padding-bottom: 1rem;
 	border-bottom: 2px solid rgba(205, 133, 63, 0.3);
 }
 
-.pesantren-name {
+.card-name {
 	font-size: 1.8rem;
 	color: var(--gold-light);
 	margin-bottom: 0.5rem;
@@ -1056,7 +1058,7 @@ header {
 	line-height: 1.3;
 }
 
-.pesantren-code {
+.card-code {
 	color: var(--text-color);
 	background: rgba(93, 64, 55, 0.4);
 	padding: 0.5rem 1rem;
@@ -1066,7 +1068,76 @@ header {
 	margin-top: 0.5rem;
 }
 
-.pesantren-details {
+.code-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+
+.copy-btn {
+	background: rgba(255, 255, 255, 0.3);
+	border: none;
+	border-radius: 50%;
+	width: 30px;
+	height: 30px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	color: #5d4037;
+}
+
+.copy-btn:hover {
+	background: rgba(255, 255, 255, 0.5);
+	transform: scale(1.1);
+}
+
+.copy-btn:active {
+	transform: scale(0.95);
+}
+
+.tooltip {
+	position: relative;
+	display: inline-block;
+}
+
+.tooltip .tooltiptext {
+	visibility: hidden;
+	width: 80px;
+	background-color: #554;
+	color: #fff;
+	text-align: center;
+	border-radius: 6px;
+	padding: 5px;
+	position: absolute;
+	z-index: 1;
+	bottom: 125%;
+	left: 50%;
+	margin-left: -40px;
+	opacity: 0;
+	transition: opacity 0.3s;
+	font-size: 12px;
+}
+
+.tooltip .tooltiptext::after {
+	content: "";
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	margin-left: -5px;
+	border-width: 5px;
+	border-style: solid;
+	border-color: #555 transparent transparent transparent;
+}
+
+.tooltip.show tooltiptext {
+	visibility: visible;
+	opacity: 1;
+}
+
+.card-details {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
@@ -1249,16 +1320,9 @@ header {
 	border-radius: 8px;
 }
 
-.verse-arabic.ojk {
-	text-align: left;
-}
-
 .verse-item .verse-arabic,
 .verse-item .content-latin,
-.verse-item .content-translation,
-.ojk-item .verse-arabic,
-.ojk-item .content-latin,
-.ojk-item .book-details .detail-grid {
+.verse-item .content-translation {
 	width: 100%;
 	box-sizing: border-box;
 }
@@ -1911,8 +1975,7 @@ mark {
 		align-items: flex-start;
 	}
 
-	.verse-item .book-detail-content,
-	.ojk-item .book-detail-content {
+	.verse-item .book-detail-content {
 		padding: 2rem;
 		flex-direction: column;
 	}
