@@ -1616,7 +1616,9 @@ const SearchService = {
 				.join(""),
 
 		swift: (data, query) =>
-			data.data.map(bank => TemplateHelper.createBookCards(data, "bank")),
+			data.data.map(bank =>
+				TemplateHelper.createBookCards(bank, "bank", query)
+			),
 
 		default: items =>
 			items

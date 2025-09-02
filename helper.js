@@ -871,7 +871,7 @@ const TemplateHelper = {
 			  <div class="detail-icon"><i class="fas fa-building"></i></div>
 			  <div class="detail-content">
 			    <div class="detail-label">Cabang</div>
-			    <div class="detail-value">${highlight(data.branch)}</div>
+			    <div class="detail-value">${highlight(data.branch || "-")}</div>
 			  </div>
 			</div>
 			<div class="detail-item">
