@@ -1527,7 +1527,7 @@ const SearchService = {
 		sekolah: (data, query) =>
 			data.data
 				.map(sekolah =>
-					TemplateHelper.createBookCards(sekolay, "sekolah", query)
+					TemplateHelper.createBookCards(sekolah, "sekolah", query)
 				)
 				.join(""),
 

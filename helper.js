@@ -63,24 +63,10 @@ const APP_CONFIG = {
 				type: "hero"
 			},
 			{
-				id: "volcano",
-				title: "Gunung Berapi",
-				subtitle: "Gunung berapi di Indonesia",
-				type: "volcano"
-			},
-			{
 				id: "kbbi",
 				title: "KBBI",
 				subtitle: "Kamus Besar Bahasa Indonesia",
 				type: "kbbi"
-			}
-		],
-		rohani: [
-			{
-				id: "bible",
-				title: "Alkitab",
-				subtitle: "Perjanjian lama & baru",
-				type: "bible"
 			}
 		],
 		finances: [
@@ -97,6 +83,14 @@ const APP_CONFIG = {
 				type: "swift"
 			}
 		],
+		rohani: [
+			{
+				id: "bible",
+				title: "Alkitab",
+				subtitle: "Perjanjian lama & baru",
+				type: "bible"
+			}
+		],
 		misc: [
 			{
 				id: "book",
@@ -109,6 +103,12 @@ const APP_CONFIG = {
 				title: "Pesantren",
 				subtitle: "Daftar Pesantren di Indonesia",
 				type: "pesantren"
+			},
+			{
+				id: "volcano",
+				title: "Gunung Berapi",
+				subtitle: "Gunung berapi di Indonesia",
+				type: "volcano"
 			}
 		]
 	},
@@ -128,6 +128,345 @@ const APP_CONFIG = {
 		}
 	}
 };
+
+const TemplateConfig = (() => {
+	const renderBookCoverSection = (data, highlight) => {
+		let html = '<div class="book-cover-section">';
+		if (data.cover_image) {
+			html += `<div class="book-cover-image"><img src="${data.cover_image}" alt="${data.title}" onerror="this.src='${APP_CONFIG.defaultBookCover}'"><div class="book-cover-effect"></div></div>`;
+		}
+		if (data.book_link) {
+			html += `<a href="${data.book_link}" class="btn-download-book" target="_blank"><i class="fas fa-download"></i> Unduh Buku</a>`;
+		}
+		return html + "</div>";
+	};
+
+	const renderBookMetaInfo = (data, highlight) => {
+		let html = '<div class="book-meta-info">';
+
+		if (data.author) {
+			if (data.author.url) {
+				html += `<div class="book-author"><strong>Penulis:</strong> <a href="${
+					data.author.url
+				}" target="_blank">${highlight(data.author.name)}</a></div>`;
+			} else {
+				html += `<div class="book-author"><strong>Penulis:</strong> ${highlight(
+					data.author.name
+				)}</div>`;
+			}
+		}
+
+		if (data.publisher) {
+			html += `<div class="book-publisher"><strong>Penerbit:</strong> ${highlight(
+				data.publisher.name
+			)}</div>`;
+		}
+
+		return html + "</div>";
+	};
+
+	const renderBookDetails = (data, highlight) => {
+		if (!data.detail) return "";
+
+		let html =
+			'<div class="book-details"><h3>Detail Buku</h3><div class="detail-grid">';
+		const details = data.detail;
+
+		const detailMap = [
+			{ key: "no_gm", label: "No. GM" },
+			{ key: "isbn", label: "ISBN" },
+			{ key: "price", label: "Harga" },
+			{ key: "total_pages", label: "Halaman" },
+			{ key: "size", label: "Ukuran", noHighlight: true },
+			{ key: "published_date", label: "Tanggal Terbit" },
+			{ key: "format", label: "Format", noHighlight: true }
+		];
+
+		detailMap.forEach(({ key, label, noHighlight }) => {
+			if (details[key]) {
+				const value = noHighlight ? details[key] : highlight(details[key]);
+				html += `<div><strong>${label}:</strong> ${value}</div>`;
+			}
+		});
+
+		return html + "</div></div>";
+	};
+
+	const bookCards = {
+		headerConfigs: {
+			pesantren: {
+				nameField: "nama",
+				codeField: "nspp",
+				hasCopyButton: false
+			},
+			bank: {
+				nameField: "name",
+				codeField: "swift_code",
+				hasCopyButton: true
+			},
+			sekolah: {
+				nameField: "nama",
+				codeField: "npsn",
+				hasCopyButton: false
+			},
+			ojk: {
+				nameField: "name",
+				codeField: "type",
+				fallbackCodeField: "entity_type",
+				hasCopyButton: false
+			},
+			default: {
+				nameField: "nama",
+				codeField: "content",
+				hasCopyButton: false
+			}
+		},
+		bodyConfigs: {
+			pesantren: [
+				{
+					condition: data => data.kyai && data.kyai !== " ",
+					icon: "user",
+					label: "Pimpinan Pesantren",
+					value: data => data.kyai
+				},
+				{
+					icon: "map-marker-alt",
+					label: "Alamat",
+					value: data => data.alamat
+				},
+				{
+					icon: "city",
+					label: "Wilayah",
+					value: data =>
+						`${data.kabupaten?.nama} - ${data.kabupaten?.provinsi?.nama}`
+				}
+			],
+			bank: [
+				{
+					icon: "building",
+					label: "Cabang",
+					value: data => data.branch || "-"
+				},
+				{
+					icon: "map-marker-alt",
+					label: "Wilayah",
+					value: data => `${data.city?.name} - ${data.city?.country?.name}`
+				}
+			],
+			sekolah: [
+				{
+					icon: "university",
+					label: "Bentuk",
+					value: data =>
+						`${data.bentuk} - ${data.status === "S" ? "Swasta" : "Negeri"}`
+				},
+				{
+					icon: "map-marker-alt",
+					label: "Alamat",
+					value: data =>
+						`${data.alamat}, ${data.kecamatan?.nama}, ${data.kecamatan?.kabupaten_kota?.nama}, ${data.kecamatan?.kabupaten_kota?.provinsi?.nama}`
+				},
+				{
+					icon: "map-marker",
+					label: "Peta",
+					value: data =>
+						data.lintang && data.bujur
+							? `<a href="https://www.google.com/maps?q=&layer=c&cbll=${data.lintang},${data.bujur}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a>`
+							: "Koordinat tidak tersedia",
+					isHTML: true
+				}
+			],
+			ojk: [
+				{
+					condition: data => data.url || data.web,
+					icon: "globe",
+					label: "Link",
+					value: data => data.url || data.web?.join(", ") || "-"
+				},
+				{
+					condition: data => data.management || data.owner,
+					icon: "users",
+					label: data => (data.management ? "Management" : "Owner"),
+					value: data => data.management || data.owner
+				},
+				{
+					condition: data => data.custodian,
+					icon: "building",
+					label: "Custodian",
+					value: data => data.custodian
+				},
+				{
+					condition: data => data.email,
+					icon: "envelope",
+					label: "Email",
+					value: data => data.email?.join(", ") || "-"
+				},
+				{
+					condition: data => data.phone,
+					icon: "phone",
+					label: "Phone",
+					value: data => data.phone?.join(", ") || "-"
+				},
+				{
+					condition: data => data.activity_type,
+					icon: "tasks",
+					label: "Activity",
+					value: data => data.activity_type
+				},
+				{
+					condition: data => data.address,
+					icon: "map",
+					label: "Alamat",
+					value: data => data.address?.join(", ") || "-"
+				},
+				{
+					condition: data => data.input_date,
+					icon: "calendar",
+					label: "Input Date",
+					value: data => data.input_date || "-"
+				},
+				{
+					condition: data => data.description,
+					icon: "file-text",
+					label: "Description",
+					value: data => data.description || "-"
+				}
+			],
+			default: [
+				{
+					icon: "map-marker-alt",
+					label: "Alamat",
+					value: data => data.details
+				}
+			]
+		}
+	};
+
+	const detailContent = {
+		contentConfigs: {
+			"verse-item": {
+				elements: [
+					{
+						condition: data => data.arabic,
+						html: data => `<div class="verse-arabic">${data.arabic}</div>`
+					},
+					{
+						condition: data => data.latin,
+						html: (data, highlight) =>
+							`<div class="content-latin">${highlight(data.latin)}</div>`
+					},
+					{
+						condition: data => data.translation,
+						html: (data, highlight) =>
+							`<div class="content-translation">${highlight(
+								data.translation
+							)}</div>`
+					},
+					{
+						condition: data => data.audio && Object.keys(data.audio).length > 0,
+						html: data => {
+							const audioUrl = data.audio["05"];
+							return audioUrl
+								? `<div class="content-audio"><audio controls class="audio-player"><source src="${audioUrl}" type="audio/mpeg">Browser anda tidak mendukung audio.</audio></div>`
+								: "";
+						}
+					}
+				]
+			},
+			"book-item": {
+				elements: [
+					{
+						condition: data => data.cover_image || data.book_link,
+						html: renderBookCoverSection
+					},
+					{
+						html: () => '<div class="book-info-section">'
+					},
+					{
+						condition: data => data.summary,
+						html: (data, highlight) =>
+							`<div class="book-summary"><h3>Sinopsis</h3><p>${highlight(
+								data.summary
+							)}</p></div>`
+					},
+					{
+						html: () => '<div class="book-meta-info">'
+					},
+					{
+						condition: data => data.author || data.publisher,
+						html: renderBookMetaInfo
+					},
+					{
+						html: () => "</div>"
+					},
+					{
+						condition: data => data.detail,
+						html: renderBookDetails
+					},
+					{
+						condition: data => data.tags && data.tags.length > 0,
+						html: (data, highlight) => {
+							const tagsHtml = data.tags
+								.map(
+									tag =>
+										`<a href="${
+											tag.url
+										}" class="tag" target="_blank">${highlight(tag.name)}</a>`
+								)
+								.join("");
+							return `<div class="book-tags"><h3>Tag</h3><div class="tags-container">${tagsHtml}</div></div>`;
+						}
+					},
+					{
+						condition: data => data.buy_links && data.buy_links.length > 0,
+						html: (data, highlight) => {
+							const linksHtml = data.buy_links
+								.map(
+									link =>
+										`<a href="${link.url}" class="btn-buy" target="_blank"><i class="fas fa-shopping-cart"></i> ${link.store}</a>`
+								)
+								.join("");
+							return `<div class="book-buy-links"><h3>Tempat Pembelian</h3><div class="buy-links">${linksHtml}</div></div>`;
+						}
+					},
+					{
+						html: () => "</div>"
+					}
+				]
+			},
+			default: {
+				elements: [
+					{
+						condition: data => data.arabic,
+						html: data => `<div class="verse-arabic">${data.arabic}</div>`
+					},
+					{
+						condition: data => data.latin,
+						html: (data, highlight) =>
+							`<div class="content-latin">${highlight(data.latin)}</div>`
+					},
+					{
+						condition: data => data.translation,
+						html: (data, highlight) =>
+							`<div class="content-translation">${highlight(
+								data.translation
+							)}</div>`
+					}
+				]
+			}
+		}
+	};
+
+	// Fungsi publik untuk mengakses konfigurasi
+	return {
+		getBookCardHeaderConfig: type =>
+			bookCards.headerConfigs[type] || bookCards.headerConfigs.default,
+		getBookCardBodyConfig: type =>
+			bookCards.bodyConfigs[type] || bookCards.bodyConfigs.default,
+		getDetailContentConfig: type =>
+			detailContent.contentConfigs[type] || detailContent.contentConfigs.default
+	};
+})();
 
 // ======= APP STATE MANAGEMENT ========
 const AppState = {
@@ -694,334 +1033,77 @@ const ApiHelper = {
  * Kumpulan utilitas untuk menghasilkan template HTML
  */
 const TemplateHelper = {
-	createBookVerse(data, query = "") {
-		const audioKeys = data.audio ? Object.keys(data.audio) : [];
-		const audioUrl = audioKeys.length ? data.audio["05"] : "";
-		const highlight = text => DomHelper.highlightMatches(text, query);
-		let html = "";
-		html += data.arabic ? `<div class="verse-arabic">${data.arabic}</div>` : "";
-		html += data.latin
-			? `<div class="content-latin">${highlight(data.latin)}</div>`
-			: "";
-		html += data.translation
-			? `<div class="content-translation">${highlight(data.translation)}</div>`
-			: "";
-		html += audioUrl
-			? `<div class="content-audio"><audio controls class="audio-player"><source src="${audioUrl}" type="audio/mpeg">Browser anda tidak mendukung audio.</audio></div>`
-			: "";
-		return html;
-	},
-
-	createBookBook(data, query = "") {
-		const highlight = text => DomHelper.highlightMatches(text, query);
-		let html = '<div class="book-cover-section">';
-		html += data.cover_image
-			? `<div class="book-cover-image"><img src="${data.cover_image}" alt="${data.title}" onerror="this.src='${APP_CONFIG.defaultBookCover}'"><div class="book-cover-effect"></div></div>`
-			: "";
-		html += data.book_link
-			? `<a href="${data.book_link}" class="btn-download-book" target="_blank"><i class="fas fa-download"></i> Unduh Buku</a>`
-			: "";
-		html += '</div><div class="book-info-section">';
-		html += data.summary
-			? `<div class="book-summary"><h3>Sinopsis</h3><p>${highlight(
-					data.summary
-			  )}</p></div>`
-			: "";
-		html += '<div class="book-meta-info">';
-		html += data.author
-			? `<div class="book-author"><strong>Penulis:</strong> ${
-					data.author.url
-						? `<a href="${data.author.url}" target="_blank">${highlight(
-								data.author.name
-						  )}</a>`
-						: highlight(data.author.name)
-			  }</div>`
-			: "";
-		html += data.publisher
-			? `<div class="book-publisher"><strong>Penerbit:</strong> ${highlight(
-					data.publisher.name
-			  )}</div>`
-			: "";
-		html += "</div>";
-		html += data.detail
-			? `<div class="book-details"><h3>Detail Buku</h3><div class="detail-grid">${
-					data.detail.no_gm
-						? `<div><strong>No. GM:</strong> ${highlight(
-								data.detail.no_gm
-						  )}</div>`
-						: ""
-			  }${
-					data.detail.isbn
-						? `<div><strong>ISBN:</strong> ${highlight(data.detail.isbn)}</div>`
-						: ""
-			  }${
-					data.detail.price
-						? `<div><strong>Harga:</strong> ${highlight(
-								data.detail.price
-						  )}</div>`
-						: ""
-			  }${
-					data.detail.total_pages
-						? `<div><strong>Halaman:</strong> ${highlight(
-								data.detail.total_pages
-						  )}</div>`
-						: ""
-			  }${
-					data.detail.size
-						? `<div><strong>Ukuran:</strong> ${data.detail.size}</div>`
-						: ""
-			  }${
-					data.detail.published_date
-						? `<div><strong>Tanggal Terbit:</strong> ${highlight(
-								data.detail.published_date
-						  )}</div>`
-						: ""
-			  }${
-					data.detail.format
-						? `<div><strong>Format:</strong> ${data.detail.format}</div>`
-						: ""
-			  }</div></div>`
-			: "";
-		html +=
-			data.tags && data.tags.length > 0
-				? `<div class="book-tags"><h3>Tag</h3><div class="tags-container">${data.tags
-						.map(
-							tag =>
-								`<a href="${tag.url}" class="tag" target="_blank">${highlight(
-									tag.name
-								)}</a>`
-						)
-						.join("")}</div></div>`
-				: "";
-		html +=
-			data.buy_links && data.buy_links.length > 0
-				? `<div class="book-buy-links"><h3>Tempat Pembelian</h3><div class="buy-links">${data.buy_links
-						.map(
-							link =>
-								`<a href="${link.url}" class="btn-buy" target="_blank"><i class="fas fa-shopping-cart"></i> ${link.store}</a>`
-						)
-						.join("")}</div></div>`
-				: "";
-		html += "</div>";
-		return html;
+	renderFromConfig(config, data, highlight) {
+		return config.elements
+			.filter(item => !item.condition || item.condition(data))
+			.map(item => item.html(data, highlight))
+			.join("");
 	},
 
 	createBookCards(data, type = "default", query = "") {
 		const highlight = text => DomHelper.highlightMatches(text, query);
 
-		const headerMap = {
-			pesantren: `<div class="card-header">
-		  <h1 class="card-name">${highlight(data.nama)}</h1>
-		  <div class="card-code">${highlight(data.nspp)}</div>
-		</div>`,
-			bank: `<div class="card-header">
-		  <h1 class="card-name">${highlight(data.name)}</h1>
-		  <div class="code-container">
-		    <div class="card-code">${highlight(data.swift_code)}</div>
-		    <div class="tooltip">
-		      <button type="button" class="copy-btn" onclick="DomHelper.copyCode(this, '${
-						data.swift_code
-					}')"><i class="fas fa-copy"></i></button>
-					<span class="tooltiptext">Salin Kode</span>
-		    </div>
-		  </div>
-		</div>`,
-			sekolah: `<div class="card-header">
-		  <h1 class="card-name">${highlight(data.nama)}</h1>
-		  <div class="card-code">${highlight(data.npsn)}</div>
-		</div>`,
-			ojk: `<div class="card-header">
-			  <h1 class="card-name">${highlight(data.name)}</h1>
-			  <div class="card-code">${highlight(data.type || data.entity_type || "")}</div>
-			</div>`,
-			default: `<div class="card-header">
-		  <h1 class="card-name">${highlight(data.nama)}</h1>
-		  <div class="card-code">${highlight(data.content)}</div>
-		</div>`
-		};
+		const headerConfig = TemplateConfig.getBookCardHeaderConfig(type);
+		const bodyConfig = TemplateConfig.getBookCardBodyConfig(type);
 
-		const bodyMap = {
-			pesantren: `${
-				data.kyai && data.kyai !== " "
-					? `<div class="detail-item kyai-section">
-		    <div class="detail-icon"><i class="fas fa-user"></i></div>
-		    <div class="detail-content">
-		      <div class="detail-label">Pimpinan Pesantren</div>
-		      <div class="detail-value">${highlight(data.kyai)}</div>
-		    </div>
-		  </div>`
-					: ""
+		const createHeader = () => {
+			const name = data[headerConfig.nameField] || "";
+			let code;
+
+			if (headerConfig.fallbackCodeField && !data[headerConfig.codeField]) {
+				code = data[headerConfig.fallbackCodeField] || "";
+			} else {
+				code = data[headerConfig.codeField] || "";
 			}
-			<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Alamat</div>
-			    <div class="detail-value">${highlight(data.alamat)}</div>
-			  </div>
-			</div>
-			<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-city"></i></div>
-			  <div class="detail-content location-section">
-			    <div class="detail-label">Wilayah</div>
-			    <div class="detail-value">${data.kabupaten?.nama}</div>
-			    <div class="detail-value">${data.kabupaten?.provinsi?.nama}</div>
-			  </div>
-			</div>`,
-			bank: `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-building"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Cabang</div>
-			    <div class="detail-value">${highlight(data.branch || "-")}</div>
-			  </div>
-			</div>
-			<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
-			  <div class="detail-content location-section">
-			    <div class="detail-label">Wilayah</div>
-			    <div class="detail-value">${data.city?.name}</div>
-			    <div class="detail-value">${data.city?.country?.name}</div>
-			  </div>
-			</div>`,
-			sekolah: `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-university"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Bentuk</div>
-			    <div class="detail-value">${data.bentuk} - ${
-						data.status === "S" ? "Swasta" : "Negeri"
-					}</div>
-			  </div>
-			</div>
-			<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
-			  <div class="detail-content location-section">
-			    <div class="detail-label">Alamat</div>
-			    <div class="detail-value">${highlight(data.alamat)}</div>
-			    <div class="detail-value">${highlight(data.kecamatan?.nama)}</div>
-			    <div class="detail-value">${highlight(
-						data.kecamatan?.kabupaten_kota?.nama
-					)}</div>
-					<div class="detail-value">${highlight(
-						data.kecamatan?.kabupaten_kota?.provinsi?.nama
-					)}</div>
-			  </div>
-			</div>
-			<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-map-marker"></i></div>
-			  <div class="detail-content location-section">
-			    <div class="detail-label">Peta</div>
-			    <div class="detail-value">
-			      <a href="https://www.google.com/maps?q=&layer=c&cbll=${data.lintang},${
-							data.bujur
-						}" class="map-link" target="_blank" title="Buka di Google Maps">Buka Lokasi di Peta</a>
-			    </div>
-			  </div>
-			 </div>`,
-			ojk: `${
-				data.url || data.web
-					? `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-globe"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Link</div>
-			    <div class="detail-value">${data.url || data.web.join(", ") || "-"}</div>
-			  </div>
-			</div>`
-					: ""
-			}${
-				data.management || data.owner
-					? `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-users"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">${
-						data.management ? "Management" : data.owner ? "Owner" : "-"
-					}</div>
-			    <div class="detail-value">${highlight(data.management || data.owner)}</div>
-			  </div>
-			</div>`
-					: ""
-			}${
-				data.custodian
-					? `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-building"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Custodian</div>
-			    <div class="detail-value">${highlight(data.custodian)}</div>
-			  </div>
-			</div>`
-					: ""
-			}${
-				data.email
-					? `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-envelope"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Email</div>
-			    <div class="detail-value">${highlight(data.email.join(", ") || "-")}</div>
-			  </div>
-			</div>`
-					: ""
-			}${
-				data.phone
-					? `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-phone"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Phone</div>
-			    <div class="detail-value">${highlight(data.phone.join(", ") || "-")}</div>
-			  </div>
-			</div>`
-					: ""
-			}${
-				data.activity_type
-					? `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-tasks"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Activity</div>
-			    <div class="detail-value">${highlight(data.activity_type)}</div>
-			  </div>
-			</div>`
-					: ""
-			}${
-				data.address
-					? `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-map"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Alamat</div>
-			    <div class="detail-value">${highlight(data.address.join(", ") || "-")}</div>
-			  </div>
-			</div>`
-					: ""
-			}${
-				data.input_date
-					? `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-calendar"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Input Date</div>
-			    <div class="detail-value">${highlight(data.input_date || "-")}</div>
-			  </div>
-			</div>`
-					: ""
-			}${
-				data.description
-					? `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-file-text"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Description</div>
-			    <div class="detail-value">${highlight(data.description) || "-"}</div>
-			  </div>
-			</div>`
-					: ""
-			}`,
-			default: `<div class="detail-item">
-			  <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
-			  <div class="detail-content">
-			    <div class="detail-label">Alamat</div>
-			    <div class="detail-value">${highlight(data.details)}</div>
-			  </div>
-			</div>`
+
+			if (headerConfig.hasCopyButton) {
+				return `<div class="card-header">
+          <h1 class="card-name">${highlight(name)}</h1>
+          <div class="code-container">
+            <div class="card-code">${highlight(code)}</div>
+            <div class="tooltip">
+              <button type="button" class="copy-btn" onclick="DomHelper.copyCode(this, '${code}')">
+                <i class="fas fa-copy"></i>
+              </button>
+              <span class="tooltiptext">Salin Kode</span>
+            </div>
+          </div>
+        </div>`;
+			}
+			return `<div class="card-header">
+        <h1 class="card-name">${highlight(name)}</h1>
+        <div class="card-code">${highlight(code)}</div>
+      </div>`;
 		};
 
-		return `<div class="card">${headerMap[type]}
-		<div class="card-details">
-		 ${bodyMap[type]}
-		</div></div>`;
+		const createBody = () => {
+			return bodyConfig
+				.filter(item => !item.condition || item.condition(data))
+				.map(item => {
+					const label =
+						typeof item.label === "function" ? item.label(data) : item.label;
+					const value =
+						typeof item.value === "function" ? item.value(data) : item.value;
+
+					return `
+            <div class="detail-item">
+              <div class="detail-icon"><i class="fas fa-${item.icon}"></i></div>
+              <div class="detail-content">
+                <div class="detail-label">${label}</div>
+                <div class="detail-value">${
+									item.isHTML ? value : highlight(value)
+								}</div>
+              </div>
+            </div>
+          `;
+				})
+				.join("");
+		};
+
+		return `<div class="card">
+      ${createHeader()}
+      <div class="card-details">${createBody()}</div>
+    </div>`;
 	},
 
 	/**
@@ -1241,21 +1323,8 @@ const TemplateHelper = {
 	 */
 	renderDetailContentItem(data, type = "default", query = "") {
 		const highlight = text => DomHelper.highlightMatches(text, query);
-		const contentHtml = {
-			"verse-item": TemplateHelper.createBookVerse(data, query),
-			"book-item": `<div class="book-detail-content">
-        ${TemplateHelper.createBookBook(data, query)}
-      </div>`,
-			default: `<div class="book-detail-content">
-			${data.arabic ? `<div class="verse-arabic">${data.arabic}</div>` : ""}
-			${data.latin ? `<div class="content-latin">${data.latin}</div>` : ""}
-			${
-				data.translation
-					? `<div class="content-translation">${data.translation}</div>`
-					: ""
-			}
-			</div>`
-		};
+
+		const config = TemplateConfig.getDetailContentConfig(type);
 
 		return `<div class="book-detail-item animated ${type}">
 		  <div class="list-item-header">
@@ -1268,7 +1337,11 @@ const TemplateHelper = {
 						: ""
 				}
 		  </div>
-		  ${contentHtml[type] || contentHtml.default}
+		  <div class="book-detail-content">${TemplateHelper.renderFromConfig(
+				config,
+				data,
+				highlight
+			)}</div>
 		</div>`;
 	},
 
